@@ -1,0 +1,5 @@
+$DOCTYPE CHKALOV IMPORTS <1.00>
+%stdcon
++println,1
++getln,1
++memfree,1
