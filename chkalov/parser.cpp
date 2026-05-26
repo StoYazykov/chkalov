@@ -56,6 +56,8 @@ void Parser::render(Vm vm) {
     code.push_back(vm.opcode);
     code.push_back(vm.type);
     size_t sz=st[vm.type];
+    cout << "render: st[vm.type]==" << hex << (int)st[vm.type] << " , pos: " << code.size()-2 << " , opcode: " << (int)vm.opcode << " , type: " << (int)vm.type;
+    cout << " , value: " << vm.value << dec << endl;
     int64_t v=vm.value;
     unsigned char *p=(unsigned char*)&v;
     for(int i=0;i<sz;i++) code.push_back(p[i]);
@@ -227,6 +229,7 @@ void Parser::parse(const string &line) {
 void Parser::parseInstruction() {
     Token t;
     if(debug) cout << "A! Iteration : " << p << '!' << endl;
+
     t=file[p];
     switch(t.type) {
         case LPAREN: {
@@ -251,9 +254,9 @@ void Parser::parseInstruction() {
                 if(imports[i].contains(method.value)) {
                     if(debug) cout << "Calling: " << imports[i].name << '.' << method.value << '!' << endl;
                     pool.push_back({STR, va.value});
-                    render({PUSH, STR, pool.size()-1});
+                    render({PUSH, seltypeu(pool.size()-1), pool.size()-1});
                     pool.push_back({LIBRARY, imports[i].name+"."+method.value});
-                    render({CALL, LIBRARY, pool.size()-1});
+                    render({CALL, seltypeu(pool.size()-1), pool.size()-1});
                 } else error("Undefined function: " << method.value);
             }
             break;
@@ -273,6 +276,13 @@ void Parser::parseInstruction() {
             parseIf();
             break;
         }
+        case ENOF: {
+            break;
+        }
+        case NOT: {
+            break;
+        }
+        default: p++;
     }
 }
 
@@ -308,41 +318,47 @@ void Parser::parseIf() {
     Token x=file[p++], y=file[p++], z=file[p++];
     if(debug) cout << "x: " << x.value << " y: " << y.value << " z: "  << z.value << '!' << endl;
     Vm u, o;
-    if(x.type==ID) u={LOAD, scopes.getVar(x.value).id}; else u={PUSH, seltype(atoll(x.value.c_str()))};
-    if(z.type==ID) o={LOAD, scopes.getVar(z.value).id}; else o={PUSH, atoll(z.value.c_str())};
+    cout << "ok" << endl;
+    if(x.type==ID) u={LOAD, seltypeu(scopes.getVar(x.value).id), scopes.getVar(x.value).id};
+    else u={PUSH, seltype(atoll(x.value.c_str())), atoll(x.value.c_str())};
+    if(z.type==ID) o={LOAD, seltypeu(scopes.getVar(x.value).id), scopes.getVar(x.value).id};
+    else o={PUSH, seltype(atoll(z.value.c_str())), atoll(z.value.c_str())};
     switch(y.type) {
         case EQ: {
             render(u);
             render(o);
             uint64_t cs=code.size();
+            cout << "size: " << code.size() << endl;
             render({IFNE, ADDR, 0});
             if(debug) cout << " CS: " << cs << '!' << endl;
             parseBlock();
             if(debug) cout << " code.size(): " << code.size() << '!' << endl;
             uint64_t tar=code.size();
-            memcpy(code.data()+cs, &tar, sz(tar));
+            cout << "PATCH: cs=" << cs << " cs+2=" << cs+2 << " tar=" << tar << dec << " (0x" << hex << tar << ")" << endl;
+            memcpy(code.data()+cs+2, &tar, sz(tar));
             break;
         }
-        case NEQ: {
-            //render({PUSH, seltype(atoll(x.value.c_str()))});
-            //render({PUSH, seltype(atoll(z.value.c_str()))});
-            render({IFE, ADDR, 0});
-            uint64_t cs=code.size()-1;
-            if(debug) cout << " CS: " << cs << '!' << endl;
-            parseBlock();
-            if(debug) cout << " code.size(): " << code.size() << '!' << endl;
-            break;
-        }
+//        case NEQ: {
+//            //render({PUSH, seltype(atoll(x.value.c_str()))});
+//            //render({PUSH, seltype(atoll(z.value.c_str()))});
+//            render({IFE, ADDR, 0});
+//            uint64_t cs=code.size()-1;
+//            if(debug) cout << " CS: " << cs << '!' << endl;
+//            parseBlock();
+//            if(debug) cout << " code.size(): " << code.size() << '!' << endl;
+//            break;
+//        }
     }
 }
 
 void Parser::parseBlock() {
-    Token t;
-    while(t.type!=RPAREN) {
+    p++;
+    while(p<file.size()&&file[p].type!=RPAREN) {
         if(debug) cout << "parseBlock!";
-        t=file[p++];
-        if(debug) cout << "t.type : " << t.type << " t.value : " << t.value << '!' << endl;
+        //t=file[p++];
+        if(debug) cout << ".type : " << file[p].type << " t.value : " << file[p].value << '!' << endl;
         parseInstruction();
     }
-    scopes.exitScope();
+    //p++;
+    //scopes.exitScope();
 }

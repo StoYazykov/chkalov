@@ -23,121 +23,76 @@ int main(int argc, char **argv) {
     ifstream a(argv[1], ios::binary);
     if(!a) error("Not found CVM file!");
     uint32_t magic;
-    uint64_t t, b;
+    uint64_t t;
     a.read(_TPL magic, sz(uint32_t));
     if(magic!=0x05020100) {
         cout << "Error! Hex magic number is: "<<magic<<", expected: "<<0x05020100<<endl;
         return 0;
     }
     if(debug) cout << "this" << endl;
-    Vm c;
+
     vector<unsigned char> vm;
+
+    uint64_t i,b;
     vector<Pool> pool;
-    vector<int64_t> stack, vars;
-    uint64_t size;
-    //stack.push_back(8);
+    vector<Slot> stack, vars;
     a.read(_TPL t, sz(uint64_t));
     pool.resize(t);
-    for(uint64_t i=0; i<t; i++) {
+    for(i=0; i<t; i++) {
         a.read(_TPL pool[i].type, sizeof(unsigned char));
         a.read(_TPL b, sz(b));
         pool[i].value.resize(b);
         a.read(pool[i].value.data(), b);
         if(debug) cout << "Readed: pool [" << i << "] as value " << pool[i].value.c_str() << '!' << endl;
     }
-    if(debug) cout << "this" << endl;
-    a.read(_TPL size, sz(size));
-    vm.resize(size);
-    a.read(_CP vm.data(), size);
-    a.close();
-    if(vm.size()!=size) error("Incorrect size!");
-    if(debug) cout << "size: " << size << " bytes, " << size/sz(Vm) << " Vm objects" << '!' << endl;
-    uint64_t q, w;
-    for(uint_fast64_t i=0; i<size/sz(Vm); i++) {
-        if(debug) cout << "Iteration: " << i << '!' << endl;
-        if(debug) cout << "Opcode: " << _TP(void)vm[i].opcode << " value: " << vm[i].value << endl;
-        switch(vm[i].opcode) {
-            case IPUSH: {
-                if(debug) cout << "ipushed " << vm[i].value << endl;
-                stack.push_back(vm[i].value);
-                break;
-            }
-            case ISTORE: {
-                int64_t v=pop(stack);
-                if(debug) cout << "A; Istored: " << v << " from-to " << vars.size() << '!' << endl;
-                vars.push_back(v);
-                break;
-            }
-            case ILOAD: {
-                int64_t v=vars[vm[i].value];
-                if(debug) cout << "A; Iloaded! Variable № " << vm[i].value << " as " << v << '!' << endl; //: " << v << " from-to " << vars.size() << '!' << endl;
-                stack.push_back(v);
-                break;
-            }
-            case IINC: {
-                stack.back()++;
-                break;
-            }
-            case IDEC: {
-                stack.back()--;
-                break;
-            }
-            case IADD: {
-                stack.push_back(stack.pop()+stack.pop());
-                break;
-            }
-            case ISUB: {
-                stack.push_back(stack.pop()-stack.pop());
-                break;
-            }
-            case IMUL: {
-                stack.push_back(stack.pop()*stack.pop());
-                break;
-            }
-            case IDIV: {
-                stack.push_back(stack.pop()/stack.pop());
+    a.read(_TPL t, sz(t));
+    vm.resize(t);
+    a.read((char*)vm.data(), t);
+    unsigned char opcode, siza;
+    int64_t tmp;
+    cout << "t: " << hex << t << '!' << endl;
+    unsigned char o,ty;
+    int64_t v;
+    i=0;
+    while(i<t) {
+        o=vm[i++];
+        ty=vm[i++];
+        v=0;
+        memcpy(&v, &vm[i], st[ty]);
+        i+=st[ty];
+        switch(o) {
+            case PUSH: {
+                stack.push_back({ty,v});
+                if(debug) cout << "PUSH; " << hex << " type: " << ty << " size: " << st[ty] <<
+                " value: " << v << '!' << endl;
                 break;
             }
             case CALL: {
-                string s=env;
-                string e=pool[vm[i].value].value;
-                string z=e.substr(0, e.find('.'));
-                if(debug) cout << pool[vm[i].value].value << endl;
-                string y=pool[vm[i].value].value.substr(pool[vm[i].value].value.find('.')+1);
-                s+=z+"/"+"lib"+z+".so";
-                if(debug) cout << "Called! Index= " << vm[i].value << " , value= " << y.c_str() << endl;
-                if(debug) cout << s << endl;
-                void *handle = dlopen(s.c_str(), RTLD_LAZY);
-                if(!handle) cout << "error!" << endl;
-                int64_t (*f1)(int64_t);
-                f1 = (int64_t (*)(int64_t))dlsym(handle, y.c_str());
-                if(!f1) cout << "error! not f1! f1 is : " << y << endl;
-                if(stack.empty()) error("Stack empty before CALL!");
-                int64_t d=pop(stack);
-                if(debug) cout << "Stack.pop(): " << d << '!' << endl;
-                f1((int64_t)pool[d].value.c_str());
-                dlclose(handle);
+                string m, l, r=pool[v].value; // stdcon.println
+                cout << r << endl;
+                m=r.substr(0, r.find("."));
+                l=r.substr(r.find("."));
+                string s=env; // /root/chk/
+                s+="/"+m+"/lib"+m+".so";
+                cout << "====LIB CALLED: " << s << endl;
+                break;
+                //void *h=dlopen()
+            }
+            case IFNE: {
+                int64_t a=pop(stack).value, b=pop(stack).value;
+                cout << "IFNE; " << a << " and " << b << '!' << endl;
+                if(a!=b) {
+                    cout << hex << "!=. Jumping to " << v << "..." << '!' << dec << endl;
+                    i=v;
+                }
                 break;
             }
-            case IFE:
-                w=pop(stack);
-                q=pop(stack);
-                if(debug) cout << "IFE: comparing " << q << " and " << w << endl;
-                if(q==w) {
-                    i=vm[i].value-1;
-                    if(debug) cout << "Jumping to " << i << endl;
-                }
+            case STORE: {
+                vars.push_back(pop(stack));
+                cout << "Store; istored to " << hex << vars.size()-1 << " , type=" << (int)vars.back().type
+                << ", value " << (int)vars.back().value << dec << endl;
                 break;
-
-            case IFNE:
-                w=pop(stack);
-                q=pop(stack);
-                if(debug) cout << "IFNE: comparing " << q << " and " << w << endl;
-                if(q!=w) {
-                    i=vm[i].value-1;
-                    if(debug) cout << "Jumping to " << i << endl;
-                }
-                break;
+            }
         }
     }
     return 0;

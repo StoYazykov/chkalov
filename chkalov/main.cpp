@@ -6,7 +6,7 @@ using namespace std;
 
 int main(int argc, char** argv) {
 	if(argc < 3) {
-        cout << "Usage: chkalovc input.chk output.cvm (--debug)" << endl;
+        cout << "Usage: chkalovc input.chk output.cvm (--d)" << endl;
         return 1;
     }
     string argi=argv[1], argo=argv[2], argd;

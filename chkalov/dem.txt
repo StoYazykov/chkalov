@@ -1,2 +1,0 @@
-ipush 5;
-istore 1;

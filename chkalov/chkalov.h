@@ -30,6 +30,17 @@ using namespace std;
 #define MUL 0x0F
 #define DIV 0x10
 
+#define CALL 0x11
+
+#define ALLOC 0x12
+
+#define IFE 0x13    // if equal ==
+#define IFNE 0x14   // if not equal !=
+#define IFL 0x15    // if less <
+#define IFB 0x16    // if big >
+#define IFBE 0x17   // if big or equal >=
+#define IFLE 0x18   // if less or equal <=
+
 // ----------------------------------------------//
 //            Sizes definitions!                 //
 // ----------------------------------------------//
@@ -40,22 +51,14 @@ using namespace std;
 #define LONG 0x03   // 8 bytes
 #define ADDR 0x04
 #define ARRAY 0x05  // ? bytes
+#define LIBRARY 0x06
+#define STR 0x07
+#define NOL
 
-#define CALL 0x11
-
-#define IFE 0x12    // if equal ==
-#define IFNE 0x13   // if not equal !=
-#define IFL 0x14    // if less <
-#define IFB 0x15    // if big >
-#define IFBE 0x16   // if big or equal >=
-#define IFLE 0x17   // if less or equal <=
-
-// ----------------------------------------------//
-//                  Pool types!                  //
-// ----------------------------------------------//
-
-#define LIBRARY LONG
-#define STR LONG
+#define CHARU 0x08
+#define SHORTU 0x09
+#define INTU 0x0A
+#define LONGU 0x0B
 
 #define getGID (nullscope.getGlobalId())
 #define _T(type) (type)
@@ -73,8 +76,8 @@ T pop(vector<T>& v) {
     v.pop_back();
     return val;
 }
-
-const int st[]={1,2,4,8,8};  // sizes table
+//              CHAR SHORT INT LONG ADDR ARRAY LIBRARY STR CHARU SHORTU INTU LONGU NOL NULL
+const int st[]={1,   2,    4,  8,   8,   0xFF, 4,      4,  1,    2,     4,   8,    0,  0};  // sizes table
 
 // ----------------------------------------------//
 //            VM instruction structure           //
@@ -82,8 +85,13 @@ const int st[]={1,2,4,8,8};  // sizes table
 
 struct Vm {
     unsigned char opcode;
-    char type;
+    unsigned char type;
     int64_t value; // 64 bits - maximal size, will truncated in Parser::finally(). //
+};
+
+struct Slot {
+    unsigned char type;
+    int64_t value;
 };
 
 // ----------------------------------------------//
@@ -97,10 +105,26 @@ struct Pool {
 
 #pragma pack(pop)
 
+/*-128 - 127 CHAR
+0-255 CHARU
+-32768 - 32767 SHORT
+0-65536 SHORTU
+-2^32/2 - 2^32/2-1 INT
+0-2^32 INTU
+-2^64/2 - 2^64/2-1 LONG
+0-2^64 LONGU*/
+
+inline uint8_t seltypeu(uint64_t a){
+    if(a<256) return CHARU;
+    if(a<65536) return SHORTU;
+    if(a<(1ULL<<32)) return INTU;
+    return LONGU;
+}
+
 inline uint8_t seltype(int64_t a){
-    if(a<256) return CHAR;
-    if(a<65536) return SHORT;
-    if(a<(1ULL<<32)) return INT;
+    if(a>=-128&&a<128) return CHAR;
+    if(a>=-32768&&a<32768) return SHORT;
+    if(a>=-((1LL<<32)/2)&&a<((1LL<<32)/2)) return INT;
     return LONG;
 }
 
