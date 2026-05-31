@@ -1,0 +1,17 @@
+#!/bin/bash
+
+export CHKALOV=/root/chk/
+printf "Компиляция...\n ______________\n"
+while [ true ]; do
+	printf "\r/ %d.%02d секунд. \\" $((seconds/100)) $((seconds%100))
+	sleep 0.01
+	seconds=$((seconds+1))
+done &
+ANIM=$!
+trap 'kill $ANIM 2>/dev/null; rm /tmp/fnd.txt 2>/dev/null' SIGINT SIGTERM
+gcc -shared -fPIC ./stdcon/main.c -o ./stdcon/libstdcon.so -w
+g++ -o chkc ./chkalov/main.cpp ./chkalov/parser.cpp ./chkalov/scope.cpp ./chkalov/token.cpp -w
+g++ -o chkvm ./chkalovm/main.cpp -w
+kill $ANIM 2>/dev/null
+./chkc demo.txt demo.cvm
+./chkvm demo.cvm

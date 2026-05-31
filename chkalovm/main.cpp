@@ -68,15 +68,32 @@ int main(int argc, char **argv) {
                 break;
             }
             case CALL: {
+            cout << "Stack size: " << stack.size() << endl;
+for(int i = 0; i < stack.size(); i++) {
+    cout << "  [" << i << "] type=" << (int)stack[i].type << " value=" << stack[i].value << endl;
+}
                 string m, l, r=pool[v].value; // stdcon.println
                 cout << r << endl;
                 m=r.substr(0, r.find("."));
-                l=r.substr(r.find("."));
+                l=r.substr(r.find(".")+1);
                 string s=env; // /root/chk/
                 s+="/"+m+"/lib"+m+".so";
                 cout << "====LIB CALLED: " << s << endl;
+                void *h=dlopen(s.c_str(), RTLD_LAZY);
+                typedef Slot (*CFUNC)(size_t argc, Slot *argp);
+                CFUNC func = (CFUNC)dlsym(h, l.c_str());
+                if(!func) {
+                    cerr << "dlsym failed for '" << l << "': " << dlerror() << endl;
+                    dlclose(h);
+                    break;
+                }
+                Slot a=pop(stack);
+                cout << "calling... a.value=" << a.value << " \n";
+                a.value = (int64_t)pool[a.value].value.c_str();
+                cout << "calling... a.value (converted!)=" << a.value << " \n";
+                func(1, &a);
+                dlclose(h);
                 break;
-                //void *h=dlopen()
             }
             case IFNE: {
                 int64_t a=pop(stack).value, b=pop(stack).value;

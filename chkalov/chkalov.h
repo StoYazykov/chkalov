@@ -5,14 +5,22 @@
 #define unix
 #endif
 
+#ifdef __cplusplus
 #include <cstdint>
+#endif
 #include <dlfcn.h>
 
 #define error(errm) do{cerr<<"Error! "<<errm<<endl;exit(0x08);}while(0);
 
+#ifdef __cplusplus
 #include <string>
+#else
+#include <string.h>
+#endif
 
+#ifdef __cplusplus
 using namespace std;
+#endif
 
 // ----------------------------------------------//
 //              VM opcodes definitions           //
@@ -53,7 +61,7 @@ using namespace std;
 #define ARRAY 0x05  // ? bytes
 #define LIBRARY 0x06
 #define STR 0x07
-#define NOL
+#define NOL 0x08
 
 #define CHARU 0x08
 #define SHORTU 0x09
@@ -70,12 +78,15 @@ using namespace std;
 
 #pragma pack(push, 1)
 
+#ifdef __cplusplus
 template<typename T>
 T pop(vector<T>& v) {
     T val = v.back();
     v.pop_back();
     return val;
 }
+#endif // __cplusplus
+
 //              CHAR SHORT INT LONG ADDR ARRAY LIBRARY STR CHARU SHORTU INTU LONGU NOL NULL
 const int st[]={1,   2,    4,  8,   8,   0xFF, 4,      4,  1,    2,     4,   8,    0,  0};  // sizes table
 
@@ -83,27 +94,43 @@ const int st[]={1,   2,    4,  8,   8,   0xFF, 4,      4,  1,    2,     4,   8, 
 //            VM instruction structure           //
 // ----------------------------------------------//
 
+#ifdef __cplusplus
 struct Vm {
+#else
+typedef struct {
+#endif // __cplusplus
     unsigned char opcode;
     unsigned char type;
     int64_t value; // 64 bits - maximal size, will truncated in Parser::finally(). //
+#ifdef __cplusplus
 };
+#else
+} Vm;
+#endif // __cplusplus
 
+#ifdef __cplusplus
 struct Slot {
+#else
+typedef struct {
+#endif // __cplusplus
     unsigned char type;
     int64_t value;
+#ifdef __cplusplus
 };
+#else
+} Slot;
+#endif // __cplusplus
 
 // ----------------------------------------------//
 //              Pool entry structure!            //
 // ----------------------------------------------//
 
+#ifdef __cplusplus
 struct Pool {
     unsigned char type;
     string value;
 };
-
-#pragma pack(pop)
+#endif
 
 /*-128 - 127 CHAR
 0-255 CHARU
@@ -114,14 +141,20 @@ struct Pool {
 -2^64/2 - 2^64/2-1 LONG
 0-2^64 LONGU*/
 
-inline uint8_t seltypeu(uint64_t a){
+#ifdef __cplusplus
+inline
+#endif
+uint8_t seltypeu(uint64_t a){
     if(a<256) return CHARU;
     if(a<65536) return SHORTU;
     if(a<(1ULL<<32)) return INTU;
     return LONGU;
 }
 
-inline uint8_t seltype(int64_t a){
+#ifdef __cplusplus
+inline
+#endif
+uint8_t seltype(int64_t a){
     if(a>=-128&&a<128) return CHAR;
     if(a>=-32768&&a<32768) return SHORT;
     if(a>=-((1LL<<32)/2)&&a<((1LL<<32)/2)) return INT;
