@@ -10,6 +10,14 @@
 
 static Scope nullscope;
 
+uint8_t eee(TokenType t) {
+    switch(t) {
+        case STRING: return STR;
+        case NUMBER: return LONG;
+        default:     return NOL;
+    }
+}
+
 //const char* envi = getenv("CHKALOV");
 Parser::Parser(const string &_fni, const string &_fn, bool _debug) : fn(_fn), p(0), debug(_debug) {
     string env=getenv("CHKALOV");
@@ -247,16 +255,22 @@ void Parser::parseInstruction() {
             Token ntam=file[++p];
             if(ntam.type!=LBRACE) error("expected (!, detected : " << ntam.type);
             Token va=file[++p];
-            if(va.type!=STRING) error("expected string!");
+            uint8_t ttt=eee(va.type);
             ntam=file[++p];
             if(ntam.type!=RBRACE) error("expected )!, detected : " << ntam.type);
             for(uint64_t i=0; i<imports.size(); i++) {
                 if(imports[i].contains(method.value)) {
                     if(debug) cout << "Calling: " << imports[i].name << '.' << method.value << '!' << endl;
-                    pool.push_back({STR, va.value});
-                    render({PUSH, seltypeu(pool.size()-1), pool.size()-1});
-                    pool.push_back({LIBRARY, imports[i].name+"."+method.value});
-                    render({CALL, seltypeu(pool.size()-1), pool.size()-1});
+                    if(ttt==STR) {
+                        pool.push_back({STR, va.value});
+                        render({PUSH, seltypeu(pool.size()-1), pool.size()-1});
+                        pool.push_back({LIBRARY, imports[i].name+"."+method.value});
+                        render({CALL, seltypeu(pool.size()-1), pool.size()-1});
+                    } else {
+                        render({PUSH, LONG, atoll(va.value.c_str())});
+                        pool.push_back({LIBRARY, imports[i].name+"."+method.value});
+                        render({CALL, seltypeu(pool.size()-1), pool.size()-1});
+                    }
                 } else error("Undefined function: " << method.value);
             }
             break;
@@ -293,9 +307,9 @@ void Parser::parseFile() {
 };
 
 VarType Parser::stringToType(string value) {
-	if(value.substr(0, 3)=="Int") return VINT;
-	if(value.substr(0, 5)=="String") return VSTRING;
-	return VNOT;
+    if(value.substr(0, 3)=="Int") return VINT;
+    if(value.substr(0, 5)=="String") return VSTRING;
+    return VNOT;
 }
 
 bool Import::contains(string a) {

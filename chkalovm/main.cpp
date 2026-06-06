@@ -89,7 +89,7 @@ for(int i = 0; i < stack.size(); i++) {
                 }
                 Slot a=pop(stack);
                 cout << "calling... a.value=" << a.value << " \n";
-                a.value = (int64_t)pool[a.value].value.c_str();
+                if(a.type==STR) a.value = (int64_t)pool[a.value].value.c_str();
                 cout << "calling... a.value (converted!)=" << a.value << " \n";
                 func(1, &a);
                 dlclose(h);
