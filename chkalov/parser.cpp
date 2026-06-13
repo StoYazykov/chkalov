@@ -254,24 +254,14 @@ void Parser::parseInstruction() {
             if(method.type!=ID) error("Expected name function!");
             Token ntam=file[++p];
             if(ntam.type!=LBRACE) error("expected (!, detected : " << ntam.type);
-            Token va=file[++p];
-            uint8_t ttt=eee(va.type);
-            ntam=file[++p];
-            if(ntam.type!=RBRACE) error("expected )!, detected : " << ntam.type);
-            for(uint64_t i=0; i<imports.size(); i++) {
+            parseExpression();
+            if(file[++p].type!=RBRACE) error("expected )!, detected : " << file[++p].type);
+            for(uint64_t i = 0; i < imports.size(); i++) {
                 if(imports[i].contains(method.value)) {
-                    if(debug) cout << "Calling: " << imports[i].name << '.' << method.value << '!' << endl;
-                    if(ttt==STR) {
-                        pool.push_back({STR, va.value});
-                        render({PUSH, seltypeu(pool.size()-1), pool.size()-1});
-                        pool.push_back({LIBRARY, imports[i].name+"."+method.value});
-                        render({CALL, seltypeu(pool.size()-1), pool.size()-1});
-                    } else {
-                        render({PUSH, LONG, atoll(va.value.c_str())});
-                        pool.push_back({LIBRARY, imports[i].name+"."+method.value});
-                        render({CALL, seltypeu(pool.size()-1), pool.size()-1});
-                    }
-                } else error("Undefined function: " << method.value);
+                    pool.push_back({LIBRARY, imports[i].name + "." + method.value});
+                    render({CALL, LIBRARY, pool.size() - 1});
+                    break;
+                }
             }
             break;
         }
@@ -375,4 +365,15 @@ void Parser::parseBlock() {
     }
     //p++;
     //scopes.exitScope();
+}
+
+void Parser::parseExpression() {
+    Token au=file[++p];
+    if(au.type==LBRACE) parseExpression();
+    if(au.type==NUMBER) {
+        render({PUSH, LONG, atoll(au.value.c_str())});
+    } else if(au.type == STRING) {
+        pool.push_back({STR, au.value});
+        render({PUSH, STR, pool.size() - 1});
+    }
 }

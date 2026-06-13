@@ -34,6 +34,7 @@ class Parser {
     size_t p;
     void parse(const string &line);
     void parseBlock();
+    void parseExpression();
     void parseIf();
     void parseInstruction();
     VarType stringToType(string str);
