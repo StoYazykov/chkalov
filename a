@@ -1,1 +1,48 @@
-/bin/a
+#!/bin/bash
+
+export CHKALOV=/root/chk/
+FORCE=0
+if [ "$1" = "-f" ]; then FORCE=1; fi
+
+printf "Компиляция...\n"
+seconds=0
+while true; do
+    printf "\r/ %d.%02d секунд. \\" $((seconds/100)) $((seconds%100))
+    sleep 0.01
+    seconds=$((seconds+1))
+done &
+ANIM=$!
+trap 'kill $ANIM 2>/dev/null' EXIT
+
+SO="./stdcon/libstdcon.so"
+SRC_C="./stdcon/main.c"
+if [ $FORCE -eq 1 ] || [ ! -f "$SO" ] || [ "$SRC_C" -nt "$SO" ]; then
+    echo -e "\n  -> Сборка stdcon..."
+    gcc -shared -fPIC "$SRC_C" -o "$SO" -w
+fi
+
+CHKC="./chkc"
+CHK_SRCS=("./chkalov/main.cpp" "./chkalov/parser.cpp" "./chkalov/scope.cpp" "./chkalov/token.cpp")
+NEED_CHKC=0
+if [ $FORCE -eq 1 ] || [ ! -f "$CHKC" ]; then
+    NEED_CHKC=1
+else
+    for src in "${CHK_SRCS[@]}"; do
+        if [ "$src" -nt "$CHKC" ]; then NEED_CHKC=1; break; fi
+    done
+fi
+if [ $NEED_CHKC -eq 1 ]; then
+    echo "  -> Сборка компилятора..."
+    g++ -o "$CHKC" "${CHK_SRCS[@]}" -ldl
+fi
+
+VM="./chkvm"
+VM_SRC="./chkalovm/main.cpp"
+if [ $FORCE -eq 1 ] || [ ! -f "$VM" ] || [ "$VM_SRC" -nt "$VM" ]; then
+    echo "  -> Сборка VM..."
+    g++ -o "$VM" "$VM_SRC" -ldl -w
+fi
+
+kill $ANIM 2>/dev/null
+echo ""
+./chkc demo.txt demo.cvm && ./chkvm demo.cvm
