@@ -9,24 +9,28 @@ CHKALOV_DIR = /root/chk
 STDCON_DIR = $(CHKALOV_DIR)/stdcon
 CHKALOV_SRC = $(CHKALOV_DIR)/chkalov
 VM_DIR = $(CHKALOV_DIR)/chkalovm
+ITT_DIR = $(CHKALOV_DIR)/chkalovitt
 
 PARSER_SRC = $(CHKALOV_SRC)/parser.cpp $(CHKALOV_SRC)/scope.cpp $(CHKALOV_SRC)/token.cpp
 MAIN_SRC = $(CHKALOV_SRC)/main.cpp
 STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.cpp
+ITT_SRC = $(ITT_DIR)/main.cpp
 
 CHKC = $(CHKALOV_DIR)/chkc
 CHKVM = $(CHKALOV_DIR)/chkvm
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
+ITT = $(CHKALOV_DIR)/chkitt
 
 PARSER_OBJ = $(PARSER_SRC:.cpp=.o)
 MAIN_OBJ = $(MAIN_SRC:.cpp=.o)
 VM_OBJ = $(VM_SRC:.cpp=.o)
+ITT_OBJ = $(ITT_SRC:.cpp=.o)
 
 DEMO_SRC = $(CHKALOV_DIR)/demo.txt
 DEMO_CVM = $(CHKALOV_DIR)/demo.cvm
 
-all: $(CHKC) $(CHKVM) $(LIBSTDCON)
+all: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
 	@echo "=============================="
 	@echo "         Компиляция...        "
 	@echo "=============================="
@@ -34,23 +38,25 @@ all: $(CHKC) $(CHKVM) $(LIBSTDCON)
 
 $(CHKC): $(MAIN_OBJ) $(PARSER_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-	
 
 $(CHKVM): $(VM_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-	
+
 $(LIBSTDCON): $(STDCON_SRC)
 	$(CC) $(CFLAGS) -shared -o $@ $^
+
+$(ITT): $(ITT_SRC)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(CHKC) $(CHKVM) $(LIBSTDCON)
-	rm -f $(PARSER_OBJ) $(MAIN_OBJ) $(VM_OBJ)
+	rm -f $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
+	rm -f $(PARSER_OBJ) $(MAIN_OBJ) $(VM_OBJ) $(ITT_OBJ)
 	rm -f $(DEMO_CVM)
 
-build: $(CHKC) $(CHKVM) $(LIBSTDCON)
+build: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
 
 run: build
 	$(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
@@ -62,5 +68,6 @@ info:
 	@echo "Компилятор: $(CHKC)"
 	@echo "VM:         $(CHKVM)"
 	@echo "Библиотека: $(LIBSTDCON)"
+	@echo "Инструменты: $(ITT)"
 
 .PHONY: all clean build run rebuild info

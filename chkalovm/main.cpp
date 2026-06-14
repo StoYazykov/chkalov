@@ -50,10 +50,11 @@ int main(int argc, char **argv) {
     a.read((char*)vm.data(), t);
     unsigned char opcode, siza;
     int64_t tmp;
-    cout << "t: " << hex << t << '!' << endl;
+    if(debug) cout << "t: " << hex << t << '!' << endl;
     unsigned char o,ty;
     int64_t v;
     i=0;
+    Slot g, h;
     while(i<t) {
         o=vm[i++];
         ty=vm[i++];
@@ -68,17 +69,17 @@ int main(int argc, char **argv) {
                 break;
             }
             case CALL: {
-            cout << "Stack size: " << stack.size() << endl;
-for(int i = 0; i < stack.size(); i++) {
-    cout << "  [" << i << "] type=" << (int)stack[i].type << " value=" << stack[i].value << endl;
-}
+            if(debug) cout << "Stack size: " << stack.size() << endl;
+            for(int i = 0; i < stack.size(); i++) {
+                if(debug) cout << "  [" << i << "] type=" << (int)stack[i].type << " value=" << stack[i].value << endl;
+            }
                 string m, l, r=pool[v].value; // stdcon.println
-                cout << r << endl;
+                if(debug) cout << r << endl;
                 m=r.substr(0, r.find("."));
                 l=r.substr(r.find(".")+1);
                 string s=env; // /root/chk/
                 s+="/"+m+"/lib"+m+".so";
-                cout << "====LIB CALLED: " << s << endl;
+                if(debug) cout << "====LIB CALLED: " << s << endl;
                 void *h=dlopen(s.c_str(), RTLD_LAZY);
                 typedef Slot (*CFUNC)(size_t argc, Slot *argp);
                 CFUNC func = (CFUNC)dlsym(h, l.c_str());
@@ -88,9 +89,9 @@ for(int i = 0; i < stack.size(); i++) {
                     break;
                 }
                 Slot a=pop(stack);
-                cout << "calling... a.value=" << a.value << " \n";
+                if(debug) cout << "calling... a.value=" << a.value << " \n";
                 if(a.type==STR) a.value = (int64_t)pool[a.value].value.c_str();
-                cout << "calling... a.value (converted!)=" << a.value << " \n";
+                if(debug) cout << "calling... a.value (converted!)=" << a.value << " \n";
                 func(1, &a);
                 dlclose(h);
                 break;
@@ -108,6 +109,30 @@ for(int i = 0; i < stack.size(); i++) {
                 vars.push_back(pop(stack));
                 cout << "Store; istored to " << hex << vars.size()-1 << " , type=" << (int)vars.back().type
                 << ", value " << (int)vars.back().value << dec << endl;
+                break;
+            }
+            case ADD: {
+                g=pop(stack);
+                h=pop(stack);
+                stack.push_back({g.type, g.value+h.value});
+                break;
+            }
+            case SUB: {
+                g=pop(stack);
+                h=pop(stack);
+                stack.push_back({g.type, h.value-g.value});
+                break;
+            }
+            case MUL: {
+                g=pop(stack);
+                h=pop(stack);
+                stack.push_back({g.type, g.value*h.value});
+                break;
+            }
+            case DIV: {
+                g=pop(stack);
+                h=pop(stack);
+                stack.push_back({g.type, h.value/g.value});
                 break;
             }
         }

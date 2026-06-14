@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Chkalov Imports-Table Toolkit 1.00 (in interactive shell)"
+while read -e -p "chkitt> " -r line && [ "$line" != "exit" ]; do
+    [ -n "$line" ] && ./chkitt $line
+done
+echo "Bye!"

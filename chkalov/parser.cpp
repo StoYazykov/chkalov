@@ -35,9 +35,8 @@ Parser::Parser(const string &_fni, const string &_fn, bool _debug) : fn(_fn), p(
             imports.push_back(Import(sa.substr(1)));
         } else if(sa[0]=='+') {
             for(uint64_t i=0LL; i<imports.size(); i++) {
-                if(section==imports[i].name) imports[i].add(sa.substr(1, sa.find(",")-1), atoll(sa.substr(sa.find(",")).c_str()));
+                if(section==imports[i].name) imports[i].add(sa.substr(1));
                 else error("Unimported function: " << sa.substr(1) << " , section : " << section << '!' << sa);
-                cout << atoll(sa.substr(sa.find(",")).c_str()) << '!' << endl;
             }
         };
         if(debug) cout << "Section: " << section << " , function: " << sa << '!' << endl;
@@ -48,7 +47,7 @@ Parser::Parser(const string &_fni, const string &_fn, bool _debug) : fn(_fn), p(
     if(debug) {
         for(uint64_t i=0; i<imports.size(); i++) {
             cout << "Name: " << imports[i].name << " , functions: ";
-            for(uint64_t j=0; j<imports[i].funcs.size(); j++) cout << ' ' << imports[i].funcs[j].name << " | ";
+            for(uint64_t j=0; j<imports[i].funcs.size(); j++) cout << ' ' << imports[i].funcs[j] << " | ";
         }
         cout << '!' << endl;
     }
@@ -253,9 +252,11 @@ void Parser::parseInstruction() {
             Token method=file[++p];
             if(method.type!=ID) error("Expected name function!");
             Token ntam=file[++p];
-            if(ntam.type!=LBRACE) error("expected (!, detected : " << ntam.type);
+            if(ntam.type!=LBRACE) error("expected (!, detected : " << ntam.value);
+            p++;
             parseExpression();
-            if(file[++p].type!=RBRACE) error("expected )!, detected : " << file[++p].type);
+            cout << "DEBUG: after parseExpression, p=" << p << " token=" << file[p].value << " type=" << file[p].type << endl;
+            if(file[p].type!=RBRACE) error("expected )!, detected : " << file[p].value);
             for(uint64_t i = 0; i < imports.size(); i++) {
                 if(imports[i].contains(method.value)) {
                     pool.push_back({LIBRARY, imports[i].name + "." + method.value});
@@ -304,13 +305,13 @@ VarType Parser::stringToType(string value) {
 
 bool Import::contains(string a) {
     for(uint64_t i=0; i<funcs.size(); i++) {
-        if(a==funcs[i].name) return true;
+        if(a==funcs[i]) return true;
     }
     return false;
 }
 
-void Import::add(string a, uint64_t _a) {
-    funcs.push_back({a,_a});
+void Import::add(string a) {
+    funcs.push_back(a);
 }
 
 void Parser::parseIf() {
@@ -368,12 +369,62 @@ void Parser::parseBlock() {
 }
 
 void Parser::parseExpression() {
-    Token au=file[++p];
-    if(au.type==LBRACE) parseExpression();
+    Token au;
+    parseTerm();
+    while(p<file.size()) {
+        au=file[p];
+        if(au.type==PLUS) {
+            p++;
+            parseTerm();
+            render({ADD});
+        } else if(au.type==MINUS) {
+            p++;
+            parseTerm();
+            render({SUB});
+        } else break;
+    }
+}
+
+void Parser::parseTerm() {
+    Token au;
+    parseFactor();
+    while(p<file.size()) {
+        au=file[p];
+        if(au.type==STAR) {
+            p++;
+            parseFactor();
+            render({MUL});
+        } else if(au.type==SLASH) {
+            p++;
+            parseFactor();
+            render({DIV});
+        } else break;
+    }
+}
+
+void Parser::parseFactor() {
+    Token au=file[p];
+
     if(au.type==NUMBER) {
+        p++;
         render({PUSH, LONG, atoll(au.value.c_str())});
-    } else if(au.type == STRING) {
+    }
+    else if(au.type==STRING) {
+        p++;
         pool.push_back({STR, au.value});
         render({PUSH, STR, pool.size() - 1});
+    }
+    else if(au.type==LBRACE) {
+        p++;
+        parseExpression();
+        cout << "DEBUG parseFactor: after parseExpression, token=" << file[p].value << " type=" << file[p].type << endl;
+        if(file[p].type!=RBRACE) error("Expected ')', detected "<<file[p].value);
+        if(p + 1 < file.size() && (file[p + 1].type == STAR || file[p + 1].type == SLASH)) {
+        p++; // двигаем только если следующий токен - оператор
+    }
+    }
+    else {
+
+        error("Unexpected token");
     }
 }

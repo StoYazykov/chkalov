@@ -8,18 +8,13 @@
 #include "chkalov.h"
 using namespace std;
 
-struct func {
-    string name;
-    uint16_t args;
-};
-
 
 class Import {
 public:
-    vector<func> funcs;
+    vector<string> funcs;
     string name;
     bool contains(string a);
-    void add(string a, uint64_t _a);
+    void add(string a);
     Import(string _v) {name=_v;}
 };
 
@@ -35,6 +30,8 @@ class Parser {
     void parse(const string &line);
     void parseBlock();
     void parseExpression();
+    void parseTerm();
+    void parseFactor();
     void parseIf();
     void parseInstruction();
     VarType stringToType(string str);
