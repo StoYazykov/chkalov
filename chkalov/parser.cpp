@@ -63,8 +63,8 @@ void Parser::render(Vm vm) {
     code.push_back(vm.opcode);
     code.push_back(vm.type);
     size_t sz=st[vm.type];
-    cout << "render: st[vm.type]==" << hex << (int)st[vm.type] << " , pos: " << code.size()-2 << " , opcode: " << (int)vm.opcode << " , type: " << (int)vm.type;
-    cout << " , value: " << vm.value << dec << endl;
+    if(debug) cout << "render: st[vm.type]==" << hex << (int)st[vm.type] << " , pos: " << code.size()-2 << " , opcode: " << (int)vm.opcode << " , type: " << (int)vm.type;
+    if(debug) cout << " , value: " << vm.value << dec << endl;
     int64_t v=vm.value;
     unsigned char *p=(unsigned char*)&v;
     for(int i=0;i<sz;i++) code.push_back(p[i]);
@@ -255,7 +255,7 @@ void Parser::parseInstruction() {
             if(ntam.type!=LBRACE) error("expected (!, detected : " << ntam.value);
             p++;
             parseExpression();
-            cout << "DEBUG: after parseExpression, p=" << p << " token=" << file[p].value << " type=" << file[p].type << endl;
+            if(debug) cout << "DEBUG: after parseExpression, p=" << p << " token=" << file[p].value << " type=" << file[p].type << endl;
             if(file[p].type!=RBRACE) error("expected )!, detected : " << file[p].value);
             for(uint64_t i = 0; i < imports.size(); i++) {
                 if(imports[i].contains(method.value)) {
@@ -323,7 +323,7 @@ void Parser::parseIf() {
     Token x=file[p++], y=file[p++], z=file[p++];
     if(debug) cout << "x: " << x.value << " y: " << y.value << " z: "  << z.value << '!' << endl;
     Vm u, o;
-    cout << "ok" << endl;
+    if(debug) cout << "ok" << endl;
     if(x.type==ID) u={LOAD, seltypeu(scopes.getVar(x.value).id), scopes.getVar(x.value).id};
     else u={PUSH, seltype(atoll(x.value.c_str())), atoll(x.value.c_str())};
     if(z.type==ID) o={LOAD, seltypeu(scopes.getVar(x.value).id), scopes.getVar(x.value).id};
@@ -333,7 +333,7 @@ void Parser::parseIf() {
             render(u);
             render(o);
             uint64_t cs=code.size();
-            cout << "size: " << code.size() << endl;
+            if(debug) cout << "size: " << code.size() << endl;
             render({IFNE, ADDR, 0});
             if(debug) cout << " CS: " << cs << '!' << endl;
             parseBlock();
@@ -417,14 +417,13 @@ void Parser::parseFactor() {
     else if(au.type==LBRACE) {
         p++;
         parseExpression();
-        cout << "DEBUG parseFactor: after parseExpression, token=" << file[p].value << " type=" << file[p].type << endl;
+        if(debug) cout << "DEBUG parseFactor: after parseExpression, token=" << file[p].value << " type=" << file[p].type << endl;
         if(file[p].type!=RBRACE) error("Expected ')', detected "<<file[p].value);
-        if(p + 1 < file.size() && (file[p + 1].type == STAR || file[p + 1].type == SLASH)) {
-        p++; // двигаем только если следующий токен - оператор
-    }
+            if(p + 1 < file.size() && (file[p + 1].type == STAR || file[p + 1].type == SLASH)) {
+            p++; // двигаем только если следующий токен - оператор
+        }
     }
     else {
-
         error("Unexpected token");
     }
 }

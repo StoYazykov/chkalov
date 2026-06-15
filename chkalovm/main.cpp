@@ -9,14 +9,21 @@
 
 using namespace std;
 
-const char* env = getenv("CHKALOV");
+const char* env=getenv("CHKALOV");
 
 int main(int argc, char **argv) {
     bool debug;
     string abcdef;
-    if(argc<2) error("Usage: chkvm program.cvm (-d)");
-    cout << "Chkalov Virtual Machine version 1.00." << endl;
-    if (!env) error("Not setted environment variable $CHKALOV!");
+    cout << "\nChkalov Virtual Machine version 1.00." << endl;
+    if(argc<2) {
+        cout << "Usage: " << argv[0] << " program.cvm (-d for debug mode)\n";
+        return 0;
+    }
+    if (!getenv("CHKALOV")) {
+        cout << "Not setted environment variable CHKALOV!\n";
+        return 0;
+    }
+    cout << "Executing " << argv[1] << "...\n";
     if(argc==3) abcdef=argv[2];
     if(abcdef=="-d") debug=true;
     else debug=false;

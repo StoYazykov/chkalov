@@ -20,7 +20,7 @@ ITT_SRC = $(ITT_DIR)/main.cpp
 CHKC = $(CHKALOV_DIR)/chkc
 CHKVM = $(CHKALOV_DIR)/chkvm
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
-ITT = $(CHKALOV_DIR)/chkitt
+ITT = $(CHKALOV_DIR)/chkalovitt
 
 PARSER_OBJ = $(PARSER_SRC:.cpp=.o)
 MAIN_OBJ = $(MAIN_SRC:.cpp=.o)
@@ -30,12 +30,21 @@ ITT_OBJ = $(ITT_SRC:.cpp=.o)
 DEMO_SRC = $(CHKALOV_DIR)/demo.txt
 DEMO_CVM = $(CHKALOV_DIR)/demo.cvm
 
+# ============ ОБЫЧНАЯ СБОРКА (релиз) ============
 all: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
 	@echo "=============================="
 	@echo "         Компиляция...        "
 	@echo "=============================="
 	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
 
+# ============ ОТЛАДОЧНЫЙ ЗАПУСК ============
+debug: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
+	@echo "=============================="
+	@echo "      Debug-компиляция...     "
+	@echo "=============================="
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && $(CHKVM) $(DEMO_CVM) -d
+
+# ============ СБОРКА КОМПОНЕНТОВ ============
 $(CHKC): $(MAIN_OBJ) $(PARSER_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
@@ -51,15 +60,17 @@ $(ITT): $(ITT_SRC)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+# ============ ОЧИСТКА ============
 clean:
 	rm -f $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
 	rm -f $(PARSER_OBJ) $(MAIN_OBJ) $(VM_OBJ) $(ITT_OBJ)
 	rm -f $(DEMO_CVM)
 
+# ============ ПРОЧЕЕ ============
 build: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
 
 run: build
-	$(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
 
 rebuild: clean all
 
@@ -70,4 +81,4 @@ info:
 	@echo "Библиотека: $(LIBSTDCON)"
 	@echo "Инструменты: $(ITT)"
 
-.PHONY: all clean build run rebuild info
+.PHONY: all clean build run rebuild info debug

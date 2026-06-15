@@ -7,10 +7,16 @@
 
 #ifdef __cplusplus
 #include <cstdint>
+#include <sstream>
+#include <stdexcept>
 #endif
 #include <dlfcn.h>
 
-#define error(errm) do{cerr<<"Error! "<<errm<<endl;exit(0x08);}while(0);
+#define error(errm) do{ \
+    ostringstream oss; \
+    oss << errm; \
+    throw ChkalovError(oss.str()); \
+}while(0);
 
 #ifdef __cplusplus
 #include <string>
@@ -152,6 +158,13 @@ uint8_t seltypeu(uint64_t a){
 }
 
 #ifdef __cplusplus
+class ChkalovError : public runtime_error {
+public:
+    ChkalovError(const string& msg) : runtime_error(msg) {}
+};
+#endif
+
+#ifdef __cplusplus
 inline
 #endif
 uint8_t seltype(int64_t a){
@@ -160,5 +173,4 @@ uint8_t seltype(int64_t a){
     if(a>=-((1LL<<32)/2)&&a<((1LL<<32)/2)) return INT;
     return LONG;
 }
-
 #endif
