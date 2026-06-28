@@ -20,7 +20,7 @@ ITT_SRC = $(ITT_DIR)/main.cpp
 CHKC = $(CHKALOV_DIR)/chkc
 CHKVM = $(CHKALOV_DIR)/chkvm
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
-ITT = $(CHKALOV_DIR)/chkalovitt
+ITT = $(CHKALOV_DIR)/chkitt
 
 PARSER_OBJ = $(PARSER_SRC:.cpp=.o)
 MAIN_OBJ = $(MAIN_SRC:.cpp=.o)

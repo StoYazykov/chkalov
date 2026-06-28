@@ -5,6 +5,7 @@
 
 Slot println(size_t argc, Slot *argp) {
     //puts("IN PRINTLN!");
-    if(argp->type==STR) printf("%s\n", argp->value);
+    //printf("argp->type: %x\r\n", argp->type);
+    if(ISSTR(argp->type)) printf("%s\n", argp->value);
     else printf("%d\n", argp->value);
 }

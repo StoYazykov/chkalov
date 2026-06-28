@@ -76,10 +76,10 @@ int main(int argc, char **argv) {
                 break;
             }
             case CALL: {
-            if(debug) cout << "Stack size: " << stack.size() << endl;
-            for(int i = 0; i < stack.size(); i++) {
-                if(debug) cout << "  [" << i << "] type=" << (int)stack[i].type << " value=" << stack[i].value << endl;
-            }
+                if(debug) cout << "Stack size: " << stack.size() << endl;
+                for(int i = 0; i < stack.size(); i++) {
+                    if(debug) cout << "  [" << i << "] type=" << (int)stack[i].type << " value=" << stack[i].value << endl;
+                }
                 string m, l, r=pool[v].value; // stdcon.println
                 if(debug) cout << r << endl;
                 m=r.substr(0, r.find("."));
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
                 }
                 Slot a=pop(stack);
                 if(debug) cout << "calling... a.value=" << a.value << " \n";
-                if(a.type==STR) a.value = (int64_t)pool[a.value].value.c_str();
+                if(a.type>=STR1&&a.type<=STR8) a.value=(int64_t)pool[a.value].value.c_str();
                 if(debug) cout << "calling... a.value (converted!)=" << a.value << " \n";
                 func(1, &a);
                 dlclose(h);
@@ -113,9 +113,17 @@ int main(int argc, char **argv) {
                 break;
             }
             case STORE: {
-                vars.push_back(pop(stack));
-                cout << "Store; istored to " << hex << vars.size()-1 << " , type=" << (int)vars.back().type
-                << ", value " << (int)vars.back().value << dec << endl;
+                if(stack.empty()) {
+                    error("STORE: stack empty!");
+                    break;
+                }
+                Slot val=pop(stack);
+                if(v>=vars.size()) {
+                    vars.resize(v+1);
+                }
+                vars[v]=val;
+                cout << hex << "Store; stored to " << v << " , type=" << (int)val.type
+                    << ", value " << (int)val.value << dec << endl;
                 break;
             }
             case ADD: {
@@ -140,6 +148,16 @@ int main(int argc, char **argv) {
                 g=pop(stack);
                 h=pop(stack);
                 stack.push_back({g.type, h.value/g.value});
+                break;
+            }
+            case LOAD: {
+                if(v>=vars.size()) {
+                    cerr << "LOAD: variable index " << v << " out of bounds!" << endl;
+                    break;
+                }
+                stack.push_back(vars[v]);
+                if(debug) cout << "LOAD: var[" << v << "] type=" << (int)vars[v].type
+                            << " value=" << vars[v].value << endl;
                 break;
             }
         }

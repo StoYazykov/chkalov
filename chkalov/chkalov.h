@@ -1,20 +1,21 @@
 #ifndef CHKALOV_H
 #define CHKALOV_H
 
-#ifndef unix
-#define unix
-#endif
+#define ISSTR(a) ((a>=STR1)&&(a<=STR8))
 
 #ifdef __cplusplus
 #include <cstdint>
 #include <sstream>
 #include <stdexcept>
 #endif
+#ifdef _WIN32
+#else
 #include <dlfcn.h>
+#endif
 
 #define error(errm) do{ \
     ostringstream oss; \
-    oss << errm; \
+    oss << errm << endl; \
     throw ChkalovError(oss.str()); \
 }while(0);
 
@@ -60,19 +61,26 @@ using namespace std;
 // ----------------------------------------------//
 
 #define CHAR 0x00   // 1 bytes
-#define SHORT 0x01  // 2 bytes
-#define INT 0x02    // 4 bytes
-#define LONG 0x03   // 8 bytes
-#define ADDR 0x04
-#define ARRAY 0x05  // ? bytes
-#define LIBRARY 0x06
-#define STR 0x07
-#define NOL 0x08
+#define XSHORT 0x01
+#define SHORT 0x02  // 2 bytes
+#define INT 0x03    // 4 bytes
+#define LONG 0x04   // 8 bytes
+#define ADDR 0x05
+#define ARRAY 0x06  // ? bytes
+#define LIBRARY 0x07 // POOL
+#define STR 0x08 // POOL
+#define NOL 0x09
 
-#define CHARU 0x08
-#define SHORTU 0x09
-#define INTU 0x0A
-#define LONGU 0x0B
+#define CHARU 0x09
+#define XSHORTU 0x0A
+#define SHORTU 0x0B
+#define INTU 0x0C
+#define LONGU 0x0D
+
+#define STR1 0x0E
+#define STR2 0x0F
+#define STR4 0x10
+#define STR8 0x11
 
 #define getGID (nullscope.getGlobalId())
 #define _T(type) (type)
@@ -93,8 +101,8 @@ T pop(vector<T>& v) {
 }
 #endif // __cplusplus
 
-//              CHAR SHORT INT LONG ADDR ARRAY LIBRARY STR CHARU SHORTU INTU LONGU NOL NULL
-const int st[]={1,   2,    4,  8,   8,   0xFF, 4,      4,  1,    2,     4,   8,    0,  0};  // sizes table
+//              CHAR XSHORT, SHORT INT LONG ADDR ARRAY LIBRARY STR CHARU XSHORTU SHORTU INTU LONGU STR1 STR2 STR4 STR8
+const int st[]={1,   1,      2,    4,  8,   8,   0xFF, 4,      4,  1,    1,      2,     4,   8,    1,   2,   4,   8};  // sizes table
 
 // ----------------------------------------------//
 //            VM instruction structure           //
@@ -151,7 +159,7 @@ struct Pool {
 inline
 #endif
 uint8_t seltypeu(uint64_t a){
-    if(a<256) return CHARU;
+    if(a<256) return XSHORTU;
     if(a<65536) return SHORTU;
     if(a<(1ULL<<32)) return INTU;
     return LONGU;
@@ -168,9 +176,20 @@ public:
 inline
 #endif
 uint8_t seltype(int64_t a){
-    if(a>=-128&&a<128) return CHAR;
+    if(a>=-128&&a<128) return XSHORT;
     if(a>=-32768&&a<32768) return SHORT;
     if(a>=-((1LL<<32)/2)&&a<((1LL<<32)/2)) return INT;
     return LONG;
+}
+
+
+#ifdef __cplusplus
+inline
+#endif
+uint8_t selstrt(uint64_t a){
+    if(a<256) return STR1;
+    if(a<65536) return STR2;
+    if(a<(1ULL<<32)) return STR4;
+    return STR8;
 }
 #endif

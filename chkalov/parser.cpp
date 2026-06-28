@@ -56,6 +56,11 @@ Parser::Parser(const string &_fni, const string &_fn, bool _debug) : fn(_fn), p(
         parse(x);
         if(debug) cout << "AA! " << x << '!' << endl;
     }
+    if(debug) {
+        for(size_t i = 0; i < file.size(); i++) {
+            cout << "Token[" << i << "]: type=" << file[i].type << " value='" << file[i].value << "'" << endl;
+        }
+    }
     a.close();
 }
 
@@ -229,6 +234,9 @@ void Parser::parse(const string &line) {
             case ')':
                 file.push_back(Token(RBRACE, ")"));
                 break;
+            case ',':
+                file.push_back(Token(COMMA, ","));
+                break;
         }
     }
 }
@@ -260,7 +268,7 @@ void Parser::parseInstruction() {
             for(uint64_t i = 0; i < imports.size(); i++) {
                 if(imports[i].contains(method.value)) {
                     pool.push_back({LIBRARY, imports[i].name + "." + method.value});
-                    render({CALL, LIBRARY, pool.size() - 1});
+                    render({CALL, selstrt(pool.size()-1), pool.size()-1});
                     break;
                 }
             }
@@ -277,6 +285,34 @@ void Parser::parseInstruction() {
             if(file[++p].type!=LPAREN) error("Expected {!");
             break;
         }
+        case VAR: {
+            Token vt=file[++p];
+            Token name;
+            VarType type = stringToType(vt.value);
+            if(file[++p].type!=COLON) error("Expected ':' !");
+            do {
+                if(debug) cout << "VAR loop: p=" << p << " token=" << file[p].value << " type=" << file[p].type << endl;
+                name=file[++p];
+                if(name.type!=ID) error("Expected variable name!");
+                scopes.addVar(name.value, type);
+                render({PUSH, LONG, 0});
+                render({STORE, LONG, 0});
+                cout << "Var: " << name.value << " type: " << vt.value << endl;
+                p++;
+            } while(p<file.size()&&file[p].type==COMMA);
+            p--;
+            break;
+        }
+        case ID: {
+            Token ja=file[++p];
+            if(ja.type!=ASSIGN) error("expected '=', detected: " << file[p].value << endl);
+            ja=file[++p];
+            variable vaa=scopes.getVar(t.value);
+            uint64_t vfa=atoll(ja.value.c_str());
+            render({PUSH, seltype(vfa), vfa});
+            render({STORE, seltypeu(vaa.id), vaa.id});
+            break;
+        }
         case IF: {
             parseIf();
             break;
@@ -287,7 +323,7 @@ void Parser::parseInstruction() {
         case NOT: {
             break;
         }
-        default: p++;
+        //default: p++;
     }
 }
 
@@ -412,15 +448,28 @@ void Parser::parseFactor() {
     else if(au.type==STRING) {
         p++;
         pool.push_back({STR, au.value});
-        render({PUSH, STR, pool.size() - 1});
+        render({PUSH, selstrt(pool.size()-1), pool.size()-1});
     }
     else if(au.type==LBRACE) {
         p++;
         parseExpression();
         if(debug) cout << "DEBUG parseFactor: after parseExpression, token=" << file[p].value << " type=" << file[p].type << endl;
         if(file[p].type!=RBRACE) error("Expected ')', detected "<<file[p].value);
-            if(p + 1 < file.size() && (file[p + 1].type == STAR || file[p + 1].type == SLASH)) {
-            p++; // двигаем только если следующий токен - оператор
+            if(p+1<file.size()&&(file[p+1].type==STAR||file[p+1].type==SLASH)) {
+            p++;
+        }
+    }
+    else if(au.type==ID) {
+        p++;
+        string name=au.value;
+
+        if(p<file.size()&&file[p].type==LBRACE) {
+            if(debug) cout << "  -> function call\n";
+        } else {
+            variable var=scopes.getVar(name);
+            if(debug) cout << "  -> variable, id=" << var.id << " name='" << var.name << "'\n";
+            if(var.name=="") error("Undefined variable: " + name);
+            render({LOAD, seltypeu(var.id), var.id});
         }
     }
     else {
