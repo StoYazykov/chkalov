@@ -297,7 +297,7 @@ void Parser::parseInstruction() {
                 scopes.addVar(name.value, type);
                 render({PUSH, LONG, 0});
                 render({STORE, LONG, 0});
-                cout << "Var: " << name.value << " type: " << vt.value << endl;
+                if(debug) cout << "Var: " << name.value << " type: " << vt.value << endl;
                 p++;
             } while(p<file.size()&&file[p].type==COMMA);
             p--;
@@ -306,10 +306,11 @@ void Parser::parseInstruction() {
         case ID: {
             Token ja=file[++p];
             if(ja.type!=ASSIGN) error("expected '=', detected: " << file[p].value << endl);
-            ja=file[++p];
+            p++;
+            if(debug) cout << "case ID: p=" << p << " token=" << file[p].value << " type=" << file[p].type << endl;
+            parseExpression();
+            p--;
             variable vaa=scopes.getVar(t.value);
-            uint64_t vfa=atoll(ja.value.c_str());
-            render({PUSH, seltype(vfa), vfa});
             render({STORE, seltypeu(vaa.id), vaa.id});
             break;
         }

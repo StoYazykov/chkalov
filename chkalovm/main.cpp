@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
                     vars.resize(v+1);
                 }
                 vars[v]=val;
-                cout << hex << "Store; stored to " << v << " , type=" << (int)val.type
+                if(debug) cout << hex << "Store; stored to " << v << " , type=" << (int)val.type
                     << ", value " << (int)val.value << dec << endl;
                 break;
             }
