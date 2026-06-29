@@ -5,17 +5,11 @@
 #include <vector>
 using namespace std;
 
-enum VarType {
-	VNOT=0,
-	VINT,
-	VSTRING
-};
-
 struct variable {
     string name;
     size_t id;
-    VarType type;
-    variable(string _name = "", size_t _id = 0, VarType _type=VNOT);
+    char type;
+    variable(string _name="", size_t _id=0, char type=0x09);
     string getTypeName();
 };
 
@@ -23,7 +17,7 @@ class Scope {
     vector<variable> vars;
     static size_t globalId;
 public:
-    void addVar(string varName, VarType varType=VNOT);
+    void addVar(string varName, char varType);
     variable getVar(string varName);
     const size_t getGlobalId();
 };
@@ -34,7 +28,7 @@ class ScopeStack {
 public:
     void enterScope();
     void exitScope();
-    void addVar(string varName, VarType varType=VNOT);
+    void addVar(string varName, char varType);
     variable getVar(string varName);
     size_t size();
 };

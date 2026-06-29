@@ -21,6 +21,7 @@ public:
 class Parser {
     string fn;
     bool debug;
+    char lit;
     vector<unsigned char> code;
     vector<Pool> pool;
     vector<Import> imports;
@@ -34,7 +35,7 @@ class Parser {
     void parseFactor();
     void parseIf();
     void parseInstruction();
-    VarType stringToType(string str);
+    char stt(const string& s);
     void render(Vm vm);
     size_t addPool(Pool _pool);
 

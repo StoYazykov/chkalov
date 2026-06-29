@@ -73,6 +73,7 @@ void Parser::render(Vm vm) {
     int64_t v=vm.value;
     unsigned char *p=(unsigned char*)&v;
     for(int i=0;i<sz;i++) code.push_back(p[i]);
+    lit=vm.type;
 }
 
 size_t Parser::addPool(Pool _pool) {
@@ -288,15 +289,15 @@ void Parser::parseInstruction() {
         case VAR: {
             Token vt=file[++p];
             Token name;
-            VarType type = stringToType(vt.value);
+            char type=stt(vt.value);
             if(file[++p].type!=COLON) error("Expected ':' !");
             do {
                 if(debug) cout << "VAR loop: p=" << p << " token=" << file[p].value << " type=" << file[p].type << endl;
                 name=file[++p];
                 if(name.type!=ID) error("Expected variable name!");
                 scopes.addVar(name.value, type);
-                render({PUSH, LONG, 0});
-                render({STORE, LONG, 0});
+                render({PUSH, type, 0});
+                render({STORE, XSHORT, 0});
                 if(debug) cout << "Var: " << name.value << " type: " << vt.value << endl;
                 p++;
             } while(p<file.size()&&file[p].type==COMMA);
@@ -311,6 +312,7 @@ void Parser::parseInstruction() {
             parseExpression();
             p--;
             variable vaa=scopes.getVar(t.value);
+            if(!(ISNUM(vaa.type)&&ISNUM(lit))) error("Error: types mismatch! vaa.type: " << hex << (int)vaa.type << " , lit: " << (int)lit << '!');
             render({STORE, seltypeu(vaa.id), vaa.id});
             break;
         }
@@ -334,10 +336,12 @@ void Parser::parseFile() {
     }
 };
 
-VarType Parser::stringToType(string value) {
-    if(value.substr(0, 3)=="Int") return VINT;
-    if(value.substr(0, 5)=="String") return VSTRING;
-    return VNOT;
+char Parser::stt(const string& s) {
+    if(s=="Int") return INT;
+    if(s=="Char") return CHAR;
+    if(s=="String") return STR;
+    if(s=="Long") return LONG;
+    return NOL;
 }
 
 bool Import::contains(string a) {

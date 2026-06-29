@@ -71,6 +71,8 @@ using namespace std;
 #define STR 0x08 // POOL
 #define NOL 0x09
 
+#define ISNUM(a) ((a>=XSHORT)&&(a<=LONG))
+
 #define CHARU 0x09
 #define XSHORTU 0x0A
 #define SHORTU 0x0B
