@@ -1,0 +1,3 @@
+var String: a
+a = "A"
+@println(a)
