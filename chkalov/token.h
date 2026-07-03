@@ -3,7 +3,7 @@
 
 #include "../ds.h"
 
-enum TokenType {
+typedef enum {
     NOT,
 	ENOF, NUMBER, STRING, LCALL, ID, CONVERT,
     VAR, FUN, IF, ELSE, WHILE, RETURN, IMPORT,
@@ -12,13 +12,14 @@ enum TokenType {
     LPAREN, RPAREN, LBRACE, RBRACE,
     COMMA, DOT, COLON, NEWLINE,
     TYPE
-};
+} TokenType;
 
 typedef struct {
-public:
     TokenType type;
     ds value;
-    Token(TokenType __type = NOT, string __value = "");
 } Token;
+
+void tok_init(Token *a, TokenType b, ds *c);
+void tok_free(Token *a);
 
 #endif
