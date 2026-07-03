@@ -1,48 +1,45 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <fstream>
-#include <string>
 #include "scope.h"
 #include "token.h"
-#include "chkalov.h"
-using namespace std;
+#include "../chkalov.h"
 
+typedef struct {
+    cv funcs;
+    ds name;
+} Import;
 
-class Import {
-public:
-    vector<string> funcs;
-    string name;
-    bool contains(string a);
-    void add(string a);
-    Import(string _v) {name=_v;}
-};
+void imp_init(Import *a, ds n);
+bool imp_cont(Import *a, ds b);
+void imp_add(Import *a, ds z);
+void imp_free(Import *a);
 
 typedef struct {
     ds fn;
     bool debug;
     char lit;
-    vector<unsigned char> code;
-    vector<Pool> pool;
-    vector<Import> imports;
-    vector<Token> file;
+    cv code;
+    cv pool;
+    cv imports;
+    cv file;
     ScopeStack scopes;
     size_t p;
-    void parse(const string &line);
-    void parseBlock();
-    void parseExpression();
-    void parseTerm();
-    void parseFactor();
-    void parseIf();
-    void parseInstruction();
-    char stt(const string& s);
-    void render(Vm vm);
-    size_t addPool(Pool _pool);
+} Parser;
 
-public:
-    Parser(const string &_fni, const string &_fno, bool _debug=false);
-    void finally();
-    void parseFile();
-};
+void par_init(Parser *a, const ds fni, const ds fno, bool deb);
+void par_par(Parser *a, const ds l);
+void par_parBlock(Parser *a);
+void par_parExpr(Parser *a);
+void par_parTerm(Parser *a);
+void par_parFact(Parser *a);
+void par_parIf(Parser *a);
+Token par_next(Parser *a);
+Token par_nexti(Parser *a);
+void par_parIns(Parser *a);
+char par_stt(const ds s);
+void par_render(Parser *a, Vm vm);
+void par_parFile(Parser *a);
+void par_free(Parser *a);
 
 #endif

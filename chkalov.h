@@ -1,8 +1,13 @@
 #ifndef CHKALOV_H
 #define CHKALOV_H
 
+#define _POSIX_C_SOURCE 200809L
+
 #define ISSTR(a) (((a>=STR1)&&(a<=STR8))||a==STR)
 #define ISNUM(a) ((a>=XSHORT)&&(a<=LONG))
+#define CSUB(a,b,c)(!strncmp(a, b, c))
+#define IFCS(a,b,c)if(CSUB(a,b,c))
+#define SEQU(a,b) (!strcmp(a,b))
 
 #ifdef _WIN32
 #else
@@ -17,11 +22,11 @@ exit(0x08);\
 }while(0)
 
 #include <stdarg.h>
-#include "ds.h"
-#include "cv.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "ds.h"
+#include "cv.h"
 // ----------------------------------------------//
 //              VM opcodes definitions           //
 // ----------------------------------------------//
@@ -85,8 +90,6 @@ exit(0x08);\
 
 #pragma pack(push, 1)
 
-//              CHAR XSHORT, SHORT INT LONG ADDR ARRAY LIBRARY STR CHARU XSHORTU SHORTU INTU LONGU STR1 STR2 STR4 STR8
-const int st[]={1,   1,      2,    4,  8,   8,   0xFF, 4,      4,  1,    1,      2,     4,   8,    1,   2,   4,   8};  // sizes table
 
 // ----------------------------------------------//
 //            VM instruction structure           //
@@ -122,14 +125,14 @@ typedef struct {
 0-2^64 LONGU*/
 
 
-inline uint8_t seltypeu(uint64_t a){
+static inline uint8_t seltypeu(uint64_t a){
     if(a<256) return XSHORTU;
     if(a<65536) return SHORTU;
     if(a<(1ULL<<32)) return INTU;
     return LONGU;
 }
 
-inline uint8_t seltype(int64_t a){
+static inline uint8_t seltype(int64_t a){
     if(a>=-128&&a<128) return XSHORT;
     if(a>=-32768&&a<32768) return SHORT;
     if(a>=-((1LL<<32)/2)&&a<((1LL<<32)/2)) return INT;
@@ -137,11 +140,13 @@ inline uint8_t seltype(int64_t a){
 }
 
 
-inline uint8_t selstrt(uint64_t a){
+static inline uint8_t selstrt(uint64_t a){
     if(a<256) return STR1;
     if(a<65536) return STR2;
     if(a<(1ULL<<32)) return STR4;
     return STR8;
 }
+
+extern const int st[];
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef _TOKEN_H
 #define _TOKEN_H
 
-#include "../ds.h"
+#include "../chkalov.h"
 
 typedef enum {
     NOT,
@@ -19,7 +19,7 @@ typedef struct {
     ds value;
 } Token;
 
-void tok_init(Token *a, TokenType b, ds *c);
+void tok_init(Token *a, TokenType b, ds c);
 void tok_free(Token *a);
 
 #endif

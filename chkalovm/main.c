@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     unsigned char o,ty;
     int64_t v;
     i=0;
-    Slot g, h;
+    Slot g, h, f;
     unsigned char *c=vm.d;
     while(i<t) {
         o=c[i++];
@@ -110,13 +110,13 @@ int main(int argc, char **argv) {
                 if(v>=vars.s) {
                     cv_resize(&vars, v+1);
                 }
-                *(Slot)(cv_eptr(&vars, v))=val;
+                *(Slot *)(cv_eptr(&vars, v))=val;
                 break;
             }
             case ADD: {
-                cv_pop(&stack, g);
-                cv_pop(&stack, g);
-                f=g+h;
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=g.value+h.value;
                 cv_push(&stack, &f);
                 break;
             }

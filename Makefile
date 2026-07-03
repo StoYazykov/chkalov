@@ -1,5 +1,4 @@
 CC = gcc
-
 CFLAGS = -std=c11 -w -O2
 LDFLAGS = -ldl
 
@@ -9,14 +8,20 @@ CHKALOV_SRC = $(CHKALOV_DIR)/chkalov
 VM_DIR = $(CHKALOV_DIR)/chkalovm
 ITT_DIR = $(CHKALOV_DIR)/chkalovitt
 
-# Исходники
+# Исходники компилятора
 COMPILER_SRC = $(CHKALOV_SRC)/main.c \
                $(CHKALOV_SRC)/parser.c \
                $(CHKALOV_SRC)/scope.c \
-               $(CHKALOV_SRC)/token.c
+               $(CHKALOV_SRC)/token.c \
+               $(CHKALOV_DIR)/ds.c \
+               $(CHKALOV_DIR)/cv.c \
+	       $(CHKALOV_DIR)/chkalov.c
 
 STDCON_SRC = $(STDCON_DIR)/main.c
-VM_SRC = $(VM_DIR)/main.c
+VM_SRC = $(VM_DIR)/main.c \
+	 $(CHKALOV_DIR)/ds.c \
+	 $(CHKALOV_DIR)/cv.c \
+	 $(CHKALOV_DIR)/chkalov.c
 ITT_SRC = $(ITT_DIR)/main.c
 
 # Выходные файлы
@@ -67,8 +72,8 @@ $(ITT): $(ITT_SRC)
 
 # ============ ОЧИСТКА ============
 clean:
-	rm -f $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
-	rm -f $(COMPILER_OBJ) $(VM_OBJ) $(ITT_OBJ)
+	rm -f $(CHKC) $(CHKVM) $(LIBSTDCON)
+	rm -f $(COMPILER_OBJ) $(VM_OBJ)
 	rm -f $(DEMO_CVM)
 
 # ============ ПРОЧЕЕ ============

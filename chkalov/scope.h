@@ -17,9 +17,9 @@ typedef struct {
 } Scope;
 
 void sco_init(Scope *a);
-void sco_addv(Scope *a, ds vn, char vt);
+void sco_addv(Scope *a, ds vn, unsigned char vt);
 void sco_gv(Scope *a, ds vn, variable *b);
-void sco_ggi(Scope *a);
+size_t sco_ggi();
 void sco_free(Scope *a);
 
 typedef struct {

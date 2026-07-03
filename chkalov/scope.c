@@ -25,7 +25,8 @@ void sco_addv(Scope *a, ds vn, unsigned char vt) {
 }
 void sco_gv(Scope *a, ds vn, variable *b) {
     variable *p;
-    for(size_t i=0; i<a->vars.s; i++) {
+    size_t i;
+    for(i=0; i<a->vars.s; i++) {
         p=(variable *)cv_eptr(&a->vars, i);
         if(!strcmp(p->name, vn)) {
             b->name=strdup(p->name);
@@ -38,7 +39,8 @@ size_t sco_ggi() {
     return globalId?globalId-1:0;
 }
 void sco_free(Scope *a) {
-    for(size_t i=0; i<a->vars.s; i++) {
+    size_t i;
+    for(i=0; i<a->vars.s; i++) {
         variable *v=(variable*)cv_eptr(&a->vars, i);
         free(v->name);
     }
@@ -53,8 +55,9 @@ void scos_addv(ScopeStack *a, ds vn, unsigned char vt) {
 }
 void scos_gv(ScopeStack *a, ds vn, variable *b) {
     Scope *ap;
+    size_t i;
     b->name=NULL;
-    for(size_t i=a->scopes.s; i>0; --i) {
+    for(i=a->scopes.s; i>0; --i) {
         ap=(Scope *)cv_eptr(&a->scopes, i);
         sco_gv(ap, vn, b);
         if(b->name) return;
@@ -70,9 +73,11 @@ void scos_ex(ScopeStack *a) {
     cv_popr(&a->scopes);
 }
 size_t scos_size(ScopeStack *a) { return a->scopes.s; }
-void scos_free(Scope *a) {
-    for(size_t i=0; i<a->vars.s; i++) {
-        Scope *v=(Scope *)cv_eptr(&a->scopes, i);
+void scos_free(ScopeStack *a) {
+    size_t i;
+    Scope *v;
+    for(i=0; i<a->scopes.s; i++) {
+        v=(Scope *)cv_eptr(&a->scopes, i);
         sco_free(v);
     }
     cv_free(&a->scopes);

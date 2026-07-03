@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "../chkalov/chkalov.h"
+#include "../chkalov.h"
 
 Slot println(size_t argc, Slot *argp) {
     //puts("IN PRINTLN!");
