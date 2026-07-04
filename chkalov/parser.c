@@ -53,12 +53,14 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     while(!feof(a)) {
         fgets(sa, sizeof(sa), a);
         if(sa[0]=='%') {
+            sa[strcspn(sa, "\n")]=0;
             strcpy(section, sa+1);
             Import imp;
             imp.name=strdup(sa+1);
             cv_init(&imp.funcs, 4, sizeof(ds));
             cv_push(&n->imports, &imp);
         } else if(sa[0]=='+') {
+            sa[strcspn(sa, "\n")]=0;
             for(uint64_t i=0ULL; i<n->imports.s; i++) {
                 Import *aa=(Import *)cv_eptr(&n->imports, i);
                 if(SEQU(section, aa->name)) {
@@ -78,7 +80,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
 }
 
 void par_render(Parser *a, Vm vm) {
-        printf("par_render: opcode=%d type=%d value=%lld\n", vm.opcode, vm.type, (long long)vm.value);
+    printf("par_render: opcode=%d type=%d value=%lld\n", vm.opcode, vm.type, (long long)vm.value);
     unsigned char op=vm.opcode, ty=vm.type;
     cv_push(&a->code, &op);
     cv_push(&a->code, &ty);
@@ -98,17 +100,20 @@ void par_free(Parser *z) {
     fwrite(&magic, 1, sizeof(uint32_t), fp); ///// 0 2 1 5     9 0 0 0 0 10 0 0 0 0
     size=z->pool.s;
     Pool *p;
-    fwrite(_TPL size, 1, sz(size), fp);
+    fwrite(&size, 1, sz(size), fp);
+    puts("writing pool...");
     for(i=0; i<size; i++) {
         p=(Pool*)cv_eptr(&z->pool, i);
-        fwrite(p->type, 1, sz(char), fp);
+        printf("Iteration %i, pool value = '%s'\r\n", i, p->value);
+        fwrite(&p->type, 1, sz(char), fp);
+        puts("writed.");
         a=strlen(p->value);
-        fwrite(_TPL a, 1, sz(a), fp);
+        fwrite(&a, 1, sz(a), fp);
         fwrite(p->value, 1, a, fp);
     }
     size=z->code.s;
-    fwrite(_TPL size, 1, sz(size), fp);
-    fwrite(_CP z->code.d, 1, size, fp);
+    fwrite(&size, 1, sz(size), fp);
+    fwrite(z->code.d, 1, size, fp);
     fclose(fp);
 }
 
@@ -162,11 +167,11 @@ void par_par(Parser *a, const ds l) {
             continue;
         }
         if(l[pos]=='\"') { // строка
-            size_t start=pos;
+            size_t start=pos++;
             while(pos<strlen(l)&&l[pos]!='\"') pos++;
             t.type=STRING;
             t.value=NULL;
-            ds_sub(&t.value, l, start, pos-start);
+            ds_sub(&t.value, l, start, ++pos-start);
             cv_push(&a->file, &t);
             continue;
         }
@@ -269,8 +274,9 @@ void par_parIns(Parser *a) {
                 Import ppp=*((Import *)cv_eptr(&a->imports, i));
                 if(imp_cont(&ppp, method.value)) {
                     ds aaa=strdup(ppp.name);
-                    ds_cat(aaa, ".", method.value, NULL);
-                    cv_push(&a->pool, aaa);
+                    ds_cat(&aaa, ".", method.value, NULL);
+                    Pool ibm=(Pool){LIBRARY, aaa};
+                    cv_push(&a->pool, &ibm);
                     par_render(a, (Vm){CALL, selstrt(a->pool.s-1), a->pool.s-1});
                     break;
                 }
@@ -448,8 +454,9 @@ void par_parFact(Parser *a) {
     }
     else if(au.type==STRING) {
         a->p++;
-        //pool.push_back({STR, au.value});
-        //par_render(a, (Vm){PUSH, selstrt(pool.size()-1), pool.size()-1});
+        Pool at=(Pool){STR, strdup(au.value)};
+        cv_push(&a->pool, &at);
+        par_render(a, (Vm){PUSH, selstrt(a->pool.s-1), a->pool.s});
     }
     else if(au.type==LBRACE) {
         a->p++;
