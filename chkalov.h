@@ -10,8 +10,19 @@
 #define SEQU(a,b) (!strcmp(a,b))
 
 #ifdef _WIN32
+    #include <windows.h>
+    #define RTLD_LAZY 0
+    void* dlopen(const char* p, int m) {
+        return LoadLibrary(p);
+    }
+    void* dlsym(void* h, const char* n) {
+        return GetProcAddress(h, n);
+    }
+    void dlclose(void* h) {
+        FreeLibrary(h);
+    }
 #else
-#include <dlfcn.h>
+    #include <dlfcn.h>
 #endif
 
 #define error(...)do{\

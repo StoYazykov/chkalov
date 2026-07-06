@@ -2,6 +2,15 @@ CC = gcc
 CFLAGS = -std=c11 -w -O2
 LDFLAGS = -ldl
 
+# Выбор платформы: make TARGET=win
+ifeq ($(TARGET),win)
+    EXT = .exe
+LIBSTDCON = $(STDCON_DIR)/stdcon.dll
+else
+    EXT =
+    LIBSTDCON = $(STDCON_DIR)/libstdcon.so
+endif
+
 CHKALOV_DIR = /root/c
 STDCON_DIR = $(CHKALOV_DIR)/stdcon
 CHKALOV_SRC = $(CHKALOV_DIR)/chkalov
@@ -25,8 +34,8 @@ VM_SRC = $(VM_DIR)/main.c \
 #ITT_SRC = $(ITT_DIR)/main.c
 
 # Выходные файлы
-CHKC = $(CHKALOV_DIR)/chkc
-CHKVM = $(CHKALOV_DIR)/chkvm
+CHKC = $(CHKALOV_DIR)/chkc$(EXT)
+CHKVM = $(CHKALOV_DIR)/chkvm$(EXT)
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
 #ITT = $(CHKALOV_DIR)/chkalovitt
 
@@ -53,6 +62,9 @@ debug: clean all
 	@echo "      Debug-компиляция...     "
 	@echo "=============================="
 	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && $(CHKVM) $(DEMO_CVM) -d
+
+win:
+	make TARGET=win rebuild
 
 # ============ СБОРКА КОМПОНЕНТОВ ============
 $(CHKC): $(COMPILER_OBJ)

@@ -76,7 +76,17 @@ int main(int argc, char **argv) {
                 m[ml]=0;
                 l=strdup(d+1);
                 ds s=strdup(getenv("CHKALOV"));
-                ds_cat(&s, "/", m, "/lib", m, ".so", NULL);
+                ds_cat(&s, "/", m, NULL);
+#ifdef _WIN32
+                ds_cat(&s, m, NULL);
+#else
+                ds_cat(&s, "/lib", m, NULL);
+#endif
+#ifdef _WIN32
+                ds_cat(&s, ".dll", NULL);
+#else
+                ds_cat(&s, ".so", NULL);
+#endif
                 void *h=dlopen(s, RTLD_LAZY);
                 typedef Slot (*CFUNC)(size_t argc, Slot *argp);
                 CFUNC func = (CFUNC)dlsym(h, "println");
