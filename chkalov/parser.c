@@ -110,11 +110,20 @@ void par_free(Parser *z) {
         a=strlen(p->value);
         fwrite(&a, 1, sz(a), fp);
         fwrite(p->value, 1, a, fp);
+        free(p->value);
     }
     size=z->code.s;
     fwrite(&size, 1, sz(size), fp);
     fwrite(z->code.d, 1, size, fp);
     fclose(fp);
+    cv_free(&z->pool);
+    cv_free(&z->code);
+    Token *fip;
+    for(i=0; i<z->file.s; i++) {
+        fip=cv_eptr(&z->file, i);
+        free(fip->value);
+    }
+    cv_free(&z->file);
 }
 
 void par_par(Parser *a, const ds l) {
