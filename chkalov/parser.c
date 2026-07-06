@@ -70,7 +70,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
         };
     }
     fclose(a);
-    fopen(fni, "rb");
+    a=fopen(fni, "rb");
     ds x;
     while(!feof(a)) {
         ds_gl(&x, a);
@@ -84,7 +84,7 @@ void par_render(Parser *a, Vm vm) {
     unsigned char op=vm.opcode, ty=vm.type;
     cv_push(&a->code, &op);
     cv_push(&a->code, &ty);
-    size_t sz=st[ty];
+    size_t sz=ty&0x0f;
     int64_t v=vm.value;
     unsigned char *p=(unsigned char*)&v;
     for(size_t i=0ULL;i<sz;i++) cv_push(&a->code, &p[i]);
@@ -192,57 +192,62 @@ void par_par(Parser *a, const ds l) {
                 t.value=NULL;
                 break;
             case '+':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){PLUS, strdup("+")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '-':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){MINUS, strdup("-")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '*':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){STAR, strdup("*")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '/':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){SLASH, strdup("/")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '{':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){LPAREN, strdup("{")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '}':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){RPAREN, strdup("}")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case ':':
-                t=(Token){COLON, strdup("=")};
+                t=(Token){COLON, strdup(":")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '@':
-                t=(Token){LCALL, strdup("=")};
+                t=(Token){LCALL, strdup("@")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case '(':
-                t=(Token){LBRACE, strdup("=")};
+                t=(Token){LBRACE, strdup("(")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case ')':
-                t=(Token){RBRACE, strdup("=")};
+                t=(Token){RBRACE, strdup(")")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
             case ',':
-                t=(Token){ASSIGN, strdup("=")};
+                t=(Token){COMMA, strdup(",")};
+                cv_push(&a->file, &t);
+                t.value=NULL;
+                break;
+            case '.':
+                t=(Token){DOT, strdup(".")};
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
@@ -286,7 +291,7 @@ void par_parIns(Parser *a) {
                     ds_cat(&aaa, ".", method.value, NULL);
                     Pool ibm=(Pool){LIBRARY, aaa};
                     cv_push(&a->pool, &ibm);
-                    par_render(a, (Vm){CALL, selstrt(a->pool.s-1), a->pool.s-1});
+                    par_render(a, (Vm){CALL, LIBRARY|selsz(a->pool.s-1), a->pool.s-1});
                     break;
                 }
             }
@@ -459,7 +464,7 @@ void par_parFact(Parser *a) {
 
     if(au.type==NUMBER) {
         a->p++;
-        par_render(a, (Vm){PUSH, LONG, atoll(au.value)});
+        par_render(a, (Vm){PUSH, LONG|selsz(atoll(au.value)), atoll(au.value)});
     }
     else if(au.type==STRING) {
         a->p++;

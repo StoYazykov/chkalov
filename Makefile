@@ -6,7 +6,7 @@ CHKALOV_DIR = /root/c
 STDCON_DIR = $(CHKALOV_DIR)/stdcon
 CHKALOV_SRC = $(CHKALOV_DIR)/chkalov
 VM_DIR = $(CHKALOV_DIR)/chkalovm
-ITT_DIR = $(CHKALOV_DIR)/chkalovitt
+#ITT_DIR = $(CHKALOV_DIR)/chkalovitt
 
 # Исходники компилятора
 COMPILER_SRC = $(CHKALOV_SRC)/main.c \
@@ -22,18 +22,18 @@ VM_SRC = $(VM_DIR)/main.c \
 	 $(CHKALOV_DIR)/ds.c \
 	 $(CHKALOV_DIR)/cv.c \
 	 $(CHKALOV_DIR)/chkalov.c
-ITT_SRC = $(ITT_DIR)/main.c
+#ITT_SRC = $(ITT_DIR)/main.c
 
 # Выходные файлы
 CHKC = $(CHKALOV_DIR)/chkc
 CHKVM = $(CHKALOV_DIR)/chkvm
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
-ITT = $(CHKALOV_DIR)/chkalovitt
+#ITT = $(CHKALOV_DIR)/chkalovitt
 
 # Объектные файлы
 COMPILER_OBJ = $(COMPILER_SRC:.c=.o)
 VM_OBJ = $(VM_SRC:.c=.o)
-ITT_OBJ = $(ITT_SRC:.c=.o)
+#ITT_OBJ = $(ITT_SRC:.c=.o)
 
 # Демо-файлы
 DEMO_SRC = $(CHKALOV_DIR)/demo.txt
@@ -64,8 +64,8 @@ $(CHKVM): $(VM_OBJ)
 $(LIBSTDCON): $(STDCON_SRC)
 	$(CC) $(CFLAGS) -shared -fPIC -o $@ $^
 
-$(ITT): $(ITT_SRC)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+#$(ITT): $(ITT_SRC)
+#	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -77,7 +77,7 @@ clean:
 	rm -f $(DEMO_CVM)
 
 # ============ ПРОЧЕЕ ============
-build: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
+build: $(CHKC) $(CHKVM) $(LIBSTDCON) #$(ITT)
 
 run: build
 	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)

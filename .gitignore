@@ -11,6 +11,8 @@
 
 demo.*
 
+*.kate-swp
+
 chkc
 chkvm
 chkitt

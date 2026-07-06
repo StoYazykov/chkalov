@@ -9,8 +9,8 @@ void cv_init(cv *v, size_t c, size_t s) {
 
 void cv_resize(cv *v, size_t s) {
     if(s>v->c) {
-        v->d=realloc(v->d, s*v->es*2);
-        v->c=s*2;
+        v->d=realloc(v->d, s*v->es<<1);
+        v->c=s<<1;
     }
     v->s=s;
 }
@@ -18,8 +18,7 @@ void cv_resize(cv *v, size_t s) {
 // Пуш. Сигнатура cv_push(вектор, указатель_на_элемент)
 void cv_push(cv *v, const void *e) {
     if(v->s>=v->c) {
-        v->c*=2;
-        v->d=realloc(v->d, v->c*v->es);
+        v->d=realloc(v->d, (v->c<<1)*v->es);
     }
     memcpy(v->d+(v->es*v->s), e, v->es);
     v->s++;

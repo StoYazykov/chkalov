@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     if(!a) error("Not found CVM file!");
     uint32_t magic;
     uint64_t t;
-    fread(_TPL magic, 1, sz(uint32_t), a);
+    fread(&magic, 1, sz(uint32_t), a);
     if(magic!=0x05020100) error("Hex magic number incorrect!");
 
     cv vm;
@@ -26,17 +26,17 @@ int main(int argc, char **argv) {
     cv stack, vars;
     cv_init(&stack, 8, sz(Slot));
     cv_init(&vars, 8, sz(Slot));
-    fread(_TPL t, 1, sz(uint64_t), a);
+    fread(&t, 1, sz(uint64_t), a);
     cv_resize(&pool, t);
     for(i=0; i<t; i++) {
         p=(Pool *)cv_eptr(&pool, i);
-        fread(_TPL p->type, 1, sizeof(unsigned char), a);
-        fread(_TPL b, 1, sz(b), a);
+        fread(&p->type, 1, sizeof(unsigned char), a);
+        fread(&b, 1, sz(b), a);
         p->value=malloc(b+1);
         fread(p->value, 1, b, a);
         if(debug) printf("Readed: pool [%d] as value %s ! \r\n", i, p->value);
     }
-    fread(_TPL t, 1, sz(t), a);
+    fread(&t, 1, sz(t), a);
     cv_resize(&vm, t);
     fread(vm.d, 1, t, a);
     int64_t tmp;
@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
         o=c[i++];
         ty=c[i++];
         v=0;
-        memcpy(&v, (unsigned char*)vm.d+i, st[ty]);
-        i+=st[ty];
+        memcpy(&v, (unsigned char*)vm.d+i, ty&0x0f);
+        i+=ty&0x0f;
         switch(o) {
             case PUSH: {
                 Slot az;
@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
                 }
                 Slot a;
                 cv_pop(&stack, &a);
+                printf("CALL: a.type=0x%02x, a.value=%lld\n", a.type, (long long)a.value);
                 //if(debug) cout << "calling... a.value=" << a.value << " \n";
                 Pool *pa=cv_eptr(&pool, a.value);
                 if(ISSTR(a.type)) a.value=(int64_t)pa->value;
