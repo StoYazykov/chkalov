@@ -1,16 +1,16 @@
 #include "../chkalov.h"
 
 int main(int argc, char **argv) {
-    bool debug;
+    bool debug=false;
 
     if (!getenv("CHKALOV")) {
         error("Not setted environment variable CHKALOV!\n");
         return 0;
     }
 
-    debug=true;
     FILE *a;
     a=fopen(argv[1], "rb");
+    if(argc>=3) debug=CSUB(argv[2], "-d", 2);
     if(!a) error("Not found CVM file!");
     uint32_t magic;
     uint64_t t;
@@ -22,6 +22,8 @@ int main(int argc, char **argv) {
     cv_init(&vm, 8, sz(unsigned char));
     uint64_t i,b;
     cv pool;
+    char *heap=malloc(1024);
+    size_t hs=1024, hp=0;
     cv_init(&pool, 8, sz(Pool));
     cv stack, vars;
     cv_init(&stack, 8, sz(Slot));
@@ -58,7 +60,7 @@ int main(int argc, char **argv) {
                 az.type=ty;
                 az.value=v;
                 cv_push(&stack, &az);
-                puts("push!");
+                if(debug) puts("push!");
                 break;
             }
             case CALL: {
@@ -97,7 +99,7 @@ int main(int argc, char **argv) {
                 }
                 Slot a;
                 cv_pop(&stack, &a);
-                printf("CALL: a.type=0x%02x, a.value=%lld\n", a.type, (long long)a.value);
+                if(debug) printf("CALL: a.type=0x%02x, a.value=%lld\n", a.type, (long long)a.value);
                 //if(debug) cout << "calling... a.value=" << a.value << " \n";
                 Pool *pa=cv_eptr(&pool, a.value);
                 if(ISSTR(a.type)) a.value=(int64_t)pa->value;
@@ -135,7 +137,37 @@ int main(int argc, char **argv) {
                 cv_push(&stack, cv_eptr(&vars, v));
                 break;
             }
+            case ALLOC: {
+                if(debug) printf("Alloc: type %x, value %x, heap size %x, heap pointer %x \r\n", ty, v, hs, hp);
+                size_t sz=v;
+                if(sz>=hs) heap=realloc(heap, hs=sz<<1);
+                g.value=hp;
+                hp+=sz;
+                if(debug) printf("Reallocated: heap size %x, heap pointer %x \r\n", hs, hp);
+                cv_push(&stack, &g);
+                break;
+            }
+            case SETFIELD: {
+                cv_pop(&stack, &g);
+                if(debug) printf("Setfield: type %x, value %x, offset %x \r\n", ty, v, g.value);
+                memcpy(heap+g.value, &v, ty&0x0f);
+                v=0;
+                memcpy(&v, heap+g.value, ty&0x0f);
+                if(debug) printf("v: %x\r\n", v);
+                break;
+            }
+            // пушится значение-смещение;
+            // а вот getfield, берёт сначала смещение потом значение.
+            case GETFIELD: {
+                cv_pop(&stack, &g); //offset
+                cv_pop(&stack, &h); //vallue
+                if(debug) printf("Getfield: value %x, offset %x \r\n", h.value, g.value);
+            }
         }
     }
+    cv_free(&stack);
+    free(heap);
+    cv_free(&vars);
+    cv_free(&pool);
     return 0;
 }

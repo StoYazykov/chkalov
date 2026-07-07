@@ -1,6 +1,6 @@
 #include "../chkalov.h"
 
 Slot println(size_t argc, Slot *argp) {
-    puts("IN PRINTLN!");
-    printf("%d\n", argp->value);
+    if(ISSTR(argp->type)) puts(argp->value);
+    else printf("%d\r\n", argp->value);
 }

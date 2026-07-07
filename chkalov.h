@@ -65,6 +65,9 @@ exit(0x08);\
 #define IFBE 0x17   // if big or equal >=
 #define IFLE 0x18   // if less or equal <=
 
+#define SETFIELD 0x19
+#define GETFIELD 0x1A
+
 // ----------------------------------------------//
 //            Types definitions!                 //
 // ----------------------------------------------//
@@ -78,6 +81,9 @@ exit(0x08);\
 #define NOL 0x70
 
 #define LIBRARY 0x80
+
+#define PTR 0x90
+#define IDX 0xA0
 
 #define sz(type) (sizeof(type))
 

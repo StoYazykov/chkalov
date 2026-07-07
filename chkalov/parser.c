@@ -92,6 +92,32 @@ void par_render(Parser *a, Vm vm) {
 }
 
 void par_free(Parser *z) {
+    par_render(z, (Vm){ALLOC, PTR|0x04, 8});
+    par_render(z, (Vm){SETFIELD, INT|0x01, 85});
+    par_render(z, (Vm){PUSH, INT|0x01, 0x52});
+    par_render(z, (Vm){PUSH, PTR|0x01, 0x00});
+    par_render(z, (Vm){GETFIELD, 0x00, 0x00});
+
+    /*смещение выделенного лежит на стеке.
+    Уже.
+    А вот значение, мы передаём в сетфиелде.*/
+
+    /* a вот с гетфилдом, наоборот.
+     * Смещение мы кладём вместе с ним... хотя... как мы это сделаем?!
+     * Компилер видит класс:
+     * struct a {
+    Int a
+    Int b
+    }
+    Сначала, он должен алоцировать, его общий размер.
+    ПОтом,
+    Alloc 8;
+    Store ptr 0
+    Load ptr 0
+    Push int(1) 52
+    Getfield
+    */
+
     printf("par_free: fn = '%s'\n", z->fn);
     FILE *fp = fopen(z->fn, "wb");
     printf("par_free: fp = %p\n", (void*)fp);
@@ -176,11 +202,26 @@ void par_par(Parser *a, const ds l) {
             continue;
         }
         if(l[pos]=='\"') { // строка
-            size_t start=pos++;
+            size_t start=++pos;
             while(pos<strlen(l)&&l[pos]!='\"') pos++;
             t.type=STRING;
             t.value=NULL;
-            ds_sub(&t.value, l, start, ++pos-start);
+            t.value=malloc(pos-start);
+            size_t i, sp=0;
+            for(i=start; i<pos; i++, sp++) {
+                if(l[i]=='\\') {
+                    i++;
+                    switch(l[i]) {
+                        case 'n': t.value[sp++]='\n'; break;
+                        case '\\': t.value[sp++]='\\'; break;
+                        default: i--; break;
+                    }
+                    i++;
+                }
+                t.value[sp]=l[i];
+            }
+            pos++;
+            //ds_sub(&t.value, l, start, pos++-start);
             cv_push(&a->file, &t);
             continue;
         }
@@ -470,7 +511,7 @@ void par_parFact(Parser *a) {
         a->p++;
         Pool at=(Pool){STR, strdup(au.value)};
         cv_push(&a->pool, &at);
-        par_render(a, (Vm){PUSH, selstrt(a->pool.s-1), a->pool.s});
+        par_render(a, (Vm){PUSH, selstrt(a->pool.s-1), a->pool.s-1});
     }
     else if(au.type==LBRACE) {
         a->p++;

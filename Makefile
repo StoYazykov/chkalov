@@ -53,7 +53,7 @@ all: $(CHKC) $(CHKVM) $(LIBSTDCON) $(ITT)
 	@echo "=============================="
 	@echo "         Компиляция...        "
 	@echo "=============================="
-	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && echo "" && echo "-- VM --" && echo "" && $(CHKVM) $(DEMO_CVM)
 
 # ============ ОТЛАДОЧНЫЙ ЗАПУСК ============
 debug: CFLAGS = -std=c11 -w -g -O0
@@ -61,7 +61,7 @@ debug: clean all
 	@echo "=============================="
 	@echo "      Debug-компиляция...     "
 	@echo "=============================="
-	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && $(CHKVM) $(DEMO_CVM) -d
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && echo "" && echo "-- VM -- " && echo "" && $(CHKVM) $(DEMO_CVM) -d
 
 win:
 	make TARGET=win rebuild
@@ -95,12 +95,5 @@ run: build
 	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
 
 rebuild: clean all
-
-info:
-	@echo "Чкалов — быстрейший язык программирования!"
-	@echo "Компилятор: $(CHKC)"
-	@echo "VM:         $(CHKVM)"
-	@echo "Библиотека: $(LIBSTDCON)"
-	@echo "Инструменты: $(ITT)"
 
 .PHONY: all clean build run rebuild info debug
