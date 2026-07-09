@@ -72,18 +72,16 @@ exit(0x08);\
 //            Types definitions!                 //
 // ----------------------------------------------//
 
-#define CHAR 0x10
-#define XSHORT 0x20
-#define SHORT 0x30
-#define INT 0x40
-#define LONG 0x50
-#define STR 0x60
-#define NOL 0x70
-
-#define LIBRARY 0x80
-
-#define PTR 0x90
-#define IDX 0xA0
+#define CHAR 0x00
+#define XSHORT 0x10
+#define SHORT 0x20
+#define INT 0x30
+#define LONG 0x40
+#define STR 0x50
+#define LIBRARY 0x60
+#define PTR 0x70
+#define NOL 0x80
+#define IDX 0x90
 
 #define sz(type) (sizeof(type))
 

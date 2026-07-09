@@ -10,8 +10,8 @@ typedef enum {
     PLUS, MINUS, STAR, SLASH, ASSIGN,
     EQ, NEQ, LT, BT, LE, BE,
     LPAREN, RPAREN, LBRACE, RBRACE,
-    COMMA, DOT, COLON, NEWLINE,
-    TYPE
+    COMMA, DOT, COLON,
+    CLASS
 } TokenType;
 
 typedef struct {

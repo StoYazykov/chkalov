@@ -5,7 +5,8 @@ LDFLAGS = -ldl
 # Выбор платформы: make TARGET=win
 ifeq ($(TARGET),win)
     EXT = .exe
-LIBSTDCON = $(STDCON_DIR)/stdcon.dll
+    LIBSTDCON = $(STDCON_DIR)/stdcon.dll
+    CFLAGS=$(CFLAGS) -fno-use-linker-plugin
 else
     EXT =
     LIBSTDCON = $(STDCON_DIR)/libstdcon.so

@@ -28,6 +28,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     cv_init(&n->imports, 4, sizeof(Import));
     printf("  scos_init...\n");
     scos_init(&n->scopes);
+    scos_es(&n->scopes);
 
     printf("  getenv...\n");
     char *env=getenv("CHKALOV");
@@ -80,7 +81,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
 }
 
 void par_render(Parser *a, Vm vm) {
-    printf("par_render: opcode=%d type=%d value=%lld\n", vm.opcode, vm.type, (long long)vm.value);
+    printf("par_render: opcode=%x type=%x value=%llx\n", vm.opcode, vm.type, (long long)vm.value);
     unsigned char op=vm.opcode, ty=vm.type;
     cv_push(&a->code, &op);
     cv_push(&a->code, &ty);
@@ -92,30 +93,23 @@ void par_render(Parser *a, Vm vm) {
 }
 
 void par_free(Parser *z) {
-    par_render(z, (Vm){ALLOC, PTR|0x04, 8});
-    par_render(z, (Vm){SETFIELD, INT|0x01, 85});
+    /*par_render(z, (Vm){ALLOC, PTR|0x04, 8});
+    par_render(z, (Vm){SETFIELD, 0x00});
     par_render(z, (Vm){PUSH, INT|0x01, 0x52});
-    par_render(z, (Vm){PUSH, PTR|0x01, 0x00});
-    par_render(z, (Vm){GETFIELD, 0x00, 0x00});
+    par_render(z, (Vm){GETFIELD, 0x00});*/
 
     /*смещение выделенного лежит на стеке.
     Уже.
     А вот значение, мы передаём в сетфиелде.*/
 
     /* a вот с гетфилдом, наоборот.
-     * Смещение мы кладём вместе с ним... хотя... как мы это сделаем?!
+     * Смещение мы кладём ему в аргументы, а значение на стеке.
      * Компилер видит класс:
      * struct a {
     Int a
     Int b
     }
-    Сначала, он должен алоцировать, его общий размер.
-    ПОтом,
-    Alloc 8;
-    Store ptr 0
-    Load ptr 0
-    Push int(1) 52
-    Getfield
+
     */
 
     printf("par_free: fn = '%s'\n", z->fn);
@@ -160,25 +154,31 @@ void par_par(Parser *a, const ds l) {
         while(pos<strlen(l)&&isspace(l[pos])) pos++;
 
         if(pos>=strlen(l)) {
-            Token abcv={EOF};
+            Token abcv={EOF, strdup("")};
             cv_push(&a->file, &abcv);
         }
 
+        IFCS(l+pos, "class", 5) {
+            pos+=5;
+            t=(Token){CLASS, strdup("class")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         IFCS(l+pos, "var", 3) {
             pos+=3;
-            t=(Token){VAR, "var"};
+            t=(Token){VAR, strdup("var")};
             cv_push(&a->file, &t);
             continue;
         }
         IFCS(l+pos, "==", 2) {
             pos+=2;
-            t=(Token){EQ, "=="};
+            t=(Token){EQ, strdup("==")};
             cv_push(&a->file, &t);
             continue;
         }
         IFCS(l+pos, "!=", 2) {
             pos+=2;
-            t=(Token){NEQ, "!="};
+            t=(Token){NEQ, strdup("!=")};
             cv_push(&a->file, &t);
             continue;
         }
@@ -343,39 +343,42 @@ void par_parIns(Parser *a) {
             if(par_nexti(a).type!=LPAREN) error("Expected {!");
             break;
         }
-        /*case VAR: {
+        case VAR: {
             Token vt=par_nexti(a);
             Token name;
-            char type=par_stt(a, vt.value);
+            char type=par_stt(vt.value);
             if(par_nexti(a).type!=COLON) error("Expected ':' !");
             do {
                 //if(debug) cout << "VAR loop: p=" << p << " token=" << par_next(a) << " type=" << file[p].type << endl;
                 name=par_nexti(a);
                 if(name.type!=ID) error("Expected variable name!");
-                sco_av(a->scopes, name.value, type);
-                par_render(a, (Vm){PUSH, type, 0});
-                par_render(a, (Vm){STORE, XSHORT, 0});
+                scos_addv(&a->scopes, name.value, type);
+                par_render(a, (Vm){PUSH, type|0, 0});
+                par_render(a, (Vm){STORE, IDX|selsz(sco_ggi()), sco_ggi()});
                 //if(debug) cout << "Var: " << name.value << " type: " << vt.value << endl;
                 a->p++;
-            } while(p<file.size()&&par_next(a).type==COMMA);
+            } while(a->p<a->file.s&&par_next(a).type==COMMA);
             a->p--;
             break;
-        }*/
-        /*case ID: {
+        }
+        case ID: {
             Token ja=par_nexti(a);
             if(ja.type!=ASSIGN) error("expected '='!");
             a->p++;
             par_parExpr(a);
             a->p--;
             variable vaa;
-            sco_gv(a->scopes, t.value, &vaa);
-            if((!(ISNUM(vaa.type)&&ISNUM(a->lit)))&&(!(ISSTR(vaa.type)&&ISSTR(a->lit)))) error("Error: types mismatch!");
-            par_render(a, (Vm){STORE, seltypeu(vaa.id), vaa.id});
+            scos_gv(&a->scopes, t.value, &vaa);
+            if((!(ISNUM(vaa.type)&&ISNUM(a->lit)))&&(!(ISSTR(vaa.type)&&ISSTR(a->lit)))) error("types mismatch!");
+            par_render(a, (Vm){STORE, IDX|selsz(vaa.id), vaa.id});
             break;
-        }*/
+        }
         case IF: {
             par_parIf(a);
             break;
+        }
+        case CLASS: {
+
         }
         case ENOF: {
             break;
@@ -389,7 +392,7 @@ void par_parIns(Parser *a) {
 
 void par_parFile(Parser *a) {
     for(a->p=0; a->p<a->file.s; a->p++) {
-                printf("par_parFile: p=%zu, type=%d\n", a->p, ((Token*)cv_eptr(&a->file, a->p))->type);
+        printf("par_parFile: p=%zu, type=%d\n", a->p, ((Token*)cv_eptr(&a->file, a->p))->type);
         par_parIns(a);
     }
 };
@@ -522,20 +525,19 @@ void par_parFact(Parser *a) {
             a->p++;
         }
     }
-   /* else if(au.type==ID) {
-        p++;
-        string name=au.value;
+   else if(au.type==ID) {
+        a->p++;
+        ds name=au.value;
 
-        if(p<file.size()&&file[p].type==LBRACE) {
-            if(debug) cout << "  -> function call\n";
+        if(a->p<a->file.s&&((Token *)cv_eptr(&a->file, a->p))->type==LBRACE) {
         } else {
-            variable var=scopes.getVar(name);
-            if(debug) cout << "  -> variable, id=" << var.id << " name='" << var.name << "'\n";
-            if(var.name=="") error("Undefined variable: " + name);
-            render({LOAD, seltypeu(var.id), var.id});
+            variable var;
+            scos_gv(&a->scopes, name, &var);
+            if(!var.name) error("Undefined variable: \'%s\', %llx", name, var.id);
+            par_render(a, (Vm){LOAD, IDX|selsz(var.id), var.id});
         }
-    }*/
+    }
     else {
-        error("Unexpected token");
+        error("ParseFactor: Unexpected token \'%s\'!", au.value);
     }
 }

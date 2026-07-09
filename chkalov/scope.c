@@ -30,6 +30,9 @@ void sco_gv(Scope *a, ds vn, variable *b) {
         p=(variable *)cv_eptr(&a->vars, i);
         if(!strcmp(p->name, vn)) {
             b->name=strdup(p->name);
+            b->type=p->type;
+            b->id=p->id;
+            printf("sco_gv Found! b->name: \'%s\', b->id: %llu!\r\n", b->name, b->id);
             return;
         }
     }
@@ -50,14 +53,18 @@ void scos_init(ScopeStack *a) {
     cv_init(&a->scopes, 4, sz(Scope));
 }
 void scos_addv(ScopeStack *a, ds vn, unsigned char vt) {
+    printf("scos_addv: '%s' (len=%zu)\n", vn, strlen(vn));
     Scope *q=cv_eptr(&a->scopes, a->scopes.s-1);
     sco_addv(q, vn, vt);
 }
 void scos_gv(ScopeStack *a, ds vn, variable *b) {
+    printf("scos_gv: searching '%s' (len=%zu)\n", vn, strlen(vn));
     Scope *ap;
     size_t i;
     b->name=NULL;
-    for(i=a->scopes.s; i>0; --i) {
+    printf("a->scopes.s: %llu\r\n", a->scopes.s);
+    for(i=a->scopes.s-1; i>=0; i++) {
+        printf("Iteration %llu\r\n", i);
         ap=(Scope *)cv_eptr(&a->scopes, i);
         sco_gv(ap, vn, b);
         if(b->name) return;
