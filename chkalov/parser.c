@@ -93,22 +93,38 @@ void par_render(Parser *a, Vm vm) {
 }
 
 void par_free(Parser *z) {
-    /*par_render(z, (Vm){ALLOC, PTR|0x04, 8});
+    par_render(z, (Vm){ALLOC, PTR|0x01, 8});
+    par_render(z, (Vm){STORE, IDX|0x00, 0});
+    par_render(z, (Vm){PUSH, INT|0x04, 52});
+    par_render(z, (Vm){LOAD, IDX|0x00, 0});
     par_render(z, (Vm){SETFIELD, 0x00});
-    par_render(z, (Vm){PUSH, INT|0x01, 0x52});
-    par_render(z, (Vm){GETFIELD, 0x00});*/
+    par_render(z, (Vm){LOAD, IDX|0x00, 0});
+    par_render(z, (Vm){GETFIELD, IDX|0x02, 0x1234});
 
     /*смещение выделенного лежит на стеке.
     Уже.
     А вот значение, мы передаём в сетфиелде.*/
 
     /* a вот с гетфилдом, наоборот.
-     * Смещение мы кладём ему в аргументы, а значение на стеке.
+     * Смещение мы кладём ему в аргументы, а основной пойнтер на стеке.
      * Компилер видит класс:
-     * struct a {
-    Int a
-    Int b
+     * class Point {
+    Int x
+    Int y
     }
+    var p: Point
+    p.x=52
+    @println(p.y)
+    и
+    alloc 8
+    store 0
+    load 0
+    push 52
+    setfield 0
+    load 0
+    getfield 4
+    call 0
+
 
     */
 
@@ -514,7 +530,7 @@ void par_parFact(Parser *a) {
         a->p++;
         Pool at=(Pool){STR, strdup(au.value)};
         cv_push(&a->pool, &at);
-        par_render(a, (Vm){PUSH, selstrt(a->pool.s-1), a->pool.s-1});
+        par_render(a, (Vm){PUSH, STR|selszu(a->pool.s-1), a->pool.s-1});
     }
     else if(au.type==LBRACE) {
         a->p++;

@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
         if(debug) printf("Readed: pool [%d] as value %s ! \r\n", i, p->value);
     }
     fread(&t, 1, sz(t), a);
+    printf("Bytecode size: %llx \r\n", t);
     cv_resize(&vm, t);
     fread(vm.d, 1, t, a);
     int64_t tmp;
@@ -140,28 +141,31 @@ int main(int argc, char **argv) {
             case ALLOC: {
                 if(debug) printf("Alloc: type %x, value %x, heap size %x, heap pointer %x \r\n", ty, v, hs, hp);
                 size_t sz=v;
-                if(sz>=hs) heap=realloc(heap, hs=sz<<1);
+                if(sz>=hs) {
+                    heap=realloc(heap, hs=sz<<1);
+                    if(debug) printf("Reallocated: heap size %x, heap pointer %x \r\n", hs, hp);
+                }
                 g.value=hp;
                 hp+=sz;
-                if(debug) printf("Reallocated: heap size %x, heap pointer %x \r\n", hs, hp);
                 cv_push(&stack, &g);
                 break;
             }
             case SETFIELD: {
-                cv_pop(&stack, &g);
-                if(debug) printf("Setfield: type %x, value %x, offset %x \r\n", ty, v, g.value);
-                memcpy(heap+g.value, &v, ty&0x0f);
-                v=0;
-                memcpy(&v, heap+g.value, ty&0x0f);
-                if(debug) printf("v: %x\r\n", v);
+                cv_pop(&stack, &g); // base pointer
+                cv_pop(&stack, &h); // value
+                if(debug) printf("Setfield: base pointer %x, offset %x \r\n", g.value, v);
+                memcpy(heap+h.value+v, &g.value, h.type&0x0f);
                 break;
             }
-            // пушится значение-смещение;
-            // а вот getfield, берёт сначала смещение потом значение.
+
             case GETFIELD: {
-                cv_pop(&stack, &g); //offset
-                cv_pop(&stack, &h); //vallue
-                if(debug) printf("Getfield: value %x, offset %x \r\n", h.value, g.value);
+                size_t off=0;
+                uint8_t sb;
+                cv_pop(&stack, &g); // base pointer
+                memcpy(&off, (uint8_t *)&v, (ty&0x0f)-1);
+                printf("offset size: %x\r\n", (ty&0x0f)-1);
+                memcpy(&sb, ((uint8_t *)&v)+((ty&0x0f)-1), 1);
+                if(debug) printf("Getfield: base pointer %x, offset %x, common byte %x \r\n", g.value, off, sb);
             }
         }
     }
