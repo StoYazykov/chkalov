@@ -27,28 +27,19 @@ int main(int argc, char **argv) {
     uint64_t t;
     fread(&magic, 1, sz(uint32_t), a);
     if(magic!=0x05020100) error("Hex magic number incorrect!");
-
     cv vm;
     Pool *p;
     cv_init(&vm, 8, sz(unsigned char));
     uint64_t i,b;
-    cv pool;
-    char *heap=malloc(1024);
-    size_t hs=1024, hp=0;
-    cv_init(&pool, 8, sz(Pool));
+    size_t hs, hp=0;
+    char *heap=malloc(hs=1024);
     cv stack, vars;
     cv_init(&stack, 8, sz(Slot));
     cv_init(&vars, 8, sz(Slot));
     fread(&t, 1, sz(uint64_t), a);
-    cv_resize(&pool, t);
-    for(i=0; i<t; i++) {
-        p=(Pool *)cv_eptr(&pool, i);
-        fread(&p->type, 1, sizeof(unsigned char), a);
-        fread(&b, 1, sz(b), a);
-        p->value=malloc(b+1);
-        fread(p->value, 1, b, a);
-        if(debug) printf("Readed: pool [%d] as value %s ! \r\n", i, p->value);
-    }
+    if(t>hs) heap=realloc(heap, hs<<=1);
+    fread(heap, 1, t, a);
+    hp+=t;
     fread(&t, 1, sz(t), a);
     printf("Bytecode size: %llx \r\n", t);
     cv_resize(&vm, t);
@@ -68,21 +59,15 @@ int main(int argc, char **argv) {
         i+=ty&0x0f;
         switch(o) {
             case PUSH: {
-                Slot az;
-                az.type=ty;
-                az.value=v;
-                cv_push(&stack, &az);
+                f.type=ty;
+                f.value=v;
+                cv_push(&stack, &f);
                 if(debug) puts("push!");
                 break;
             }
             case CALL: {
-                //if(debug) cout << "Stack size: " << stack.size() << endl;
-                /*for(int i = 0; i < stack.size(); i++) {
-                    if(debug) cout << "  [" << i << "] type=" << (int)stack[i].type << " value=" << stack[i].value << endl;
-                }*/
                 ds m, l, r;
-                Pool *p=(Pool*)cv_eptr(&pool, v);
-                r=p->value;
+                r=heap+v;
                 ds d=strchr(r, '.');
                 size_t ml=d-r;
                 m=malloc(ml+1);
@@ -105,18 +90,13 @@ int main(int argc, char **argv) {
                 typedef Slot (*CFUNC)(size_t argc, Slot *argp, ChkEnv *env);
                 CFUNC func = (CFUNC)dlsym(h, l);
                 if(!func) {
-                    //cerr << "dlsym failed for '" << l << "': " << dlerror() << endl;
                     dlclose(h);
                     break;
                 }
                 Slot a;
                 cv_pop(&stack, &a);
                 if(debug) printf("CALL: a.type=0x%02x, a.value=%llx\n", a.type, (long long)a.value);
-                //if(debug) cout << "calling... a.value=" << a.value << " \n";
-                if(ISSTR(a.type)) a.value=(int64_t)cv_eptr(&pool, a.value);
-                //if(debug) cout << "calling... a.value (converted!)=" << a.value << " \n";
                 ChkEnv env;
-                env._pool=&pool;
                 env._heap=&heap;
                 env._hp=&hp;
                 env._hs=&hs;
@@ -222,6 +202,5 @@ int main(int argc, char **argv) {
     puts("\r\nHeap end");
     free(heap);
     cv_free(&vars);
-    cv_free(&pool);
     return 0;
 }

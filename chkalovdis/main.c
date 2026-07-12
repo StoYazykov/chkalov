@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     if(magic!=0x05020100) error("Hex magic number incorrect!");
     cv vm;
     Pool *p;
-    uint8_t vp=strchr(argv[1], 'p'), vb=strchr(argv[1], 'b');
+    uint8_t vp=!!strchr(argv[1], 'p'), vb=!!strchr(argv[1], 'b');
     cv_init(&vm, 8, sz(unsigned char));
     uint64_t i,b;
     cv pool;

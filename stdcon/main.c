@@ -1,7 +1,7 @@
 #include "../chkapi.h"
 
 Slot println(size_t argc, Slot *argp, ChkEnv *env) {
-    if(ISSTR(argp->type)) puts(argp->value);
+    if(ISSTR(argp->type)) puts(*env->_heap+argp->value);
     else printf("%d\r\n", argp->value);
     return (Slot){0x00};
 }

@@ -20,7 +20,8 @@ typedef struct {
     bool debug;
     char lit;
     cv code;
-    cv pool;
+    char *heap;
+    size_t hp, hs;
     cv imports;
     cv file;
     ScopeStack scopes;
@@ -34,6 +35,7 @@ void par_parExpr(Parser *a);
 void par_parTerm(Parser *a);
 void par_parFact(Parser *a);
 void par_parIf(Parser *a);
+size_t par_heapIns(Parser *a, ds k);
 Token par_next(Parser *a);
 Token par_nexti(Parser *a);
 void par_parIns(Parser *a);

@@ -1,27 +1,18 @@
 #include "parser.h"
 #include "token.h"
 #include <stdio.h>
-//#include <ñstdlib>
 #include <stdlib.h>
 
 static Scope nullscope;
 
-uint8_t eee(TokenType t) {
-    switch(t) {
-        case STRING: return STR;
-        case NUMBER: return LONG;
-        default:     return NOL;
-    }
-}
-
-//const char* envi = getenv("CHKALOV");
 void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     printf("  memset...\n");
     memset(n, 0, sizeof(Parser));
     printf("  cv_init code...\n");
     cv_init(&n->code, 256, sizeof(unsigned char));
-    printf("  cv_init pool...\n");
-    cv_init(&n->pool, 8, sizeof(Pool));
+    printf("  init (malloc) heap...\n");
+    n->hp=0;
+    n->heap=malloc(n->hs=1024);
     printf("  cv_init file...\n");
     cv_init(&n->file, 16, sizeof(Token));
     printf("  cv_init imports...\n");
@@ -144,25 +135,15 @@ void par_free(Parser *z) {
     uint32_t magic=0x05020100;
     uint64_t size=0, i, a, b, c; // 4 + 5 + 5 = 14 !!!!!
     fwrite(&magic, 1, sizeof(uint32_t), fp); ///// 0 2 1 5     9 0 0 0 0 10 0 0 0 0
-    size=z->pool.s;
-    Pool *p;
+    puts("writing heap...");
+    size=z->hp;
     fwrite(&size, 1, sz(size), fp);
-    puts("writing pool...");
-    for(i=0; i<size; i++) {
-        p=(Pool*)cv_eptr(&z->pool, i);
-        printf("Iteration %i, pool value = '%s'\r\n", i, p->value);
-        fwrite(&p->type, 1, sz(char), fp);
-        puts("writed.");
-        a=strlen(p->value);
-        fwrite(&a, 1, sz(a), fp);
-        fwrite(p->value, 1, a, fp);
-        free(p->value);
-    }
+    fwrite(z->heap, 1, size, fp);
     size=z->code.s;
     fwrite(&size, 1, sz(size), fp);
     fwrite(z->code.d, 1, size, fp);
     fclose(fp);
-    cv_free(&z->pool);
+    free(z->heap);
     cv_free(&z->code);
     Token *fip;
     for(i=0; i<z->file.s; i++) {
@@ -356,9 +337,8 @@ void par_parIns(Parser *a) {
                 if(imp_cont(&ppp, method.value)) {
                     ds aaa=strdup(ppp.name);
                     ds_cat(&aaa, ".", method.value, NULL);
-                    Pool ibm=(Pool){LIBRARY, aaa};
-                    cv_push(&a->pool, &ibm);
-                    par_render(a, (Vm){CALL, LIBRARY|selsz(a->pool.s-1), a->pool.s-1});
+                    size_t k=par_heapIns(a, aaa);
+                    par_render(a, (Vm){CALL, LIBRARY|selszu(k), k});
                     break;
                 }
             }
@@ -529,6 +509,14 @@ void par_parTerm(Parser *a) {
     }
 }
 
+size_t par_heapIns(Parser *a, ds k) {
+    if(strlen(k)>=a->hs) a->heap=realloc(a->heap, a->hs=strlen(k)<<1);
+    memcpy(a->heap+a->hp, k, strlen(k)+1);
+    size_t r=a->hp;
+    a->hp+=strlen(k)+1;
+    return r;
+}
+
 void par_parFact(Parser *a) {
     Token au=par_next(a);
 
@@ -538,9 +526,8 @@ void par_parFact(Parser *a) {
     }
     else if(au.type==STRING) {
         a->p++;
-        Pool at=(Pool){STR, strdup(au.value)};
-        cv_push(&a->pool, &at);
-        par_render(a, (Vm){PUSH, STR|selszu(a->pool.s-1), a->pool.s-1});
+        size_t k=par_heapIns(a, au.value);
+        par_render(a, (Vm){PUSH, STR|selszu(k), k});
     }
     else if(au.type==LBRACE) {
         a->p++;
