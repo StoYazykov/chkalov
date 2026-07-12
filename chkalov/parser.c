@@ -93,13 +93,14 @@ void par_render(Parser *a, Vm vm) {
 }
 
 void par_free(Parser *z) {
-    par_render(z, (Vm){ALLOC, PTR|0x01, 8});
+    /*par_render(z, (Vm){ALLOC, PTR|0x01, 8});
     par_render(z, (Vm){STORE, IDX|0x00, 0});
-    par_render(z, (Vm){PUSH, INT|0x04, 52});
+    par_render(z, (Vm){PUSH, INT|0x01, 52});
     par_render(z, (Vm){LOAD, IDX|0x00, 0});
-    par_render(z, (Vm){SETFIELD, 0x00});
+    par_render(z, (Vm){SETFIELD, PTR|0x00});
     par_render(z, (Vm){LOAD, IDX|0x00, 0});
-    par_render(z, (Vm){GETFIELD, IDX|0x02, 0x1234});
+    par_render(z, (Vm){GETFIELD, IDX|0x01, 0x00});
+    par_render(z, (Vm){CALL, 0x00, 0x00});*/
 
     /*смещение выделенного лежит на стеке.
     Уже.
@@ -112,9 +113,19 @@ void par_free(Parser *z) {
     Int x
     Int y
     }
+
+    alloc 8
+    store 0
+    push 52
+    load 0
+    setfield 0
+    load 0
+    getfield 0
+    call 0
+
     var p: Point
     p.x=52
-    @println(p.y)
+    var a=p.x; // Int
     и
     alloc 8
     store 0
@@ -122,8 +133,7 @@ void par_free(Parser *z) {
     push 52
     setfield 0
     load 0
-    getfield 4
-    call 0
+    getfield
 
 
     */

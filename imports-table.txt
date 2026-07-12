@@ -1,3 +1,4 @@
 $DOCTYPE CHKALOV IMPORTS <1.00>
 %stdcon
 +println
++readln

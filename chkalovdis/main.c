@@ -41,10 +41,10 @@ int main(int argc, char **argv) {
         "short",
         "int",
         "long",
-        "str",
+        "string",
         "library",
-        "ptr",
-        "idx",
+        "pointer",
+        "index",
         "nol"
     };
     FILE *a=fopen(argv[2], "rb");

@@ -1,4 +1,15 @@
 #include "../chkalov.h"
+#include "../chkapi.h"
+
+void *env_alloc(ChkEnv *e, size_t s) {
+    printf("Env_alloc! \r\n");
+    if(s>=*e->_hs) {
+        *e->_heap=realloc(*e->_heap, *e->_hs=s<<1);
+    }
+    void *ret=*e->_heap+*e->_hp;
+    *e->_hp+=s;
+    return ret;
+}
 
 int main(int argc, char **argv) {
     bool debug=false;
@@ -91,8 +102,8 @@ int main(int argc, char **argv) {
                 ds_cat(&s, ".so", NULL);
 #endif
                 void *h=dlopen(s, RTLD_LAZY);
-                typedef Slot (*CFUNC)(size_t argc, Slot *argp);
-                CFUNC func = (CFUNC)dlsym(h, "println");
+                typedef Slot (*CFUNC)(size_t argc, Slot *argp, ChkEnv *env);
+                CFUNC func = (CFUNC)dlsym(h, l);
                 if(!func) {
                     //cerr << "dlsym failed for '" << l << "': " << dlerror() << endl;
                     dlclose(h);
@@ -100,12 +111,18 @@ int main(int argc, char **argv) {
                 }
                 Slot a;
                 cv_pop(&stack, &a);
-                if(debug) printf("CALL: a.type=0x%02x, a.value=%lld\n", a.type, (long long)a.value);
+                if(debug) printf("CALL: a.type=0x%02x, a.value=%llx\n", a.type, (long long)a.value);
                 //if(debug) cout << "calling... a.value=" << a.value << " \n";
-                Pool *pa=cv_eptr(&pool, a.value);
-                if(ISSTR(a.type)) a.value=(int64_t)pa->value;
+                if(ISSTR(a.type)) a.value=(int64_t)cv_eptr(&pool, a.value);
                 //if(debug) cout << "calling... a.value (converted!)=" << a.value << " \n";
-                func(1, &a);
+                ChkEnv env;
+                env._pool=&pool;
+                env._heap=&heap;
+                env._hp=&hp;
+                env._hs=&hs;
+                env.alloc=env_alloc;
+                a=func(1, &a, &env);
+                if(a.type) cv_push(&stack, &a);
                 dlclose(h);
                 break;
             }
@@ -134,7 +151,30 @@ int main(int argc, char **argv) {
                 cv_push(&stack, &f);
                 break;
             }
+            case SUB: {
+                cv_pop(&stack, &h);
+                cv_pop(&stack, &g);
+                f.value=g.value-h.value;
+                cv_push(&stack, &f);
+                break;
+            }
+            case MUL: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=g.value*h.value;
+                cv_push(&stack, &f);
+                break;
+            }
+            case DIV: {
+                cv_pop(&stack, &h);
+                cv_pop(&stack, &g);
+                if(!h.value) error("Division by zero");
+                f.value=g.value/h.value;
+                cv_push(&stack, &f);
+                break;
+            }
             case LOAD: {
+                if(!(v<vars.s)) error("Index out of bounds: %llx", v);
                 cv_push(&stack, cv_eptr(&vars, v));
                 break;
             }
@@ -154,22 +194,32 @@ int main(int argc, char **argv) {
                 cv_pop(&stack, &g); // base pointer
                 cv_pop(&stack, &h); // value
                 if(debug) printf("Setfield: base pointer %x, offset %x \r\n", g.value, v);
-                memcpy(heap+h.value+v, &g.value, h.type&0x0f);
+                memcpy(heap+g.value+v, &h.value, h.type&0x0f);
                 break;
             }
 
             case GETFIELD: {
-                size_t off=0;
-                uint8_t sb;
+                /*size_t off=0;
+                uint8_t sb;*/
                 cv_pop(&stack, &g); // base pointer
-                memcpy(&off, (uint8_t *)&v, (ty&0x0f)-1);
+                /*memcpy(&off, (uint8_t *)&v, (ty&0x0f)-1);
                 printf("offset size: %x\r\n", (ty&0x0f)-1);
                 memcpy(&sb, ((uint8_t *)&v)+((ty&0x0f)-1), 1);
-                if(debug) printf("Getfield: base pointer %x, offset %x, common byte %x \r\n", g.value, off, sb);
+                if(debug) printf("Getfield: base pointer %x, offset %x, common byte %x \r\n", g.value, off, sb);*/
+                f.value=0;
+                memcpy(&f.value, (char*)heap+g.value+v, 1);
+                if(debug) printf("f.value: %llx \r\n", f.value);
+                cv_push(&stack, &f);
+                break;
             }
         }
     }
     cv_free(&stack);
+    printf("Heap: ");
+    for(int i=0; i<hp; i++) {
+        printf("%c", heap[i]);
+    }
+    puts("\r\nHeap end");
     free(heap);
     cv_free(&vars);
     cv_free(&pool);

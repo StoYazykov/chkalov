@@ -78,11 +78,12 @@ exit(0x08);\
 #define SHORT 0x30
 #define INT 0x40
 #define LONG 0x50
-#define STR 0x60
+#define STR 0x60 // string in HEAP
 #define LIBRARY 0x70
 #define PTR 0x80
 #define IDX 0x90
-#define NOL 0xA0
+#define PSTR 0xA0 // string in POOL
+#define NOL 0xB0
 
 #define sz(type) (sizeof(type))
 
