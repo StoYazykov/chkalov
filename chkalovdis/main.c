@@ -60,16 +60,7 @@ int main(int argc, char **argv) {
     cv pool;
     cv_init(&pool, 8, sz(Pool));
     fread(&t, 1, sz(uint64_t), a);
-    cv_resize(&pool, t);
-    if(vp) printf("  Pool size: %x \r\n", t);
-    for(i=0; i<t; i++) {
-        p=(Pool *)cv_eptr(&pool, i);
-        fread(&p->type, 1, sizeof(unsigned char), a);
-        fread(&b, 1, sz(b), a);
-        p->value=malloc(b+1);
-        fread(p->value, 1, b, a);
-        if(vp) printf(" #%x %s \r\n", i, p->value);
-    }
+    fseek(a, t, SEEK_CUR);
     if(!vb) goto PEND;
     fread(&t, 1, sz(t), a);
     printf("Bytecode size: %llx \r\n", t);

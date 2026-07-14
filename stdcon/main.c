@@ -1,5 +1,11 @@
 #include "../chkapi.h"
 
+Slot print(size_t argc, Slot *argp, ChkEnv *env) {
+    if(ISSTR(argp->type)) printf("%s", *env->_heap+argp->value);
+    else printf("%d", argp->value);
+    return (Slot){0x00};
+}
+
 Slot println(size_t argc, Slot *argp, ChkEnv *env) {
     if(ISSTR(argp->type)) puts(*env->_heap+argp->value);
     else printf("%d\r\n", argp->value);
@@ -7,7 +13,7 @@ Slot println(size_t argc, Slot *argp, ChkEnv *env) {
 }
 
 Slot readln(size_t argc, Slot *argp, ChkEnv *env) {
-    void *mem=env->alloc(env, 256);
-    scanf("%s", mem);
-    return (Slot){STR, *env->_heap-(char *)mem};
+    char *mem=env->alloc(env, 256);
+    fgets(mem, 256, stdin);
+    return (Slot){STR, mem-(uintptr_t)*env->_heap};
 }

@@ -375,7 +375,7 @@ void par_parIns(Parser *a) {
             a->p--;
             variable vaa;
             scos_gv(&a->scopes, t.value, &vaa);
-            if((!(ISNUM(vaa.type)&&ISNUM(a->lit)))&&(!(ISSTR(vaa.type)&&ISSTR(a->lit)))) error("types mismatch!");
+            if((!(ISNUM(vaa.type)&&ISNUM(a->lit)))&&(!(ISSTR(vaa.type)&&ISSTR(a->lit)))) error("types mismatch! vaa.type=%x, lit=%x!", vaa.type, a->lit);
             par_render(a, (Vm){STORE, IDX|selsz(vaa.id), vaa.id});
             break;
         }
@@ -548,6 +548,25 @@ void par_parFact(Parser *a) {
             scos_gv(&a->scopes, name, &var);
             if(!var.name) error("Undefined variable: \'%s\', %llx", name, var.id);
             par_render(a, (Vm){LOAD, IDX|selsz(var.id), var.id});
+        }
+    }
+    else if(au.type==LCALL) {
+        Token method=par_nexti(a);
+        if(method.type!=ID) error("Expected name function!");
+        Token ntam=par_nexti(a);
+        if(ntam.type!=LBRACE) error("expected '('!");
+        a->p++;
+        par_parExpr(a);
+        if(par_next(a).type!=RBRACE) error("expected )!");
+        for(uint64_t i=0; i<a->imports.s; i++) {
+            Import ppp=*((Import *)cv_eptr(&a->imports, i));
+            if(imp_cont(&ppp, method.value)) {
+                ds aaa=strdup(ppp.name);
+                ds_cat(&aaa, ".", method.value, NULL);
+                size_t k=par_heapIns(a, aaa);
+                par_render(a, (Vm){CALL, LIBRARY|selszu(k), k});
+                break;
+            }
         }
     }
     else {

@@ -79,7 +79,7 @@ exit(0x08);\
 #define INT 0x40
 #define LONG 0x50
 #define STR 0x60 // string in HEAP
-#define LIBRARY 0x70
+#define LIBRARY STR
 #define PTR 0x80
 #define IDX 0x90
 #define PSTR 0xA0 // string in POOL

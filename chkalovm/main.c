@@ -2,7 +2,7 @@
 #include "../chkapi.h"
 
 void *env_alloc(ChkEnv *e, size_t s) {
-    printf("Env_alloc! \r\n");
+    //printf("Env_alloc! \r\n");
     if(s>=*e->_hs) {
         *e->_heap=realloc(*e->_heap, *e->_hs=s<<1);
     }
@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
                 env._hp=&hp;
                 env._hs=&hs;
                 env.alloc=env_alloc;
-                a=func(1, &a, &env);
-                if(a.type) cv_push(&stack, &a);
+                g=func(1, &a, &env);
+                cv_push(&stack, &g);
                 dlclose(h);
                 break;
             }
@@ -195,11 +195,13 @@ int main(int argc, char **argv) {
         }
     }
     cv_free(&stack);
-    printf("Heap: ");
-    for(int i=0; i<hp; i++) {
-        printf("%c", heap[i]);
+    if(debug) {
+        printf("Heap: ");
+        for(int i=0; i<hp; i++) {
+            printf("%c", heap[i]);
+        }
+        puts("\r\nHeap end");
     }
-    puts("\r\nHeap end");
     free(heap);
     cv_free(&vars);
     return 0;
