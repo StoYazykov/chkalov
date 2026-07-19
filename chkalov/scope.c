@@ -60,10 +60,10 @@ void scos_addv(ScopeStack *a, ds vn, unsigned char vt) {
 void scos_gv(ScopeStack *a, ds vn, variable *b) {
     printf("scos_gv: searching '%s' (len=%zu)\n", vn, strlen(vn));
     Scope *ap;
-    size_t i;
+    ssize_t i;
     b->name=NULL;
     printf("a->scopes.s: %llu\r\n", a->scopes.s);
-    for(i=a->scopes.s-1; i>=0; i++) {
+    for(i=a->scopes.s-1; i>=0; i--) {
         printf("Iteration %llu\r\n", i);
         ap=(Scope *)cv_eptr(&a->scopes, i);
         sco_gv(ap, vn, b);

@@ -13,6 +13,7 @@ Slot println(size_t argc, Slot *argp, ChkEnv *env) {
 }
 
 Slot readln(size_t argc, Slot *argp, ChkEnv *env) {
+    print(argc, argp, env);
     char *mem=env->alloc(env, 256);
     fgets(mem, 256, stdin);
     return (Slot){STR, mem-(uintptr_t)*env->_heap};
