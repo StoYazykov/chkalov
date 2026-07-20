@@ -64,14 +64,15 @@ exit(0x08);\
 #define IFB 0x16    // if big >
 #define IFBE 0x17   // if big or equal >=
 #define IFLE 0x18   // if less or equal <=
+#define JUMP 0x19
 
-#define SETFIELD 0x19
-#define GETFIELD 0x1A
+#define SETFIELD 0x1A
+#define GETFIELD 0x1B
+
 
 // ----------------------------------------------//
 //            Types definitions!                 //
 // ----------------------------------------------//
-
 
 #define CHAR 0x10
 #define XSHORT 0x20
@@ -82,8 +83,6 @@ exit(0x08);\
 #define LIBRARY STR
 #define PTR 0x80
 #define IDX 0x90
-#define PSTR 0xA0 // string in POOL
-#define NOL 0xB0
 
 #define sz(type) (sizeof(type))
 

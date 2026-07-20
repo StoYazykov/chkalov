@@ -189,7 +189,12 @@ void par_par(Parser *a, const ds l) {
             cv_push(&a->file, &t);
             continue;
         }
-
+        IFCS(l+pos, "if", 2) {
+            pos+=2;
+            t=(Token){IF, strdup("if")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         if(isalpha(l[pos])) { // ID
             size_t start=pos;
             while(pos<strlen(l)&&isalnum(l[pos])) pos++;
@@ -220,6 +225,9 @@ void par_par(Parser *a, const ds l) {
                     i++;
                     switch(l[i]) {
                         case 'n': t.value[sp++]='\n'; break;
+                        case 'b': t.value[sp++]='\b'; break;
+                        case 'r': t.value[sp++]='\r'; break;
+                        case 'a': t.value[sp++]='\a'; break;
                         case '\\': t.value[sp++]='\\'; break;
                         default: i--; break;
                     }
@@ -369,7 +377,7 @@ void par_parIns(Parser *a) {
         }
         case ID: {
             Token ja=par_nexti(a);
-            if(ja.type!=ASSIGN) error("expected '='!");
+            if(ja.type!=ASSIGN) error("case ID: expected '=', detected '%s'", ja.value);
             a->p++;
             par_parExpr(a);
             a->p--;
@@ -392,7 +400,7 @@ void par_parIns(Parser *a) {
         case NOT: {
             break;
         }
-        //default: p++;
+        default: a->p++;
     }
 }
 
@@ -409,7 +417,7 @@ char par_stt(const ds s) {
     if(SEQU(s, "Char")) return CHAR;
     if(SEQU(s, "String")) return STR;
     if(SEQU(s, "Long")) return LONG;
-    return NOL;
+    return 0;
 }
 
 bool imp_cont(Import *a, ds b) {
@@ -422,53 +430,43 @@ void imp_add(Import *a, ds z) {
     ds copy=strdup(z);
     cv_push(&a->funcs, &copy);
 }
-/*void Parser::parseIf() {
-    if(file[++p].type!=LBRACE) {
-        error("Expected ( after if!");
+
+void par_parIf(Parser *a){
+    if(par_nexti(a).type!=LBRACE) {
+        error("Expected '(' after if!");
     }
-    scopes.enterScope();
-    p++;
-    Token x=file[p++], y=file[p++], z=file[p++];
-    if(debug) cout << "x: " << x.value << " y: " << y.value << " z: "  << z.value << '!' << endl;
-    Vm u, o;
-    if(debug) cout << "ok" << endl;
-    if(x.type==ID) u={LOAD, seltypeu(scopes.getVar(x.value).id), scopes.getVar(x.value).id};
-    else u={PUSH, seltype(atoll(x.value.c_str())), atoll(x.value.c_str())};
-    if(z.type==ID) o={LOAD, seltypeu(scopes.getVar(x.value).id), scopes.getVar(x.value).id};
-    else o={PUSH, seltype(atoll(z.value.c_str())), atoll(z.value.c_str())};
+    scos_es(&a->scopes);
+    a->p++;
+    par_parExpr(a);
+    Token y=par_next(a);
+    printf("y value: %s \r\n", y.value);
+    a->p++;
+    par_parExpr(a);
+    a->p++;
+    printf("value: %s \r\n", par_next(a).value);
     switch(y.type) {
         case EQ: {
-            render(u);
-            render(o);
-            uint64_t cs=code.size();
-            if(debug) cout << "size: " << code.size() << endl;
-            render({IFNE, ADDR, 0});
-            if(debug) cout << " CS: " << cs << '!' << endl;
-            parseBlock();
-            if(debug) cout << " code.size(): " << code.size() << '!' << endl;
-            uint64_t tar=code.size();
-            cout << "PATCH: cs=" << cs << " cs+2=" << cs+2 << " tar=" << tar << dec << " (0x" << hex << tar << ")" << endl;
-            memcpy(code.data()+cs+2, &tar, sz(tar));
+            uint64_t cs=a->code.s;
+            char *cd;
+            par_render(a, (Vm){IFNE, PTR|8, 0x00});
+            puts("before parBlock");
+            par_parBlock(a);
+            uint64_t tar=0, shift=8-selszu(tar);
+            memmove(a->code.d+cs+2+selszu(tar), a->code.d+cs+10, a->code.s-(cs+10));
+            a->code.s-=shift;
+            printf("shift: %llx \r\n", shift);
+            memcpy(a->code.d+cs+2, &tar, selszu(tar));
+            cd=((char*)a->code.d);
+            cd[cs+1]=(cd[cs+1]&0xF0)|selszu(tar);
             break;
         }
-//        case NEQ: {
-//            //render({PUSH, seltype(atoll(x.value.c_str()))});
-//            //render({PUSH, seltype(atoll(z.value.c_str()))});
-//            render({IFE, ADDR, 0});
-//            uint64_t cs=code.size()-1;
-//            if(debug) cout << " CS: " << cs << '!' << endl;
-//            parseBlock();
-//            if(debug) cout << " code.size(): " << code.size() << '!' << endl;
-//            break;
-//        }
     }
-}*/
-
-void par_parIf(Parser *a){};
+}
 
 void par_parBlock(Parser *a) {
     a->p++;
     while(a->p<a->file.s&&par_next(a).type!=RPAREN) {
+        printf("a->p: %llu value: '%s'", a->p, par_next(a).value);
         par_parIns(a);
     }
     //p++;
@@ -546,7 +544,7 @@ void par_parFact(Parser *a) {
         } else {
             variable var;
             scos_gv(&a->scopes, name, &var);
-            if(!var.name) error("Undefined variable: \'%s\', %llx", name, var.id);
+            if(!var.name) error("Undeclared variable \'%s\'", name);
             par_render(a, (Vm){LOAD, IDX|selsz(var.id), var.id});
         }
     }

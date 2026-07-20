@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
         "ifb",
         "ifbe",
         "ifle",
+        "jump",
         "setfield",
         "getfield"
     };
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
         memcpy(&v, c+i, ty&0x0f);
         i+=ty&0x0f;
         printf(" %-4x:  %-10s", i, opcodes[o]);
-        if(ty) printf("%-10s%llx", types[(ty&0xf0)>>4], v);
+        if(ty) printf("%-10s%-10llx(%llu)", types[(ty&0xf0)>>4], v, ty&0x0F);
         printf(" \r\n");
     }
 PEND:

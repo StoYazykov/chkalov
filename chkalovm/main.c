@@ -45,7 +45,6 @@ int main(int argc, char **argv) {
     cv_resize(&vm, t);
     fread(vm.d, 1, t, a);
     int64_t tmp;
-    if(debug) printf("t: %d ! \r\n", t);
     unsigned char o,ty;
     int64_t v;
     i=0;
@@ -192,8 +191,18 @@ int main(int argc, char **argv) {
                 cv_push(&stack, &f);
                 break;
             }
+            case IFNE: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                if(g.value!=h.value) {
+                    printf("ifne: jumping to %llx... \r\n", v);
+                    i=v;
+                }
+                continue;
+            }
         }
     }
+    printf("Ended on instruction pointer %llx \r\n", i);
     cv_free(&stack);
     if(debug) {
         printf("Heap: ");
