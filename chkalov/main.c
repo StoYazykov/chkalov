@@ -16,7 +16,9 @@ int main(int argc, char **argv) {
     par_init(&parser, argv[1], argv[2], false);
     printf("Before par_parFile...\n");
     par_parFile(&parser);
-    printf("Before par_free...\n");
+    puts("\r\n=== AST TREE ===");
+    ast_print((AstNode *)parser.root, 0);
+    printf("\r\nBefore par_free...\n");
     par_free(&parser);
     printf("Done!\n");
     return 0;

@@ -26,7 +26,8 @@ COMPILER_SRC = $(CHKALOV_SRC)/main.c \
                $(CHKALOV_SRC)/token.c \
                $(CHKALOV_DIR)/ds.c \
                $(CHKALOV_DIR)/cv.c \
-	       $(CHKALOV_DIR)/chkalov.c
+	       $(CHKALOV_DIR)/chkalov.c \
+	       $(CHKALOV_SRC)/ast.c
 
 STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.c \

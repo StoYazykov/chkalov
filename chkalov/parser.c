@@ -5,38 +5,78 @@
 
 static Scope nullscope;
 
+void par_parFile(Parser *a) {
+    a->p=0;
+    Token *z, *t;
+    while(a->p<a->file.s) {
+        t=par_this(a);
+        printf("p=%llu t->value: %s \r\n", a->p, t->value);
+        a->p++;
+        switch(t->type) {
+            case LCALL: {
+                puts("lcall");
+                AstStmtCall *asc;
+                AstExprLiteral *ael;
+                expect(a, ID, "ID");
+                expect(a, LBRACE, "\'(\'");
+                z=par_this(a);
+                printf("p=%llu z->value: %s \r\n", a->p, z->value);
+                ael=ast_create_literal(z->type, z->value);
+                asc=ast_create_call("println", (AstNode *)ael);
+                ast_add((AstNode *)a->root, (AstNode *)asc);
+                break;
+            }
+            default: ++a->p;
+        }
+    }
+}
+
+void codegen(AstNode *node, Parser *a) {
+    if(!node) return;
+    switch(node->type) {
+        case AST_PROGRAM: {
+            AstProgram *prog=(AstProgram *)node;
+            for(size_t i=0; i<prog->count; i++) {
+                codegen(prog->stats[i], a);
+            }
+            break;
+        }
+
+    }
+}
+
+void expect(Parser *a, TokenType t, char *s) {
+    if(par_this(a)->type==t) a->p++;
+    else error("Expected %s, detected: %s", s, par_this(a)->value);
+}
+
+Token *par_this(Parser *a) {
+    return (Token *)cv_eptr(&a->file, a->p);
+}
+Token *par_next(Parser *a) {
+    return (Token *)cv_eptr(&a->file, ++a->p);
+}
+
 void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
-    printf("  memset...\n");
     memset(n, 0, sizeof(Parser));
-    printf("  cv_init code...\n");
     cv_init(&n->code, 256, sizeof(unsigned char));
-    printf("  init (malloc) heap...\n");
     n->hp=0;
     n->heap=malloc(n->hs=1024);
-    printf("  cv_init file...\n");
-    cv_init(&n->file, 16, sizeof(Token));
-    printf("  cv_init imports...\n");
+    n->root=ast_create_program();
     cv_init(&n->imports, 4, sizeof(Import));
-    printf("  scos_init...\n");
     scos_init(&n->scopes);
     scos_es(&n->scopes);
-
-    printf("  getenv...\n");
+    cv_init(&n->file, 16, sizeof(Token));
     char *env=getenv("CHKALOV");
     printf("  env ptr = %p\n", (void*)env);
     if(!env) {
         printf("  CHKALOV is NULL!\n");
         return;
     }
-    printf("  env = '%s'\n", env);
-
-    printf("  strdup...\n");
     ds yyy=strdup(env);
-    printf("  env_copy = '%s'\n", yyy);
     ds_cat(&yyy, "/imports-table.txt", NULL);
     printf("  yyy = '%s'\n", yyy);
     n->fn=strdup(fno);
-    // ...
     FILE *a=fopen(yyy, "r");
     if(!a) error("Imports table not found!");
     char sa[128], section[128];
@@ -66,7 +106,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     ds x;
     while(!feof(a)) {
         ds_gl(&x, a);
-        par_par(n, x);
+        par_lexer(n, x);
     }
     fclose(a);
 }
@@ -84,51 +124,6 @@ void par_render(Parser *a, Vm vm) {
 }
 
 void par_free(Parser *z) {
-    /*par_render(z, (Vm){ALLOC, PTR|0x01, 8});
-    par_render(z, (Vm){STORE, IDX|0x00, 0});
-    par_render(z, (Vm){PUSH, INT|0x01, 52});
-    par_render(z, (Vm){LOAD, IDX|0x00, 0});
-    par_render(z, (Vm){SETFIELD, PTR|0x00});
-    par_render(z, (Vm){LOAD, IDX|0x00, 0});
-    par_render(z, (Vm){GETFIELD, IDX|0x01, 0x00});
-    par_render(z, (Vm){CALL, 0x00, 0x00});*/
-
-    /*смещение выделенного лежит на стеке.
-    Уже.
-    А вот значение, мы передаём в сетфиелде.*/
-
-    /* a вот с гетфилдом, наоборот.
-     * Смещение мы кладём ему в аргументы, а основной пойнтер на стеке.
-     * Компилер видит класс:
-     * class Point {
-    Int x
-    Int y
-    }
-
-    alloc 8
-    store 0
-    push 52
-    load 0
-    setfield 0
-    load 0
-    getfield 0
-    call 0
-
-    var p: Point
-    p.x=52
-    var a=p.x; // Int
-    и
-    alloc 8
-    store 0
-    load 0
-    push 52
-    setfield 0
-    load 0
-    getfield
-
-
-    */
-
     printf("par_free: fn = '%s'\n", z->fn);
     FILE *fp = fopen(z->fn, "wb");
     printf("par_free: fp = %p\n", (void*)fp);
@@ -145,15 +140,18 @@ void par_free(Parser *z) {
     fclose(fp);
     free(z->heap);
     cv_free(&z->code);
-    Token *fip;
-    for(i=0; i<z->file.s; i++) {
-        fip=cv_eptr(&z->file, i);
-        free(fip->value);
-    }
-    cv_free(&z->file);
+    ast_free((AstNode *)z->root);
 }
 
-void par_par(Parser *a, const ds l) {
+size_t par_heapIns(Parser *a, ds k) {
+    if(strlen(k)>=a->hs) a->heap=realloc(a->heap, a->hs=strlen(k)<<1);
+    memcpy(a->heap+a->hp, k, strlen(k)+1);
+    size_t r=a->hp;
+    a->hp+=strlen(k)+1;
+    return r;
+}
+
+void par_lexer(Parser *a, ds l) {
     Token t;
     uint64_t pos=0;
     while(pos<strlen(l)) {
@@ -204,7 +202,7 @@ void par_par(Parser *a, const ds l) {
             cv_push(&a->file, &t);
             continue;
         }
-        if(isdigit(l[pos])) { // число
+        if(isdigit(l[pos])) {
             size_t start=pos;
             while(pos<strlen(l)&&isdigit(l[pos])) pos++;
             t.type=NUMBER;
@@ -213,7 +211,7 @@ void par_par(Parser *a, const ds l) {
             cv_push(&a->file, &t);
             continue;
         }
-        if(l[pos]=='\"') { // строка
+        if(l[pos]=='\"') {
             size_t start=++pos;
             while(pos<strlen(l)&&l[pos]!='\"') pos++;
             t.type=STRING;
@@ -236,7 +234,6 @@ void par_par(Parser *a, const ds l) {
                 t.value[sp]=l[i];
             }
             pos++;
-            //ds_sub(&t.value, l, start, pos++-start);
             cv_push(&a->file, &t);
             continue;
         }
@@ -311,263 +308,14 @@ void par_par(Parser *a, const ds l) {
     }
 }
 
-Token par_next(Parser *a) {
-    return *((Token *)cv_eptr(&a->file, a->p));
-}
-
-Token par_nexti(Parser *a) {
-    return *((Token *)cv_eptr(&a->file, ++a->p));
-}
-
-void par_parIns(Parser *a) {
-    Token t;
-    t=par_next(a);
-    switch(t.type) {
-        case LPAREN: {
-            scos_es(&a->scopes);
-            par_parBlock(a);
-            break;
-        }
-        case RPAREN: {
-            scos_ex(&a->scopes);
-            break;
-        }
-        case LCALL: {
-            Token method=par_nexti(a);
-            if(method.type!=ID) error("Expected name function!");
-            Token ntam=par_nexti(a);
-            if(ntam.type!=LBRACE) error("expected '('!");
-            a->p++;
-            par_parExpr(a);
-            if(par_next(a).type!=RBRACE) error("expected )!");
-            for(uint64_t i=0; i<a->imports.s; i++) {
-                Import ppp=*((Import *)cv_eptr(&a->imports, i));
-                if(imp_cont(&ppp, method.value)) {
-                    ds aaa=strdup(ppp.name);
-                    ds_cat(&aaa, ".", method.value, NULL);
-                    size_t k=par_heapIns(a, aaa);
-                    par_render(a, (Vm){CALL, LIBRARY|selszu(k), k});
-                    break;
-                }
-            }
-            break;
-        }
-        case FUN: {
-            Token funcname=par_nexti(a);
-            if(par_nexti(a).type!=LPAREN) error("Expected {!");
-            break;
-        }
-        case VAR: {
-            Token vt=par_nexti(a);
-            Token name;
-            char type=par_stt(vt.value);
-            if(par_nexti(a).type!=COLON) error("Expected ':' !");
-            do {
-                //if(debug) cout << "VAR loop: p=" << p << " token=" << par_next(a) << " type=" << file[p].type << endl;
-                name=par_nexti(a);
-                if(name.type!=ID) error("Expected variable name!");
-                scos_addv(&a->scopes, name.value, type);
-                par_render(a, (Vm){PUSH, type|0, 0});
-                par_render(a, (Vm){STORE, IDX|selsz(sco_ggi()), sco_ggi()});
-                //if(debug) cout << "Var: " << name.value << " type: " << vt.value << endl;
-                a->p++;
-            } while(a->p<a->file.s&&par_next(a).type==COMMA);
-            a->p--;
-            break;
-        }
-        case ID: {
-            Token ja=par_nexti(a);
-            if(ja.type!=ASSIGN) error("case ID: expected '=', detected '%s'", ja.value);
-            a->p++;
-            par_parExpr(a);
-            a->p--;
-            variable vaa;
-            scos_gv(&a->scopes, t.value, &vaa);
-            if((!(ISNUM(vaa.type)&&ISNUM(a->lit)))&&(!(ISSTR(vaa.type)&&ISSTR(a->lit)))) error("types mismatch! vaa.type=%x, lit=%x!", vaa.type, a->lit);
-            par_render(a, (Vm){STORE, IDX|selsz(vaa.id), vaa.id});
-            break;
-        }
-        case IF: {
-            par_parIf(a);
-            break;
-        }
-        case CLASS: {
-
-        }
-        case ENOF: {
-            break;
-        }
-        case NOT: {
-            break;
-        }
-        default: a->p++;
-    }
-}
-
-void par_parFile(Parser *a) {
-    for(a->p=0; a->p<a->file.s; a->p++) {
-        printf("par_parFile: p=%zu, type=%d\n", a->p, ((Token*)cv_eptr(&a->file, a->p))->type);
-        par_parIns(a);
-    }
-};
-
-char par_stt(const ds s) {
-    if(SEQU(s, "Int")) return INT;
-    if(SEQU(s, "Xshort")) return XSHORT;
-    if(SEQU(s, "Char")) return CHAR;
-    if(SEQU(s, "String")) return STR;
-    if(SEQU(s, "Long")) return LONG;
-    return 0;
-}
-
 bool imp_cont(Import *a, ds b) {
     for(uint64_t i=0; i<a->funcs.s; i++) {
         if(SEQU(*(ds*)cv_eptr(&a->funcs, i), b)) return true;
     }
     return false;
 }
+
 void imp_add(Import *a, ds z) {
     ds copy=strdup(z);
     cv_push(&a->funcs, &copy);
-}
-
-void par_parIf(Parser *a){
-    if(par_nexti(a).type!=LBRACE) {
-        error("Expected '(' after if!");
-    }
-    scos_es(&a->scopes);
-    a->p++;
-    par_parExpr(a);
-    Token y=par_next(a);
-    printf("y value: %s \r\n", y.value);
-    a->p++;
-    par_parExpr(a);
-    a->p++;
-    printf("value: %s \r\n", par_next(a).value);
-    switch(y.type) {
-        case EQ: {
-            uint64_t cs=a->code.s;
-            char *cd;
-            par_render(a, (Vm){IFNE, PTR|8, 0x00});
-            puts("before parBlock");
-            par_parBlock(a);
-            uint64_t tar=0, shift=8-selszu(tar);
-            memmove(a->code.d+cs+2+selszu(tar), a->code.d+cs+10, a->code.s-(cs+10));
-            a->code.s-=shift;
-            printf("shift: %llx \r\n", shift);
-            memcpy(a->code.d+cs+2, &tar, selszu(tar));
-            cd=((char*)a->code.d);
-            cd[cs+1]=(cd[cs+1]&0xF0)|selszu(tar);
-            break;
-        }
-    }
-}
-
-void par_parBlock(Parser *a) {
-    a->p++;
-    while(a->p<a->file.s&&par_next(a).type!=RPAREN) {
-        printf("a->p: %llu value: '%s'", a->p, par_next(a).value);
-        par_parIns(a);
-    }
-    //p++;
-    //scopes.exitScope();
-}
-
-void par_parExpr(Parser *a) {
-    Token au;
-    par_parTerm(a);
-    while(a->p<a->file.s) {
-        au=par_next(a);
-        if(au.type==PLUS) {
-            a->p++;
-            par_parTerm(a);
-            par_render(a, (Vm){ADD});
-        } else if(au.type==MINUS) {
-            a->p++;
-            par_parTerm(a);
-            par_render(a, (Vm){SUB});
-        } else break;
-    }
-}
-
-void par_parTerm(Parser *a) {
-    Token au;
-    par_parFact(a);
-    while(a->p<a->file.s) {
-        au=par_next(a);
-        if(au.type==STAR) {
-            a->p++;
-            par_parFact(a);
-            par_render(a, (Vm){MUL});
-        } else if(au.type==SLASH) {
-            a->p++;
-            par_parFact(a);
-            par_render(a, (Vm){DIV});
-        } else break;
-    }
-}
-
-size_t par_heapIns(Parser *a, ds k) {
-    if(strlen(k)>=a->hs) a->heap=realloc(a->heap, a->hs=strlen(k)<<1);
-    memcpy(a->heap+a->hp, k, strlen(k)+1);
-    size_t r=a->hp;
-    a->hp+=strlen(k)+1;
-    return r;
-}
-
-void par_parFact(Parser *a) {
-    Token au=par_next(a);
-
-    if(au.type==NUMBER) {
-        a->p++;
-        par_render(a, (Vm){PUSH, LONG|selsz(atoll(au.value)), atoll(au.value)});
-    }
-    else if(au.type==STRING) {
-        a->p++;
-        size_t k=par_heapIns(a, au.value);
-        par_render(a, (Vm){PUSH, STR|selszu(k), k});
-    }
-    else if(au.type==LBRACE) {
-        a->p++;
-        par_parExpr(a);
-        if(par_next(a).type!=RBRACE) error("Expected ')'!");
-        Token *aap=(Token *)cv_eptr(&a->file, a->p+1);
-        if(a->p+1<a->file.s&&(aap->type==STAR||aap->type==SLASH)) {
-            a->p++;
-        }
-    }
-   else if(au.type==ID) {
-        a->p++;
-        ds name=au.value;
-
-        if(a->p<a->file.s&&((Token *)cv_eptr(&a->file, a->p))->type==LBRACE) {
-        } else {
-            variable var;
-            scos_gv(&a->scopes, name, &var);
-            if(!var.name) error("Undeclared variable \'%s\'", name);
-            par_render(a, (Vm){LOAD, IDX|selsz(var.id), var.id});
-        }
-    }
-    else if(au.type==LCALL) {
-        Token method=par_nexti(a);
-        if(method.type!=ID) error("Expected name function!");
-        Token ntam=par_nexti(a);
-        if(ntam.type!=LBRACE) error("expected '('!");
-        a->p++;
-        par_parExpr(a);
-        if(par_next(a).type!=RBRACE) error("expected )!");
-        for(uint64_t i=0; i<a->imports.s; i++) {
-            Import ppp=*((Import *)cv_eptr(&a->imports, i));
-            if(imp_cont(&ppp, method.value)) {
-                ds aaa=strdup(ppp.name);
-                ds_cat(&aaa, ".", method.value, NULL);
-                size_t k=par_heapIns(a, aaa);
-                par_render(a, (Vm){CALL, LIBRARY|selszu(k), k});
-                break;
-            }
-        }
-    }
-    else {
-        error("ParseFactor: Unexpected token \'%s\'!", au.value);
-    }
 }
