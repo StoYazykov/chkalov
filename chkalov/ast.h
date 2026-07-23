@@ -4,7 +4,7 @@
 #include "token.h"
 
 typedef enum {
-    AST_STMT_BLOCK,
+    AST_STMT_BLOCK=0,
     AST_STMT_CALL,
     AST_EXPR_LITERAL,
     AST_BINARY
@@ -42,6 +42,7 @@ AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, AstNode *arg);
 AstExprLiteral* ast_create_literal(TokenType t, char *v);
 AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r);
+AstNode *fold(AstNode *node);
 
 void ast_free(AstNode *node);
 

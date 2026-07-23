@@ -16,7 +16,7 @@ void imp_add(Import *a, ds z);
 
 typedef struct {
     ds fn;
-    bool debug;
+    int debug;
     cv code, file;
     char *heap;
     size_t hp, hs;
@@ -26,7 +26,7 @@ typedef struct {
     size_t p;
 } Parser;
 
-void par_init(Parser *a, const ds fni, const ds fno, bool deb);
+void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);
 void par_free(Parser *a);
 Token* par_this(Parser *a);
@@ -37,5 +37,6 @@ void expect(Parser *a, TokenType t, char *s);
 AstNode *par_par_primary(Parser *a);
 AstNode *par_par_term(Parser *a);
 AstNode *par_par_expr(Parser *a);
+void par_optim(Parser *a);
 
 #endif

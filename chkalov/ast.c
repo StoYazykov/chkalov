@@ -114,3 +114,43 @@ void ast_print(AstNode *node, int indent) {
         }
     }
 }
+
+AstNode *fold(AstNode *node) {
+    if(!node) return NULL;
+    switch(node->type) {
+        case AST_STMT_BLOCK: {
+            AstStmtBlock *block=(AstStmtBlock *)node;
+            for(size_t i=0; i<block->count; i++) {
+                block->stats[i]=fold((AstNode *)block->stats[i]);
+            }
+            return (AstNode *)block;
+        }
+        case AST_STMT_CALL: {
+            AstStmtCall *c=(AstStmtCall*)node;
+            c->arg=fold(c->arg);
+            return node;
+        }
+        case AST_EXPR_LITERAL: {
+            return node;
+        }
+        case AST_BINARY: {
+            AstBinary *b=(AstBinary *)node;
+            AstExprLiteral *l, *r;
+            b->left=fold(b->left);
+            b->right=fold(b->right);
+            l=(AstExprLiteral *)b->left, r=(AstExprLiteral *)b->right;
+            if(b->left->type!=AST_EXPR_LITERAL||b->right->type!=AST_EXPR_LITERAL) return node;
+            int64_t x=atoll(l->value), y=atoll(r->value), e;
+            switch(b->op) {
+                case PLUS: e=x+y; break;
+                case MINUS: e=x-y; break;
+                case STAR: e=x*y; break;
+                case SLASH: e=x/y; break;
+            }
+            ast_free(b);
+            char buf[32];
+            sprintf(buf, "%lld", e);
+            return (AstNode *)ast_create_literal(NUMBER, buf);
+        }
+    }
+}

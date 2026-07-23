@@ -11,15 +11,15 @@ void par_parFile(Parser *a) {
     a->p=0;
     while(a->p<a->file.s) {
         t=par_this(a);
-        printf("p=%llu t->value: %s \r\n", a->p, t->value);
+        if(a->debug) printf("p=%llu t->value: %s \r\n", a->p, t->value);
         switch(t->type) {
             case LCALL: {
-                puts("lcall");
+                if(a->debug) puts("lcall");
                 a->p++;
                 AstStmtCall *asc;
                 expect(a, ID, "ID");
                 expect(a, LBRACE, "\'(\'");
-                printf("this token: \'%s\' \r\n", par_this(a)->value);
+                if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
                 arg=par_par_expr(a);
                 asc=ast_create_call("println", arg);
                 ast_add((AstNode *)a->root, (AstNode *)asc);
@@ -46,7 +46,7 @@ void codegen(AstNode *node, Parser *a) {
             codegen(call->arg, a);
             j=par_heapIns(a, "stdcon.println");
             par_render(a, CALL, STR|selszu(j), j);
-            puts("call");
+            if(a->debug) puts("call");
             break;
         }
         case AST_EXPR_LITERAL: {
@@ -54,7 +54,7 @@ void codegen(AstNode *node, Parser *a) {
             AstExprLiteral *lit=(AstExprLiteral *)node;
             j=atol(lit->value);
             par_render(a, PUSH, LONG|selsz(j), j);
-            puts("push long");
+            if(a->debug) puts("push long");
             break;
         }
         case AST_BINARY: {
@@ -85,7 +85,7 @@ Token *par_next(Parser *a) {
     return (Token *)cv_eptr(&a->file, ++a->p);
 }
 
-void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
+void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     memset(n, 0, sizeof(Parser));
     cv_init(&n->code, 256, sizeof(unsigned char));
     n->hp=0;
@@ -95,15 +95,16 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     scos_init(&n->scopes);
     scos_es(&n->scopes);
     cv_init(&n->file, 16, sizeof(Token));
+    n->debug=deb;
     char *env=getenv("CHKALOV");
-    printf("  env ptr = %p\n", (void*)env);
+    if(n->debug) printf("  env ptr = %p\n", (void*)env);
     if(!env) {
         printf("  CHKALOV is NULL!\n");
         return;
     }
     ds yyy=strdup(env);
     ds_cat(&yyy, "/imports-table.txt", NULL);
-    printf("  yyy = '%s'\n", yyy);
+    if(n->debug) printf("  yyy = '%s'\n", yyy);
     n->fn=strdup(fno);
     FILE *a=fopen(yyy, "r");
     if(!a) error("Imports table not found!");
@@ -140,7 +141,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
 }
 
 void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v) {
-    printf("par_render: opcode=%x type=%x value=%llx\n", op, ty, v);
+    if(a->debug) printf("par_render: opcode=%x type=%x value=%llx\n", op, ty, v);
     cv_push(&a->code, &op);
     cv_push(&a->code, &ty);
     size_t sz=ty&0x0f;
@@ -149,13 +150,13 @@ void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v) {
 }
 
 void par_free(Parser *z) {
-    printf("par_free: fn = '%s'\n", z->fn);
+    if(z->debug) printf("par_free: fn = '%s'\n", z->fn);
     FILE *fp = fopen(z->fn, "wb");
-    printf("par_free: fp = %p\n", (void*)fp);
+    if(z->debug) printf("par_free: fp = %p\n", (void*)fp);
     uint32_t magic=0x05020100;
     uint64_t size=0, i, a, b, c; // 4 + 5 + 5 = 14 !!!!!
     fwrite(&magic, 1, sizeof(uint32_t), fp); ///// 0 2 1 5     9 0 0 0 0 10 0 0 0 0
-    puts("writing heap...");
+    if(z->debug) puts("writing heap...");
     size=z->hp;
     fwrite(&size, 1, sz(size), fp);
     fwrite(z->heap, 1, size, fp);
@@ -346,7 +347,7 @@ void imp_add(Import *a, ds z) {
 }
 
 AstNode *par_par_primary(Parser *a) {
-    puts("par primary start");
+    if(a->debug) puts("par primary start");
     Token t=*par_this(a);
     a->p++;
     switch(t.type) {
@@ -364,13 +365,13 @@ AstNode *par_par_primary(Parser *a) {
 
 AstNode *par_par_term(Parser *a) {
     Token op;
-    puts("par term start");
+    if(a->debug) puts("par term start");
     AstNode *l=par_par_primary(a);
-    printf("after calling primary (in term): p=%llu token='%s'\n", a->p, par_this(a)->value);
+    if(a->debug) printf("after calling primary (in term): p=%llu token='%s'\n", a->p, par_this(a)->value);
     while(a->p<a->file.s) {
         op=*par_this(a);
         if(!((op.type==STAR)||(op.type==SLASH))) {
-            printf("ne to! vmesto */ naydeno %s \r\n", op.value);
+            if(a->debug) printf("ne to! vmesto */ naydeno %s \r\n", op.value);
             break;
         }
         a->p++;
@@ -382,14 +383,14 @@ AstNode *par_par_term(Parser *a) {
 
 AstNode *par_par_expr(Parser *a) {
     Token op;
-    puts("par expr start");
+    if(a->debug) puts("par expr start");
     AstNode *l=par_par_term(a);
-    puts("after calling term (in expr)");
+    if(a->debug) puts("after calling term (in expr)");
     while(a->p<a->file.s) {
         op=*par_this(a);
-        printf("par_expr: op=\'%s\' \r\n", op.value);
+        if(a->debug) printf("par_expr: op=\'%s\' \r\n", op.value);
         if(!((op.type==PLUS)||(op.type==MINUS))) {
-            printf("ne to! vmesto +- naydeno %s \r\n", op.value);
+            if(a->debug) printf("ne to! vmesto +- naydeno %s \r\n", op.value);
             break;
         }
         a->p++;
@@ -397,4 +398,8 @@ AstNode *par_par_expr(Parser *a) {
         l=(AstNode *)ast_create_binary(op.type, l, r);
     }
     return l;
+}
+
+void par_optim(Parser *a) {
+    a->root=(AstStmtBlock *)fold((AstNode *)a->root);
 }
