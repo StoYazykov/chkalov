@@ -34,5 +34,8 @@ Token* par_next(Parser *a);
 void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v);
 void par_parFile(Parser *a);
 void expect(Parser *a, TokenType t, char *s);
+AstNode *par_par_primary(Parser *a);
+AstNode *par_par_term(Parser *a);
+AstNode *par_par_expr(Parser *a);
 
 #endif

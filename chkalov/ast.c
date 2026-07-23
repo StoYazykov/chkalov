@@ -91,19 +91,25 @@ void ast_print(AstNode *node, int indent) {
     switch(node->type) {
         case AST_STMT_BLOCK:
             puts("Program");
-            AstStmtBlock *p=(AstStmtBlock*)node;
-            for(size_t i=0; i<p->count; i++)
-                ast_print(p->stats[i], indent + 1);
+            AstStmtBlock *p=(AstStmtBlock *)node;
+            for(size_t i=0; i<p->count; i++) ast_print(p->stats[i], indent+1);
             break;
         case AST_STMT_CALL: {
-            AstStmtCall *c=(AstStmtCall*)node;
+            AstStmtCall *c=(AstStmtCall *)node;
             printf("CALL: %s \r\n", c->name);
-            ast_print(c->arg, indent + 1);
+            ast_print(c->arg, indent+1);
             break;
         }
         case AST_EXPR_LITERAL: {
-            AstExprLiteral *l=(AstExprLiteral*)node;
+            AstExprLiteral *l=(AstExprLiteral *)node;
             printf("LITERAL: %s \r\n", l->value);
+            break;
+        }
+        case AST_BINARY: {
+            AstBinary *b=(AstBinary *)node;
+            puts("BINARY");
+            ast_print(b->left, indent+1);
+            ast_print(b->right, indent+1);
             break;
         }
     }

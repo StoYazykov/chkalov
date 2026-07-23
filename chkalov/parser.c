@@ -6,23 +6,22 @@
 static Scope nullscope;
 
 void par_parFile(Parser *a) {
+    Token *t;
+    AstNode *arg;
     a->p=0;
-    Token *z, *t;
     while(a->p<a->file.s) {
         t=par_this(a);
         printf("p=%llu t->value: %s \r\n", a->p, t->value);
-        a->p++;
         switch(t->type) {
             case LCALL: {
                 puts("lcall");
+                a->p++;
                 AstStmtCall *asc;
-                AstExprLiteral *ael;
                 expect(a, ID, "ID");
                 expect(a, LBRACE, "\'(\'");
-                z=par_this(a);
-                printf("p=%llu z->value: %s \r\n", a->p, z->value);
-                ael=ast_create_literal(z->type, z->value);
-                asc=ast_create_call("println", (AstNode *)ael);
+                printf("this token: \'%s\' \r\n", par_this(a)->value);
+                arg=par_par_expr(a);
+                asc=ast_create_call("println", arg);
                 ast_add((AstNode *)a->root, (AstNode *)asc);
                 break;
             }
@@ -52,11 +51,23 @@ void codegen(AstNode *node, Parser *a) {
         }
         case AST_EXPR_LITERAL: {
             long j;
-            AstExprLiteral *lit;
-            lit=(AstExprLiteral *)node;
+            AstExprLiteral *lit=(AstExprLiteral *)node;
             j=atol(lit->value);
             par_render(a, PUSH, LONG|selsz(j), j);
             puts("push long");
+            break;
+        }
+        case AST_BINARY: {
+            AstBinary *bin=(AstBinary *)node;
+            codegen(bin->left, a);
+            codegen(bin->right, a);
+            switch(bin->op) {
+                case PLUS: par_render(a, ADD, 0, 0); break;
+                case MINUS: par_render(a, SUB, 0, 0); break;
+                case STAR: par_render(a, MUL, 0, 0); break;
+                case SLASH: par_render(a, DIV, 0, 0); break;
+                default: error("Unknown binary operator: %d", bin->op);
+            }
             break;
         }
     }
@@ -332,4 +343,58 @@ bool imp_cont(Import *a, ds b) {
 void imp_add(Import *a, ds z) {
     ds copy=strdup(z);
     cv_push(&a->funcs, &copy);
+}
+
+AstNode *par_par_primary(Parser *a) {
+    puts("par primary start");
+    Token t=*par_this(a);
+    a->p++;
+    switch(t.type) {
+        case NUMBER: return (AstNode *)ast_create_literal(NUMBER, t.value);
+        case LBRACE: {
+            AstNode *p;
+            expect(a, LBRACE, "'('");
+            p=par_par_expr(a);
+            a->p++;
+            expect(a, RBRACE, "')'");
+            return p;
+        }
+    }
+}
+
+AstNode *par_par_term(Parser *a) {
+    Token op;
+    puts("par term start");
+    AstNode *l=par_par_primary(a);
+    printf("after calling primary (in term): p=%llu token='%s'\n", a->p, par_this(a)->value);
+    while(a->p<a->file.s) {
+        op=*par_this(a);
+        if(!((op.type==STAR)||(op.type==SLASH))) {
+            printf("ne to! vmesto */ naydeno %s \r\n", op.value);
+            break;
+        }
+        a->p++;
+        AstNode *r=par_par_primary(a);
+        l=(AstNode *)ast_create_binary(op.type, l, r);
+    }
+    return l;
+}
+
+AstNode *par_par_expr(Parser *a) {
+    Token op;
+    puts("par expr start");
+    AstNode *l=par_par_term(a);
+    puts("after calling term (in expr)");
+    while(a->p<a->file.s) {
+        op=*par_this(a);
+        printf("par_expr: op=\'%s\' \r\n", op.value);
+        if(!((op.type==PLUS)||(op.type==MINUS))) {
+            printf("ne to! vmesto +- naydeno %s \r\n", op.value);
+            break;
+        }
+        a->p++;
+        AstNode *r=par_par_term(a);
+        l=(AstNode *)ast_create_binary(op.type, l, r);
+    }
+    return l;
 }
