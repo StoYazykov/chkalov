@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-AstProgram* ast_create_program() {
-    AstProgram *prog=malloc(sizeof(AstProgram));
-    prog->base.type=AST_PROGRAM;
+AstStmtBlock* ast_create_block() {
+    AstStmtBlock *prog=malloc(sizeof(AstStmtBlock));
+    prog->base.type=AST_STMT_BLOCK;
     prog->stats=NULL;
     prog->count=0;
     return prog;
@@ -29,8 +29,8 @@ AstExprLiteral* ast_create_literal(TokenType t, char *v) {
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
-        case AST_PROGRAM: {
-            AstProgram *p=(AstProgram*)node;
+        case AST_STMT_BLOCK: {
+            AstStmtBlock *p=(AstStmtBlock*)node;
             for(size_t i=0; i<p->count; i++) ast_free(p->stats[i]);
             free(p->stats);
             free(p);
@@ -54,9 +54,9 @@ void ast_free(AstNode *node) {
 
 void ast_add(AstNode *r, AstNode *n) {
     switch(r->type) {
-        case AST_PROGRAM: {
-            AstProgram *y;
-            y=(AstProgram *)r;
+        case AST_STMT_BLOCK: {
+            AstStmtBlock *y;
+            y=(AstStmtBlock *)r;
             y->stats=realloc(y->stats, sizeof(AstNode *)*(y->count+1));
             y->stats[y->count++]=(AstNode *)n;
             break;
@@ -73,9 +73,9 @@ void ast_add(AstNode *r, AstNode *n) {
 void ast_print(AstNode *node, int indent) {
     for(int i=0; i<indent; i++) printf("  ");
     switch(node->type) {
-        case AST_PROGRAM:
+        case AST_STMT_BLOCK:
             puts("Program");
-            AstProgram *p=(AstProgram*)node;
+            AstStmtBlock *p=(AstStmtBlock*)node;
             for(size_t i=0; i<p->count; i++)
                 ast_print(p->stats[i], indent + 1);
             break;

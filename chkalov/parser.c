@@ -34,10 +34,10 @@ void par_parFile(Parser *a) {
 void codegen(AstNode *node, Parser *a) {
     if(!node) return;
     switch(node->type) {
-        case AST_PROGRAM: {
-            AstProgram *prog=(AstProgram *)node;
-            for(size_t i=0; i<prog->count; i++) {
-                codegen(prog->stats[i], a);
+        case AST_STMT_BLOCK: {
+            AstStmtBlock *block=(AstStmtBlock *)node;
+            for(size_t i=0; i<block->count; i++) {
+                codegen(block->stats[i], a);
             }
             break;
         }
@@ -79,7 +79,7 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     cv_init(&n->code, 256, sizeof(unsigned char));
     n->hp=0;
     n->heap=malloc(n->hs=1024);
-    n->root=ast_create_program();
+    n->root=ast_create_block();
     cv_init(&n->imports, 4, sizeof(Import));
     scos_init(&n->scopes);
     scos_es(&n->scopes);

@@ -21,7 +21,7 @@ typedef struct {
     char *heap;
     size_t hp, hs;
     cv imports;
-    AstProgram *root;
+    AstStmtBlock *root;
     ScopeStack scopes;
     size_t p;
 } Parser;

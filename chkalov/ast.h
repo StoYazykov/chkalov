@@ -4,7 +4,7 @@
 #include "token.h"
 
 typedef enum {
-    AST_PROGRAM,
+    AST_STMT_BLOCK,
     AST_STMT_CALL,
     AST_EXPR_LITERAL
 } AstNodeType;
@@ -17,7 +17,7 @@ typedef struct {
     AstNode base;
     AstNode **stats;
     size_t count;
-} AstProgram;
+} AstStmtBlock;
 
 typedef struct {
     AstNode base;
@@ -31,7 +31,7 @@ typedef struct {
     char *value;
 } AstExprLiteral;
 
-AstProgram* ast_create_program();
+AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, AstNode *arg);
 AstExprLiteral* ast_create_literal(TokenType t, char *v);
 
