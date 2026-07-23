@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     cv_init(&stack, 8, sz(Slot));
     cv_init(&vars, 8, sz(Slot));
     fread(&t, 1, sz(uint64_t), a);
-    if(t>hs) heap=realloc(heap, hs<<=1);
+    heap=realloc(heap, (t>hs)?hs<<=1:hs);
     fread(heap, 1, t, a);
     hp+=t;
     fread(&t, 1, sz(t), a);

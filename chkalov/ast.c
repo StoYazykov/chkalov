@@ -57,8 +57,14 @@ void ast_add(AstNode *r, AstNode *n) {
         case AST_PROGRAM: {
             AstProgram *y;
             y=(AstProgram *)r;
-            y->stats=realloc(y->stats, sizeof(AstNode *)*y->count+1);
+            y->stats=realloc(y->stats, sizeof(AstNode *)*(y->count+1));
             y->stats[y->count++]=(AstNode *)n;
+            break;
+        }
+        case AST_STMT_CALL: {
+            AstStmtCall *y;
+            y=(AstStmtCall *)r;
+            y->arg=n;
             break;
         }
     }

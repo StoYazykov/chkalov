@@ -17,7 +17,6 @@ void imp_add(Import *a, ds z);
 typedef struct {
     ds fn;
     bool debug;
-    char lit;
     cv code, file;
     char *heap;
     size_t hp, hs;
@@ -32,6 +31,7 @@ size_t par_heapIns(Parser *a, ds k);
 void par_free(Parser *a);
 Token* par_this(Parser *a);
 Token* par_next(Parser *a);
+void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v);
 void par_parFile(Parser *a);
 void expect(Parser *a, TokenType t, char *s);
 

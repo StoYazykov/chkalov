@@ -41,7 +41,24 @@ void codegen(AstNode *node, Parser *a) {
             }
             break;
         }
-
+        case AST_STMT_CALL: {
+            size_t j;
+            AstStmtCall *call=(AstStmtCall *)node;
+            codegen(call->arg, a);
+            j=par_heapIns(a, "stdcon.println");
+            par_render(a, CALL, STR|selszu(j), j);
+            puts("call");
+            break;
+        }
+        case AST_EXPR_LITERAL: {
+            long j;
+            AstExprLiteral *lit;
+            lit=(AstExprLiteral *)node;
+            j=atol(lit->value);
+            par_render(a, PUSH, LONG|selsz(j), j);
+            puts("push long");
+            break;
+        }
     }
 }
 
@@ -111,16 +128,13 @@ void par_init(Parser *n, const ds fni, const ds fno, bool deb) {
     fclose(a);
 }
 
-void par_render(Parser *a, Vm vm) {
-    printf("par_render: opcode=%x type=%x value=%llx\n", vm.opcode, vm.type, (long long)vm.value);
-    unsigned char op=vm.opcode, ty=vm.type;
+void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v) {
+    printf("par_render: opcode=%x type=%x value=%llx\n", op, ty, v);
     cv_push(&a->code, &op);
     cv_push(&a->code, &ty);
     size_t sz=ty&0x0f;
-    int64_t v=vm.value;
     unsigned char *p=(unsigned char*)&v;
     for(size_t i=0ULL;i<sz;i++) cv_push(&a->code, &p[i]);
-    a->lit=vm.type;
 }
 
 void par_free(Parser *z) {
