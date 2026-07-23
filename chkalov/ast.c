@@ -26,6 +26,15 @@ AstExprLiteral* ast_create_literal(TokenType t, char *v) {
     return lit;
 }
 
+AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r) {
+    AstBinary *bin=malloc(sizeof(AstBinary));
+    bin->base.type=AST_BINARY;
+    bin->op=t;
+    bin->left=l;
+    bin->right=r;
+    return bin;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
@@ -47,6 +56,13 @@ void ast_free(AstNode *node) {
             AstExprLiteral *l=(AstExprLiteral *)node;
             free(l->value);
             free(l);
+            break;
+        }
+        case AST_BINARY: {
+            AstBinary *b=(AstBinary *)node;
+            ast_free(b->left);
+            ast_free(b->right);
+            free(b);
             break;
         }
     }
