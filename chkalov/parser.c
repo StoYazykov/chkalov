@@ -11,7 +11,7 @@ void par_parFile(Parser *a) {
     a->p=0;
     while(a->p<a->file.s) {
         t=par_this(a);
-        if(a->debug) printf("p=%llu t->value: %s \r\n", a->p, t->value);
+        //if(a->debug) printf("p=%llu t->value: %s \r\n", a->p, t->value);
         switch(t->type) {
             case LCALL: {
                 if(a->debug) puts("lcall");
@@ -347,16 +347,14 @@ void imp_add(Import *a, ds z) {
 }
 
 AstNode *par_par_primary(Parser *a) {
-    if(a->debug) puts("par primary start");
     Token t=*par_this(a);
+    if(a->debug) puts("par primary start");
     a->p++;
     switch(t.type) {
         case NUMBER: return (AstNode *)ast_create_literal(NUMBER, t.value);
         case LBRACE: {
             AstNode *p;
-            expect(a, LBRACE, "'('");
             p=par_par_expr(a);
-            a->p++;
             expect(a, RBRACE, "')'");
             return p;
         }
