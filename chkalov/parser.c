@@ -50,11 +50,22 @@ void codegen(AstNode *node, Parser *a) {
             break;
         }
         case AST_EXPR_LITERAL: {
-            long j;
+            long long j;
             AstExprLiteral *lit=(AstExprLiteral *)node;
-            j=atol(lit->value);
-            par_render(a, PUSH, LONG|selsz(j), j);
-            if(a->debug) puts("push long");
+            switch(lit->type) {
+                case NUMBER: {
+                    j=atoll(lit->value);
+                    par_render(a, PUSH, LONG|selsz(j), j);
+                    if(a->debug) puts("push long");
+                    break;
+                }
+                case STRING: {
+                    j=par_heapIns(a, lit->value);
+                    par_render(a, PUSH, STR|selszu(j), j);
+                    if(a->debug) puts("push string");
+                    break;
+                }
+            }
             break;
         }
         case AST_BINARY: {
@@ -358,6 +369,7 @@ AstNode *par_par_primary(Parser *a) {
             expect(a, RBRACE, "')'");
             return p;
         }
+        case STRING: return(AstNode *)ast_create_literal(STRING, t.value);
     }
 }
 
