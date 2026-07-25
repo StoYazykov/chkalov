@@ -7,7 +7,9 @@ typedef enum {
     AST_STMT_BLOCK=0,
     AST_STMT_CALL,
     AST_EXPR_LITERAL,
-    AST_BINARY
+    AST_BINARY,
+    AST_EXPR_VARIABLE,
+    AST_STMT_ASSIGN
 } AstNodeType;
 
 typedef struct {
@@ -37,6 +39,17 @@ typedef struct {
     unsigned char op;
     AstNode *left, *right;
 } AstBinary;
+
+typedef struct {
+    AstNode base;
+    char *name;
+    AstNode *value;
+} AstStmtAssign;
+
+typedef struct {
+    AstNode base;
+    char *name;
+} AstExprVariable;
 
 AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, AstNode *arg);

@@ -35,6 +35,21 @@ AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r) {
     return bin;
 }
 
+AstExprVariable *ast_create_variable(char *n) {
+    AstExprVariable *var=malloc(sizeof(AstExprVariable));
+    var->name=strdup(n);
+    var->base.type=AST_EXPR_VARIABLE;
+    return var;
+}
+
+AstStmtAssign *ast_create_assign(char *n, AstNode *v) {
+    AstStmtAssign *ass=malloc(sizeof(AstStmtAssign));
+    ass->name=strdup(n);
+    ass->value=v;
+    ass->base.type=AST_STMT_ASSIGN;
+    return ass;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
@@ -63,6 +78,17 @@ void ast_free(AstNode *node) {
             ast_free(b->left);
             ast_free(b->right);
             free(b);
+            break;
+        }
+        case AST_STMT_ASSIGN: {
+            AstStmtAssign *a=(AstStmtAssign *)node;
+            ast_free(a->value);
+            free(a->name);
+            break;
+        }
+        case AST_EXPR_VARIABLE: {
+            AstExprVariable *v=(AstExprVariable *)node;
+            free(v->name);
             break;
         }
     }
@@ -110,6 +136,18 @@ void ast_print(AstNode *node, int indent) {
             puts("BINARY");
             ast_print(b->left, indent+1);
             ast_print(b->right, indent+1);
+            break;
+        }
+        case AST_STMT_ASSIGN: {
+            AstStmtAssign *a=(AstStmtAssign *)node;
+            puts("ASSIGN");
+            printf("  NAME: %s \r\n", a->name);
+            ast_print(a->value, indent+1);
+            break;
+        }
+        case AST_EXPR_VARIABLE: {
+            AstExprVariable *v=(AstExprVariable *)node;
+            printf("VARIABLE \r\n  NAME: %s \r\n", v->name);
             break;
         }
     }

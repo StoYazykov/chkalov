@@ -6,27 +6,11 @@
 static Scope nullscope;
 
 void par_parFile(Parser *a) {
-    Token *t;
-    AstNode *arg;
+    AstNode *an;
     a->p=0;
     while(a->p<a->file.s) {
-        t=par_this(a);
-        //if(a->debug) printf("p=%llu t->value: %s \r\n", a->p, t->value);
-        switch(t->type) {
-            case LCALL: {
-                if(a->debug) puts("lcall");
-                a->p++;
-                AstStmtCall *asc;
-                expect(a, ID, "ID");
-                expect(a, LBRACE, "\'(\'");
-                if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
-                arg=par_par_expr(a);
-                asc=ast_create_call("println", arg);
-                ast_add((AstNode *)a->root, (AstNode *)asc);
-                break;
-            }
-            default: ++a->p;
-        }
+        an=par_par_expr(a);
+        if(an) ast_add((AstNode *)a->root, an);
     }
 }
 
@@ -44,8 +28,17 @@ void codegen(AstNode *node, Parser *a) {
             size_t j;
             AstStmtCall *call=(AstStmtCall *)node;
             codegen(call->arg, a);
-            j=par_heapIns(a, "stdcon.println");
-            par_render(a, CALL, STR|selszu(j), j);
+            char *method=call->name;
+            for(size_t i=0; i<a->imports.s; i++) {
+                Import ppp=*((Import *)cv_eptr(&a->imports, i));
+                if(imp_cont(&ppp, method)) {
+                    ds aaa=strdup(ppp.name);
+                    ds_cat(&aaa, ".", method, NULL);
+                    j=par_heapIns(a, aaa);
+                    par_render(a, CALL, STR|selszu(j), j);
+                    break;
+                }
+            }
             if(a->debug) puts("call");
             break;
         }
@@ -360,6 +353,7 @@ void imp_add(Import *a, ds z) {
 
 AstNode *par_par_primary(Parser *a) {
     Token t=*par_this(a);
+    AstNode *arg;
     if(a->debug) puts("par primary start");
     a->p++;
     switch(t.type) {
@@ -372,6 +366,7 @@ AstNode *par_par_primary(Parser *a) {
         }
         case STRING: return(AstNode *)ast_create_literal(STRING, t.value);
     }
+    return NULL;
 }
 
 AstNode *par_par_term(Parser *a) {
@@ -393,8 +388,24 @@ AstNode *par_par_term(Parser *a) {
 }
 
 AstNode *par_par_expr(Parser *a) {
-    Token op;
+    Token op, *t=par_this(a);
+    AstNode *arg;
     if(a->debug) puts("par expr start");
+    switch(t->type) {
+        case LCALL: {
+            a->p++;
+            AstStmtCall *asc;
+            if(a->debug) puts("lcall");
+            Token *as=par_this(a);
+            a->p++;
+            expect(a, LBRACE, "\'(\'");
+            if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
+            arg=par_par_expr(a);
+            expect(a, RBRACE, "\')\'");
+            asc=ast_create_call(as->value, arg);
+            return (AstNode *)asc;
+        }
+    }
     AstNode *l=par_par_term(a);
     if(a->debug) puts("after calling term (in expr)");
     while(a->p<a->file.s) {
