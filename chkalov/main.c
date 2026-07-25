@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
         }
     } else if(debug) {
         puts("\r\nAST Tree:");
+        ast_print((AstNode *)parser.root, 0);
     }
     codegen(parser.root, &parser);
     if(debug) printf("\r\nBefore par_free... \r\n");
