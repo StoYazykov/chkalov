@@ -88,6 +88,9 @@ Token *par_this(Parser *a) {
 Token *par_next(Parser *a) {
     return (Token *)cv_eptr(&a->file, ++a->p);
 }
+Token *par_post(Parser *a) {
+    return (Token *)cv_eptr(&a->file, a->p++);
+}
 
 void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     memset(n, 0, sizeof(Parser));
@@ -391,9 +394,9 @@ AstNode *par_par_expr(Parser *a) {
     Token op, *t=par_this(a);
     AstNode *arg;
     if(a->debug) puts("par expr start");
+    a->p++;
     switch(t->type) {
         case LCALL: {
-            a->p++;
             AstStmtCall *asc;
             if(a->debug) puts("lcall");
             Token *as=par_this(a);
@@ -405,6 +408,11 @@ AstNode *par_par_expr(Parser *a) {
             asc=ast_create_call(as->value, arg);
             return (AstNode *)asc;
         }
+        case VAR: {
+           // AstStmtAssign
+            break;
+        }
+        default: a->p--;
     }
     AstNode *l=par_par_term(a);
     if(a->debug) puts("after calling term (in expr)");
