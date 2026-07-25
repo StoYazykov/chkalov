@@ -181,7 +181,7 @@ void par_free(Parser *z) {
 }
 
 size_t par_heapIns(Parser *a, ds k) {
-    if(strlen(k)>=a->hs) a->heap=realloc(a->heap, a->hs=strlen(k)<<1);
+    if(strlen(k)+a->hp>=a->hs) a->heap=realloc(a->heap, a->hs=strlen(k)<<1);
     memcpy(a->heap+a->hp, k, strlen(k)+1);
     size_t r=a->hp;
     a->hp+=strlen(k)+1;
@@ -253,7 +253,7 @@ void par_lexer(Parser *a, ds l) {
             while(pos<strlen(l)&&l[pos]!='\"') pos++;
             t.type=STRING;
             t.value=NULL;
-            t.value=malloc(pos-start);
+            t.value=malloc((pos-start)+1);
             size_t i, sp=0;
             for(i=start; i<pos; i++, sp++) {
                 if(l[i]=='\\') {
@@ -270,6 +270,7 @@ void par_lexer(Parser *a, ds l) {
                 }
                 t.value[sp]=l[i];
             }
+            t.value[sp]=0;
             pos++;
             cv_push(&a->file, &t);
             continue;

@@ -205,9 +205,9 @@ int main(int argc, char **argv) {
     printf("Ended on instruction pointer %llx \r\n", i);
     cv_free(&stack);
     if(debug) {
-        printf("Heap: ");
+        printf("Heap (hp=%llx): ", hp);
         for(int i=0; i<hp; i++) {
-            printf("%c", heap[i]);
+            printf("%c", heap[i]?heap[i]:'$');
         }
         puts("\r\nHeap end");
     }
