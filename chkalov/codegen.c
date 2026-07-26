@@ -63,7 +63,7 @@ void codegen(AstNode *node, Parser *a) {
         case AST_STMT_VAR_DECL: {
             AstStmtVarDecl *svd=(AstStmtVarDecl *)node;
             par_render(a, PUSH, svd->var_type, 0);
-            par_render(a, STORE, IDX|selszu(sco_ggi()), sco_ggi());
+            par_render(a, STORE, IDX|selszu(scos_ggi(&a->scopes)), scos_ggi(&a->scopes));
             break;
         }
     }

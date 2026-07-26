@@ -36,8 +36,8 @@ void cv_popr(cv *v) {
 }
 
 // последний элемент. Не POP'ит. Просто возвращает его в *e.
-void cv_back(cv *v, void *e) {
-    memcpy(e, v->d+(v->s-1)*v->es, v->es);
+void *cv_back(cv *v) {
+    return v->d+(v->s-1)*v->es;
 }
 
 // Возвращает, указатель на элемент с индексом i. Осторожно!!! Он изменяемый!

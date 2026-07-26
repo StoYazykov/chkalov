@@ -14,7 +14,7 @@ void cv_resize(cv *v, size_t s);
 void cv_push(cv *v, const void *e);
 void cv_pop(cv *v, void *e);
 void cv_popr(cv *v);
-void cv_back(cv *v, void *e);
+void *cv_back(cv *v);
 void *cv_eptr(cv *v, size_t i);
 void cv_free(cv *v);
 #endif

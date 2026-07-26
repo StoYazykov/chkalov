@@ -1,64 +1,21 @@
 #include "scope.h"
 
-static variable nullvar;
-static size_t globalId=0;
-
-void var_init(variable *a, ds na, size_t i, unsigned char t) {
-    a->name=NULL;
-    ds_str(&(a->name), na);
-    a->id=i;
-    a->type=t;
-}
-void var_free(variable *a) {
-    free(a->name);
-}
-void sco_init(Scope *a) {
-    cv_init(&a->vars, 4, sz(variable));
-}
-void sco_addv(Scope *a, ds vn, unsigned char vt) {
-    variable b;
-    b.name = NULL;
-    ds_str(&b.name, vn);
-    b.type=vt;
-    b.id=globalId++;
-    cv_push(&a->vars, &b);
-}
-void sco_gv(Scope *a, ds vn, variable *b) {
-    variable *p;
-    size_t i;
-    for(i=0; i<a->vars.s; i++) {
-        p=(variable *)cv_eptr(&a->vars, i);
-        if(!strcmp(p->name, vn)) {
-            b->name=strdup(p->name);
-            b->type=p->type;
-            b->id=p->id;
-            printf("sco_gv Found! b->name: \'%s\', b->id: %llu!\r\n", b->name, b->id);
-            return;
-        }
-    }
-    b->name=NULL;
-}
-size_t sco_ggi() {
-    return globalId?globalId-1:0;
-}
-void sco_free(Scope *a) {
-    size_t i;
-    for(i=0; i<a->vars.s; i++) {
-        variable *v=(variable*)cv_eptr(&a->vars, i);
-        free(v->name);
-    }
-    cv_free(&a->vars);
-}
 void scos_init(ScopeStack *a) {
     cv_init(&a->scopes, 4, sz(Scope));
+    a->gid=0;
 }
 void scos_addv(ScopeStack *a, ds vn, unsigned char vt) {
     printf("scos_addv: '%s' (len=%zu)\n", vn, strlen(vn));
     Scope *q=cv_eptr(&a->scopes, a->scopes.s-1);
-    sco_addv(q, vn, vt);
+    variable b;
+    b.name=NULL;
+    b.name=strdup(vn);
+    b.type=vt;
+    b.id=a->gid++;
+    cv_push(&q->vars, &b);
 }
-void scos_gv(ScopeStack *a, ds vn, variable *b) {
-    printf("scos_gv: searching '%s' (len=%zu)\n", vn, strlen(vn));
+void scos_getv(ScopeStack *a, ds vn, variable *b) {
+    printf("scos_getv: searching '%s' (len=%zu)\n", vn, strlen(vn));
     Scope *ap;
     ssize_t i;
     b->name=NULL;
@@ -66,26 +23,43 @@ void scos_gv(ScopeStack *a, ds vn, variable *b) {
     for(i=a->scopes.s-1; i>=0; i--) {
         printf("Iteration %llu\r\n", i);
         ap=(Scope *)cv_eptr(&a->scopes, i);
-        sco_gv(ap, vn, b);
-        if(b->name) return;
+        variable *p;
+        size_t j;
+        for(j=0; j<ap->vars.s; j++) {
+            p=(variable *)cv_eptr(&ap->vars, j);
+            if(!strcmp(p->name, vn)) {
+                b->name=p->name;
+                b->type=p->type;
+                b->id=p->id;
+                printf("sco_getv Found! b->name: \'%s\', b->id: %llu!\r\n", b->name, b->id);
+                return;
+            }
+        }
     }
 }
 void scos_es(ScopeStack *a) {
     Scope oa;
-    sco_init(&oa);
+    cv_init(&oa.vars, 4, sz(variable));
     cv_push(&a->scopes, &oa);
 }
 void scos_ex(ScopeStack *a) {
-    sco_free(cv_eptr(&a->scopes, a->scopes.s-1));
+    Scope *v;
+    size_t j;
+    variable *f;
+    v=(Scope *)cv_eptr(&a->scopes, a->scopes.s-1);
+    for(j=0; j<v->vars.s; j++) {
+        f=(variable*)cv_eptr(&v->vars, j);
+        free(f->name);
+    }
+    cv_free(&v->vars);
     cv_popr(&a->scopes);
 }
+size_t scos_ggi(ScopeStack *a) { return a->gid; }
 size_t scos_size(ScopeStack *a) { return a->scopes.s; }
 void scos_free(ScopeStack *a) {
     size_t i;
-    Scope *v;
-    for(i=0; i<a->scopes.s; i++) {
-        v=(Scope *)cv_eptr(&a->scopes, i);
-        sco_free(v);
+    while(a->scopes.s>0) {
+        scos_ex((ScopeStack *)cv_eptr(&a->scopes, i));
     }
     cv_free(&a->scopes);
 }
