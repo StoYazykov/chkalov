@@ -50,6 +50,14 @@ AstStmtAssign *ast_create_assign(char *n, AstNode *v) {
     return ass;
 }
 
+AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt) {
+    AstStmtVarDecl *svd=malloc(sizeof(AstStmtVarDecl));
+    svd->name=strdup(n);
+    svd->var_type=vt;
+    svd->base.type=AST_STMT_VAR_DECL;
+    return svd;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
@@ -89,6 +97,11 @@ void ast_free(AstNode *node) {
         case AST_EXPR_VARIABLE: {
             AstExprVariable *v=(AstExprVariable *)node;
             free(v->name);
+            break;
+        }
+        case AST_STMT_VAR_DECL: {
+            AstStmtVarDecl *d=(AstStmtVarDecl *)node;
+            free(d->name);
             break;
         }
     }
@@ -150,6 +163,11 @@ void ast_print(AstNode *node, int indent) {
             printf("VARIABLE \r\n  NAME: %s \r\n", v->name);
             break;
         }
+        case AST_STMT_VAR_DECL: {
+            AstStmtVarDecl *d=(AstStmtVarDecl *)node;
+            printf("VARIABLE DECL \r\n    NAME: %s \r\n    TYPE: %s \r\n", d->name, par_tts(d->var_type));
+            break;
+        }
     }
 }
 
@@ -166,9 +184,6 @@ AstNode *fold(AstNode *node) {
         case AST_STMT_CALL: {
             AstStmtCall *c=(AstStmtCall*)node;
             c->arg=fold(c->arg);
-            return node;
-        }
-        case AST_EXPR_LITERAL: {
             return node;
         }
         case AST_BINARY: {
@@ -190,5 +205,10 @@ AstNode *fold(AstNode *node) {
             sprintf(buf, "%lld", e);
             return (AstNode *)ast_create_literal(NUMBER, buf);
         }
+        case AST_STMT_ASSIGN:
+        case AST_EXPR_LITERAL:
+        case AST_EXPR_VARIABLE:
+        case AST_STMT_VAR_DECL:
+            return node;
     }
 }

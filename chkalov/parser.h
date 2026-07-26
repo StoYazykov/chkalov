@@ -31,6 +31,8 @@ size_t par_heapIns(Parser *a, ds k);
 void par_free(Parser *a);
 Token* par_this(Parser *a);
 Token* par_next(Parser *a);
+char par_stt(ds s);
+char *par_tts(uint8_t t);
 Token* par_post(Parser *a);
 void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v);
 void par_parFile(Parser *a);

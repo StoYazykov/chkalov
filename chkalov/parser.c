@@ -5,6 +5,26 @@
 
 static Scope nullscope;
 
+char par_stt(ds s) {
+    if(SEQU(s, "Int")) return INT;
+    if(SEQU(s, "Xshort")) return XSHORT;
+    if(SEQU(s, "Char")) return CHAR;
+    if(SEQU(s, "String")) return STR;
+    if(SEQU(s, "Long")) return LONG;
+    return 0;
+}
+
+char *par_tts(uint8_t t) {
+    puts("tts");
+    switch(t) {
+        case INT: return "Int";
+        case LONG: return "Long";
+        case CHAR: return "Char";
+        case STR: return "String";
+    }
+    return "Unknown";
+}
+
 void par_parFile(Parser *a) {
     AstNode *an;
     a->p=0;
@@ -399,8 +419,7 @@ AstNode *par_par_expr(Parser *a) {
         case LCALL: {
             AstStmtCall *asc;
             if(a->debug) puts("lcall");
-            Token *as=par_this(a);
-            a->p++;
+            Token *as=par_post(a);
             expect(a, LBRACE, "\'(\'");
             if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
             arg=par_par_expr(a);
@@ -409,7 +428,11 @@ AstNode *par_par_expr(Parser *a) {
             return (AstNode *)asc;
         }
         case VAR: {
-           // AstStmtAssign
+            AstStmtVarDecl *svd;
+            Token *n, *w=par_post(a);
+            n=par_post(a);
+            printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
+            return (AstNode *)ast_create_vardecl(n->value, par_stt(w->value));
             break;
         }
         default: a->p--;

@@ -9,7 +9,8 @@ typedef enum {
     AST_EXPR_LITERAL,
     AST_BINARY,
     AST_EXPR_VARIABLE,
-    AST_STMT_ASSIGN
+    AST_STMT_ASSIGN,
+    AST_STMT_VAR_DECL
 } AstNodeType;
 
 typedef struct {
@@ -51,10 +52,19 @@ typedef struct {
     char *name;
 } AstExprVariable;
 
+typedef struct {
+    AstNode base;
+    char *name;
+    uint8_t var_type;
+} AstStmtVarDecl;
+
 AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, AstNode *arg);
 AstExprLiteral* ast_create_literal(TokenType t, char *v);
 AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r);
+AstStmtAssign *ast_create_assign(char *n, AstNode *v);
+AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt);
+
 AstNode *fold(AstNode *node);
 
 void ast_free(AstNode *node);
