@@ -2,7 +2,6 @@ CC = gcc
 CFLAGS = -std=c11 -w -O2
 LDFLAGS = -ldl
 
-# Выбор платформы: make TARGET=win
 ifeq ($(TARGET),win)
     EXT = .exe
     LIBSTDCON = $(STDCON_DIR)/stdcon.dll
@@ -19,7 +18,6 @@ VM_DIR = $(CHKALOV_DIR)/chkalovm
 DIS_DIR = $(CHKALOV_DIR)/chkalovdis
 #ITT_DIR = $(CHKALOV_DIR)/chkalovitt
 
-# Исходники компилятора
 COMPILER_SRC = $(CHKALOV_SRC)/main.c \
                $(CHKALOV_SRC)/parser.c \
                $(CHKALOV_SRC)/scope.c \
@@ -27,7 +25,8 @@ COMPILER_SRC = $(CHKALOV_SRC)/main.c \
                $(CHKALOV_DIR)/ds.c \
                $(CHKALOV_DIR)/cv.c \
 	       $(CHKALOV_DIR)/chkalov.c \
-	       $(CHKALOV_SRC)/ast.c
+	       $(CHKALOV_SRC)/ast.c \
+	       $(CHKALOV_SRC)/codegen.c
 
 STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.c \
