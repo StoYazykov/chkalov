@@ -384,7 +384,8 @@ AstNode *par_par_expr(Parser *a) {
         }
         case VAR: {
             AstStmtVarDecl *svd;
-            Token *n, *w=par_post(a);
+            Token *n, *w;
+            w=par_post(a);
             n=par_post(a);
             printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
             return (AstNode *)ast_create_vardecl(n->value, par_stt(w->value));

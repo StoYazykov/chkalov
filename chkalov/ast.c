@@ -78,6 +78,13 @@ AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt) {
     return svd;
 }
 
+AstExprComma *ast_create_comma(AstNode *l, AstNode *r) {
+    AstExprComma *com=malloc(AstExprComma);
+    com->left=l;
+    com->right=r;
+    return com;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
@@ -122,6 +129,12 @@ void ast_free(AstNode *node) {
         case AST_STMT_VAR_DECL: {
             AstStmtVarDecl *d=(AstStmtVarDecl *)node;
             free(d->name);
+            break;
+        }
+        case AST_EXPR_COMMA: {
+            AstExprComma *c=(AstExprComma *)node;
+            ast_free(c->left);
+            ast_free(c->right);
             break;
         }
     }
@@ -188,6 +201,13 @@ void ast_print(AstNode *node, int indent) {
             printf("VARIABLE DECL \r\n    NAME: %s \r\n    TYPE: %s \r\n", d->name, par_tts(d->var_type));
             break;
         }
+        case AST_EXPR_COMMA: {
+            AstExprComma *c=(AstExprComma *)node;
+            puts("COMMA");
+            ast_print(c->left, indent+1);
+            ast_print(c->right, indent+1);
+            break;
+        }
     }
 }
 
@@ -229,6 +249,7 @@ AstNode *fold(AstNode *node) {
         case AST_EXPR_LITERAL:
         case AST_EXPR_VARIABLE:
         case AST_STMT_VAR_DECL:
+        case AST_EXPR_COMMA:
             return node;
     }
 }
