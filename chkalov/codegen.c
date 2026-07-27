@@ -81,8 +81,10 @@ void codegen(AstNode *node, Parser *a) {
         }
         case AST_STMT_VAR_DECL: {
             AstStmtVarDecl *svd=(AstStmtVarDecl *)node;
+            variable var;
+            scos_getv(&a->scopes, svd->name, &var);
             par_render(a, PUSH, svd->var_type, 0);
-            par_render(a, STORE, IDX|selszu(scos_ggi(&a->scopes)), scos_ggi(&a->scopes));
+            par_render(a, STORE, IDX|selszu(var.id), var.id);
             break;
         }
         case AST_EXPR_COMMA: {
