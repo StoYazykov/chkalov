@@ -247,11 +247,20 @@ AstNode *fold(AstNode *node) {
             sprintf(buf, "%lld", e);
             return (AstNode *)ast_create_literal(NUMBER, buf);
         }
-        case AST_STMT_ASSIGN:
-        case AST_EXPR_LITERAL:
+        case AST_EXPR_COMMA: {
+            AstExprComma *c=(AstExprComma *)node;
+            c->left=fold(c->left);
+            c->right=fold(c->right);
+            return c;
+        }
+        case AST_STMT_ASSIGN: {
+            AstStmtAssign *s=(AstStmtAssign *)node;
+            s->value=fold(s->value);
+            return s;
+        }
         case AST_EXPR_VARIABLE:
         case AST_STMT_VAR_DECL:
-        case AST_EXPR_COMMA:
+        case AST_EXPR_LITERAL:
             return node;
     }
 }
