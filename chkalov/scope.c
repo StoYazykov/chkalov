@@ -76,9 +76,8 @@ void scos_ex(ScopeStack *a) {
 size_t scos_ggi(ScopeStack *a) { return a->gid; }
 size_t scos_size(ScopeStack *a) { return a->scopes.s; }
 void scos_free(ScopeStack *a) {
-    size_t i;
     while(a->scopes.s>0) {
-        scos_ex((ScopeStack *)cv_eptr(&a->scopes, i));
+        scos_ex(a);
     }
     cv_free(&a->scopes);
 }
