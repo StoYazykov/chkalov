@@ -400,6 +400,17 @@ AstNode *par_par_expr(Parser *a) {
             } while(par_this(a)->type==COMMA&&a->p++);
             return res;
         }
+        case ID: {
+            variable var;
+            Token *w=par_this(a);
+            scos_getv(&a->scopes, t->value, &var);
+            if(!var.name) error("Undeclared variable: %s", t->value);
+            if(w->type==ASSIGN) {
+                a->p++;
+                return ast_create_assign(t->value, par_par_expr(a));
+            }
+            else return ast_create_variable(t->value);
+        }
         default: a->p--;
     }
     AstNode *l=par_par_term(a);

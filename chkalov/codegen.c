@@ -93,5 +93,20 @@ void codegen(AstNode *node, Parser *a) {
             codegen(com->right, a);
             break;
         }
+        case AST_EXPR_VARIABLE: {
+            AstExprVariable *var=(AstExprVariable *)node;
+            variable vat;
+            scos_getv(&a->scopes, var->name, &vat);
+            par_render(a, LOAD, IDX|selszu(vat.id), vat.id);
+            break;
+        }
+        case AST_STMT_ASSIGN: {
+            AstStmtAssign *ass=(AstStmtAssign *)node;
+            variable vat;
+            codegen(ass->value, a);
+            scos_getv(&a->scopes, ass->name, &vat);
+            par_render(a, STORE, IDX|selszu(vat.id), vat.id);
+            break;
+        }
     }
 }

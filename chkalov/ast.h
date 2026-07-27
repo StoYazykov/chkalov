@@ -90,6 +90,7 @@ AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r);
 AstStmtAssign *ast_create_assign(char *n, AstNode *v);
 AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt);
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r);
+AstExprVariable *ast_create_variable(char *n);
 
 AstNode *fold(AstNode *node);
 
