@@ -426,6 +426,11 @@ AstNode *par_par_expr(Parser *a) {
         AstNode *r=par_par_term(a);
         l=(AstNode *)ast_create_binary(op.type, l, r);
     }
+    l=par_par_comma(a, l);
+    return l;
+}
+
+AstNode *par_par_comma(Parser *a, AstNode *l) {
     while(a->p<a->file.s&&par_this(a)->type==COMMA) {
         a->p++;
         AstNode *r=par_par_expr(a);

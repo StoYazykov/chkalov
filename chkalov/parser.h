@@ -59,6 +59,7 @@ void expect(Parser *a, TokenType t, char *s);
 AstNode *par_par_primary(Parser *a);
 AstNode *par_par_term(Parser *a);
 AstNode *par_par_expr(Parser *a);
+AstNode *par_par_comma(Parser *a, AstNode *l);
 void par_optim(Parser *a);
 
 #endif
