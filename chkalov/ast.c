@@ -79,7 +79,7 @@ AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt) {
 }
 
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r) {
-    AstExprComma *com=malloc(AstExprComma);
+    AstExprComma *com=malloc(sizeof(AstExprComma));
     com->left=l;
     com->right=r;
     return com;
