@@ -80,6 +80,7 @@ AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt) {
 
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r) {
     AstExprComma *com=malloc(sizeof(AstExprComma));
+    printf("create comma: left=%p, right=%p \r\n", l, r);
     com->base.type=AST_EXPR_COMMA;
     com->left=l;
     com->right=r;

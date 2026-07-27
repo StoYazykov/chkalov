@@ -385,10 +385,20 @@ AstNode *par_par_expr(Parser *a) {
         case VAR: {
             AstStmtVarDecl *svd;
             Token *n, *w=par_post(a);
-            n=par_post(a);
-            printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
-            return (AstNode *)ast_create_vardecl(n->value, par_stt(w->value));
-            break;
+            AstNode *decl;
+            AstNode *res=NULL;
+            do {
+                n=par_post(a);  // 'a', 'b', 'c'
+                printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
+                scos_addv(&a->scopes, n->value, par_stt(w->value));
+                decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value));
+                if(!res) {
+                    res=decl;
+                } else {
+                    res=(AstNode*)ast_create_comma(res, decl);
+                }
+            } while(par_this(a)->type==COMMA&&a->p++);
+            return res;
         }
         default: a->p--;
     }
