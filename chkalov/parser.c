@@ -389,7 +389,7 @@ AstNode *par_par_expr(Parser *a) {
             AstNode *res=NULL;
             do {
                 n=par_post(a);  // 'a', 'b', 'c'
-                printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
+                if(a->debug) printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
                 scos_addv(&a->scopes, n->value, par_stt(w->value));
                 decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value));
                 if(!res) {
