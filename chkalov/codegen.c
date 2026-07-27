@@ -85,5 +85,11 @@ void codegen(AstNode *node, Parser *a) {
             par_render(a, STORE, IDX|selszu(scos_ggi(&a->scopes)), scos_ggi(&a->scopes));
             break;
         }
+        case AST_EXPR_COMMA: {
+            AstExprComma *com=(AstExprComma *)node;
+            codegen(com->left, a);
+            codegen(com->right, a);
+            break;
+        }
     }
 }

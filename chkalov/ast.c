@@ -80,6 +80,7 @@ AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt) {
 
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r) {
     AstExprComma *com=malloc(sizeof(AstExprComma));
+    com->base.type=AST_EXPR_COMMA;
     com->left=l;
     com->right=r;
     return com;
@@ -135,6 +136,7 @@ void ast_free(AstNode *node) {
             AstExprComma *c=(AstExprComma *)node;
             ast_free(c->left);
             ast_free(c->right);
+            free(c);
             break;
         }
     }
