@@ -33,7 +33,8 @@ int main(int argc, char **argv) {
         "ifle",
         "jump",
         "setfield",
-        "getfield"
+        "getfield",
+        "dup"
     };
     char *types[]={
         0,

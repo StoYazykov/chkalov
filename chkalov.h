@@ -88,6 +88,8 @@ exit(0x08);\
 #define SETFIELD 0x1A
 #define GETFIELD 0x1B
 
+#define DUP 0x1C
+
 
 // ----------------------------------------------//
 //            Types definitions!                 //

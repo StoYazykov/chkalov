@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
     fread(&magic, 1, sz(uint32_t), a);
     if(magic!=0x05020100) error("Hex magic number incorrect!");
     cv vm;
-    Pool *p;
     cv_init(&vm, 8, sz(unsigned char));
     uint64_t i,b;
     size_t hs, hp=0;
@@ -67,7 +66,7 @@ int main(int argc, char **argv) {
     unsigned char o,ty;
     int64_t v;
     i=0;
-    Slot g, h, f;
+    Slot g, h, f, *p;
     unsigned char *c=vm.d;
     while(i<t) {
         o=c[i++];
@@ -218,6 +217,11 @@ int main(int argc, char **argv) {
                     i=v;
                 }
                 continue;
+            }
+            case DUP: {
+                p=cv_back(&stack);
+                cv_push(&stack, p);
+                break;
             }
         }
     }

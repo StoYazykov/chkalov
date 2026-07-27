@@ -104,6 +104,7 @@ void codegen(AstNode *node, Parser *a) {
             AstStmtAssign *ass=(AstStmtAssign *)node;
             variable vat;
             codegen(ass->value, a);
+            par_render(a, DUP, 0, 0);
             scos_getv(&a->scopes, ass->name, &vat);
             par_render(a, STORE, IDX|selszu(vat.id), vat.id);
             break;
