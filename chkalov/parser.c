@@ -400,7 +400,7 @@ AstNode *par_par_expr(Parser *a) {
             expect(a, LBRACE, "\'(\'");
             if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
             arg=par_par_comp(a);
-                printf("After par_par_comp: p=%zu, token='%s'\n", a->p, par_this(a)->value);
+            if(a->debug) printf("After par_par_comp: p=%zu, token='%s'\n", a->p, par_this(a)->value);
             expect(a, RBRACE, "\')\'");
             asc=ast_create_call(as->value, arg);
             return (AstNode *)asc;
