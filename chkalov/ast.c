@@ -241,6 +241,7 @@ AstNode *fold(AstNode *node) {
                 case MINUS: e=x-y; break;
                 case STAR: e=x*y; break;
                 case SLASH: e=x/y; break;
+                default: return node;
             }
             ast_free(b);
             char buf[32];
