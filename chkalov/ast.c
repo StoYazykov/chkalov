@@ -242,6 +242,11 @@ AstNode *fold(AstNode *node) {
                 case STAR: e=x*y; break;
                 case SLASH: e=x/y; break;
                 case EQ: e=x==y; break;
+                case NEQ: e=x!=y; break;
+                case LT: e=x<y; break;
+                case BT: e=x>y; break;
+                case LE: e=x<=y; break;
+                case BE: e=x>=y; break;
                 default: return node;
             }
             ast_free(b);
