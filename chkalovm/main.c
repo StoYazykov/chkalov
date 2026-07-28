@@ -209,10 +209,45 @@ int main(int argc, char **argv) {
                 cv_push(&stack, &f);
                 break;
             }
+            case CMP_EQ: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=h.value==g.value;
+                cv_push(&stack, &f);
+                break;
+            }
+            case CMP_NEQ: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=h.value!=g.value;
+                cv_push(&stack, &f);
+                break;
+            }
             case CMP_BT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
                 f.value=h.value>g.value;
+                cv_push(&stack, &f);
+                break;
+            }
+            case CMP_LT: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=h.value<g.value;
+                cv_push(&stack, &f);
+                break;
+            }
+            case CMP_BE: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=h.value>=g.value;
+                cv_push(&stack, &f);
+                break;
+            }
+            case CMP_LE: {
+                cv_pop(&stack, &g);
+                cv_pop(&stack, &h);
+                f.value=h.value<=g.value;
                 cv_push(&stack, &f);
                 break;
             }
