@@ -214,11 +214,15 @@ void ast_print(AstNode *node, int indent) {
             break;
         }
         case AST_STMT_IF: {
-            AstStmtIf *i=(AstStmtIf *)node;
-            puts("IF");
-            if(i->body) {
-                puts("BODY");
-                ast_print(i->body, indent+1);
+            AstStmtIf *stmt=(AstStmtIf*)node;
+            printf("IF\n");
+            printf("CONDITION:\n");
+            ast_print(stmt->cond, indent+1);
+            printf("BODY:\n");
+            ast_print(stmt->body, indent+1);
+            if(stmt->els) {
+                printf("ELSE:\n");
+                ast_print(stmt->els, indent+1);
             }
             break;
         }

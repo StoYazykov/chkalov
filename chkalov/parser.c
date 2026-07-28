@@ -497,9 +497,9 @@ void par_optim(Parser *a) {
     a->root=(AstStmtBlock *)fold((AstNode *)a->root);
 }
 AstStmtBlock *par_parBlock(Parser *a) {
-    AstStmtBlock *block;
+    AstStmtBlock *block=ast_create_block();
     AstNode *an;
-    while(a->p<a->file.s) {
+    while(a->p<a->file.s&&par_this(a)->type!=RPAREN) {
         an=par_par_expr(a);
         if(an) ast_add(block, an);
     }
