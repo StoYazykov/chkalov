@@ -195,6 +195,18 @@ void par_lexer(Parser *a, ds l) {
             cv_push(&a->file, &t);
             continue;
         }
+        IFCS(l+pos, ">=", 2) {
+            pos+=2;
+            t=(Token){BE, strdup(">=")};
+            cv_push(&a->file, &t);
+            continue;
+        }
+        IFCS(l+pos, "<=", 2) {
+            pos+=2;
+            t=(Token){LE, strdup("<=")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         IFCS(l+pos, "if", 2) {
             pos+=2;
             t=(Token){IF, strdup("if")};
@@ -313,6 +325,16 @@ void par_lexer(Parser *a, ds l) {
                 cv_push(&a->file, &t);
                 t.value=NULL;
                 break;
+            case '>':
+                t=(Token){BT, strdup(">")};
+                cv_push(&a->file, &t);
+                t.value=NULL;
+                break;
+            case '<':
+                t=(Token){LT, strdup("<")};
+                cv_push(&a->file, &t);
+                t.value=NULL;
+                break;
         }
     }
 }
@@ -377,7 +399,8 @@ AstNode *par_par_expr(Parser *a) {
             Token *as=par_post(a);
             expect(a, LBRACE, "\'(\'");
             if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
-            arg=par_par_expr(a);
+            arg=par_par_comp(a);
+                printf("After par_par_comp: p=%zu, token='%s'\n", a->p, par_this(a)->value);
             expect(a, RBRACE, "\')\'");
             asc=ast_create_call(as->value, arg);
             return (AstNode *)asc;
@@ -407,7 +430,7 @@ AstNode *par_par_expr(Parser *a) {
             if(!var.name) error("Undeclared variable: %s", t->value);
             if(w->type==ASSIGN) {
                 a->p++;
-                return ast_create_assign(t->value, par_par_expr(a));
+                return ast_create_assign(t->value, par_par_comp(a));
             }
             else return ast_create_variable(t->value);
         }
@@ -433,10 +456,32 @@ AstNode *par_par_expr(Parser *a) {
 AstNode *par_par_comma(Parser *a, AstNode *l) {
     while(a->p<a->file.s&&par_this(a)->type==COMMA) {
         a->p++;
-        AstNode *r=par_par_expr(a);
+        AstNode *r=par_par_comp(a);
         l=(AstNode*)ast_create_comma(l, r);
     }
     return l;
+}
+
+AstNode *par_par_comp(Parser *a) {
+    AstNode *left=par_par_expr(a), *right;
+    Token *op, *peek;
+    while(a->p<a->file.s) {
+        peek=par_this(a);
+        switch(peek->type) {
+            case EQ:
+            case NEQ:
+            case LT:
+            case BT:
+            case LE:
+            case BE:
+                break;
+            default: return left;
+        }
+        op=par_post(a);
+        right=par_par_expr(a);
+        left=(AstNode *)ast_create_binary(op->type, left, right);
+    }
+    return left;
 }
 
 void par_optim(Parser *a) {

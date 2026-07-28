@@ -209,14 +209,12 @@ int main(int argc, char **argv) {
                 cv_push(&stack, &f);
                 break;
             }
-            case IFNE: {
+            case CMP_BT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                if(g.value!=h.value) {
-                    printf("ifne: jumping to %llx... \r\n", v);
-                    i=v;
-                }
-                continue;
+                f.value=h.value>g.value;
+                cv_push(&stack, &f);
+                break;
             }
             case DUP: {
                 p=cv_back(&stack);

@@ -77,18 +77,21 @@ exit(0x08);\
 
 #define ALLOC 0x12
 
-#define IFE 0x13    // if equal ==
-#define IFNE 0x14   // if not equal !=
-#define IFL 0x15    // if less <
-#define IFB 0x16    // if big >
-#define IFBE 0x17   // if big or equal >=
-#define IFLE 0x18   // if less or equal <=
+#define CMP_EQ 0x13    // if equal ==
+#define CMP_NEQ 0x14   // if not equal !=
+#define CMP_LT 0x15    // if less <
+#define CMP_BT 0x16    // if big >
+#define CMP_BEQ 0x17   // if big or equal >=
+#define CMP_LEQ 0x18   // if less or equal <=
 #define JUMP 0x19
 
 #define SETFIELD 0x1A
 #define GETFIELD 0x1B
 
 #define DUP 0x1C
+
+#define JMP_IF 0x1D
+#define JMP_IFN 0x1E
 
 
 // ----------------------------------------------//
