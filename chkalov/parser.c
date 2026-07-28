@@ -478,7 +478,7 @@ AstNode *par_par_comp(Parser *a) {
             default: return left;
         }
         op=par_post(a);
-        right=par_par_expr(a);
+        right=par_par_comp(a);
         left=(AstNode *)ast_create_binary(op->type, left, right);
     }
     return left;

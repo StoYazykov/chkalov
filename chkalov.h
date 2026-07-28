@@ -81,8 +81,8 @@ exit(0x08);\
 #define CMP_NEQ 0x14   // if not equal !=
 #define CMP_LT 0x15    // if less <
 #define CMP_BT 0x16    // if big >
-#define CMP_BEQ 0x17   // if big or equal >=
-#define CMP_LEQ 0x18   // if less or equal <=
+#define CMP_BE 0x17   // if big or equal >=
+#define CMP_LE 0x18   // if less or equal <=
 #define JUMP 0x19
 
 #define SETFIELD 0x1A

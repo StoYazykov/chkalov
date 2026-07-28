@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -w -O2
+CFLAGS = -std=c99 -w -O2
 LDFLAGS = -ldl
 
 ifeq ($(TARGET),win)

@@ -23,6 +23,7 @@
 #include "scope.h"
 #include "ast.h"
 #include "token.h"
+#include <ctype.h>
 #include "../chkalov.h"
 
 typedef struct {

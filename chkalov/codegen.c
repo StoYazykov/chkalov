@@ -75,7 +75,12 @@ void codegen(AstNode *node, Parser *a) {
                 case MINUS: par_render(a, SUB, 0, 0); break;
                 case STAR: par_render(a, MUL, 0, 0); break;
                 case SLASH: par_render(a, DIV, 0, 0); break;
+                case EQ: par_render(a, CMP_EQ, 0, 0); break;
+                case NEQ: par_render(a, CMP_NEQ, 0, 0); break;
+                case LT: par_render(a, CMP_LT, 0, 0); break;
                 case BT: par_render(a, CMP_BT, 0, 0); break;
+                case LE: par_render(a, CMP_LE, 0, 0); break;
+                case BE: par_render(a, CMP_BE, 0, 0); break;
                 default: error("Unknown binary operator: %d", bin->op);
             }
             break;
