@@ -434,6 +434,15 @@ AstNode *par_par_expr(Parser *a) {
             }
             else return ast_create_variable(t->value);
         }
+        case IF: {
+            AstStmtBlock *body;
+            AstNode *cond;
+            expect(a, LBRACE, "(");
+            cond=par_par_comp(a);
+            expect(a, RBRACE, ")");
+            body=par_parBlock(a);
+            return (AstNode *)ast_create_if(cond, body, NULL);
+        }
         default: a->p--;
     }
     AstNode *l=par_par_term(a);
@@ -486,4 +495,13 @@ AstNode *par_par_comp(Parser *a) {
 
 void par_optim(Parser *a) {
     a->root=(AstStmtBlock *)fold((AstNode *)a->root);
+}
+AstStmtBlock *par_parBlock(Parser *a) {
+    AstStmtBlock *block;
+    AstNode *an;
+    while(a->p<a->file.s) {
+        an=par_par_expr(a);
+        if(an) ast_add(block, an);
+    }
+    return block;
 }

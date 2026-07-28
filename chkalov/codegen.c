@@ -115,5 +115,10 @@ void codegen(AstNode *node, Parser *a) {
             par_render(a, STORE, IDX|selszu(vat.id), vat.id);
             break;
         }
+        case AST_STMT_IF: {
+            AstStmtIf *ifi=(AstStmtIf *)node;
+            size_t cs=a->code.s, tar;
+            break;
+        }
     }
 }

@@ -63,5 +63,6 @@ AstNode *par_par_expr(Parser *a);
 AstNode *par_par_comma(Parser *a, AstNode *l);
 AstNode *par_par_comp(Parser *a);
 void par_optim(Parser *a);
+AstStmtBlock *par_parBlock(Parser *a);
 
 #endif

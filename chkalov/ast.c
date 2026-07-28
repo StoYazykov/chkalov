@@ -86,6 +86,15 @@ AstExprComma *ast_create_comma(AstNode *l, AstNode *r) {
     return com;
 }
 
+AstStmtIf *ast_create_if(AstNode *c, AstStmtBlock *b, AstStmtBlock *e) {
+    AstStmtIf *ifi=malloc(sizeof(AstStmtIf));
+    ifi->base.type=AST_STMT_IF;
+    ifi->cond=c;
+    ifi->body=b;
+    ifi->els=e;
+    return ifi;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
@@ -151,12 +160,6 @@ void ast_add(AstNode *r, AstNode *n) {
             y->stats[y->count++]=(AstNode *)n;
             break;
         }
-        case AST_STMT_CALL: {
-            AstStmtCall *y;
-            y=(AstStmtCall *)r;
-            y->arg=n;
-            break;
-        }
     }
 }
 
@@ -208,6 +211,15 @@ void ast_print(AstNode *node, int indent) {
             puts("COMMA");
             ast_print(c->left, indent+1);
             ast_print(c->right, indent+1);
+            break;
+        }
+        case AST_STMT_IF: {
+            AstStmtIf *i=(AstStmtIf *)node;
+            puts("IF");
+            if(i->body) {
+                puts("BODY");
+                ast_print(i->body, indent+1);
+            }
             break;
         }
     }
