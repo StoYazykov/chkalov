@@ -698,3 +698,21 @@ c) Author Attribution:
    derivative works. This attribution must appear in the README file, 
    the copyright notice, and any about or credits section of the 
    software or its documentation.
+   
+d) Reserved File Extensions and Formats:
+The file extensions ".chk" (Chkalov source code), ".cvm" 
+(Chkalov Virtual Machine bytecode), and ".chl" (Chkalov Library) 
+are hereby reserved exclusively for use by the official Chkalov 
+project as defined in section (b) of these Additional Terms.
+
+Any derivative works, modified versions, or forks of this software 
+MUST NOT generate, read, or otherwise operate on files with the 
+".chk", ".cvm", or ".chl" extensions by default. Derivative works 
+MUST use clearly distinct file extensions (e.g., ".chk2", ".cvm2", 
+".fork") to prevent user confusion and ecosystem fragmentation.
+
+The bytecode format (".cvm" structure, magic number 0x05020100, 
+and instruction set encoding) is part of the official Chkalov 
+specification. Any implementation capable of executing ".cvm" 
+files MUST pass the official compatibility test suite (if 
+provided) before claiming Chkalov bytecode compatibility.
