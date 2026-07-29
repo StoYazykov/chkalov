@@ -22,6 +22,7 @@
 Slot print(size_t argc, Slot *argp, ChkEnv *env) {
     if(ISSTR(argp->type)) printf("%s", *env->_heap+argp->value);
     else printf("%d", argp->value);
+    fflush(stdout);
     return (Slot){0x00};
 }
 
@@ -36,4 +37,11 @@ Slot readln(size_t argc, Slot *argp, ChkEnv *env) {
     char *mem=env->alloc(env, 256);
     fgets(mem, 256, stdin);
     return (Slot){STR, mem-(uintptr_t)*env->_heap};
+}
+
+Slot readint(size_t argc, Slot *argp, ChkEnv *env) {
+    int a;
+    print(argc, argp, env);
+    scanf("%d", &a);
+    return (Slot){INT, a};
 }
