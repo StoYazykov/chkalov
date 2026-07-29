@@ -256,6 +256,16 @@ int main(int argc, char **argv) {
                 cv_push(&stack, p);
                 break;
             }
+            case JMP_IF: {
+                cv_pop(&stack, &f);
+                if(f.value) i=v;
+                continue;
+            }
+            case JMP_IFN: {
+                cv_pop(&stack, &f);
+                if(!f.value) i=v;
+                continue;
+            }
         }
     }
     printf("Ended on instruction pointer %llx \r\n", i);

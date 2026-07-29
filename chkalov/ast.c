@@ -247,6 +247,7 @@ AstNode *fold(AstNode *node) {
         case AST_BINARY: {
             AstBinary *b=(AstBinary *)node;
             AstExprLiteral *l, *r;
+            if(!(l&&r)) return node;
             b->left=fold(b->left);
             b->right=fold(b->right);
             l=(AstExprLiteral *)b->left, r=(AstExprLiteral *)b->right;
@@ -284,6 +285,7 @@ AstNode *fold(AstNode *node) {
         case AST_EXPR_VARIABLE:
         case AST_STMT_VAR_DECL:
         case AST_EXPR_LITERAL:
+        case AST_STMT_IF:
             return node;
     }
 }

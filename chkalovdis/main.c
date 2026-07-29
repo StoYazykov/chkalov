@@ -34,7 +34,9 @@ int main(int argc, char **argv) {
         "jump",
         "setfield",
         "getfield",
-        "dup"
+        "dup",
+        "jmp_if",
+        "jmp_ifn"
     };
     char *types[]={
         0,
