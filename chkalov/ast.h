@@ -31,7 +31,8 @@ typedef enum {
     AST_STMT_ASSIGN,
     AST_STMT_VAR_DECL,
     AST_EXPR_COMMA,
-    AST_STMT_IF
+    AST_STMT_IF,
+    AST_STMT_WHILE
 } AstNodeType;
 
 typedef struct {
@@ -103,6 +104,7 @@ AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt);
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r);
 AstExprVariable *ast_create_variable(char *n);
 AstStmtIf *ast_create_if(AstNode *c, AstStmtBlock *b, AstStmtBlock *e);
+AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b);
 
 AstNode *fold(AstNode *node);
 

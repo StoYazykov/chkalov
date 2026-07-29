@@ -130,9 +130,29 @@ void codegen(AstNode *node, Parser *a) {
             memcpy(a->code.d+cs+2, &tar, e);
             if(e<8) {
                 memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
-                ((uint8_t *)a->code.d)[cs+1]=PTR|e;
                 a->code.s-=(8-e);
             }
+            ((uint8_t *)a->code.d)[cs+1]=PTR|e;
+            break;
+        }
+        case AST_STMT_WHILE: {
+            AstStmtWhile *whi=(AstStmtWhile *)node;
+            uintptr_t ls=a->code.s, cs, tar;
+            uint8_t e;
+            codegen(whi->cond, a);
+            cs=a->code.s;
+            par_render(a, JMP_IFN, PTR|8, 0);
+            codegen(whi->body, a);
+            tar=a->code.s;
+            e=selszu(tar);
+            tar-=(8-e);
+            par_render(a, JUMP, PTR|selszu(ls), ls);
+            memcpy(a->code.d+cs+2, &tar, e);
+            if(e<8) {
+                memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
+                a->code.s-=(8-e);
+            }
+            ((uint8_t *)a->code.d)[cs+1]=PTR|e;
             break;
         }
     }

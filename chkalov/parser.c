@@ -263,6 +263,15 @@ AstNode *par_par_expr(Parser *a) {
             body=par_parBlock(a);
             return (AstNode *)ast_create_if(cond, body, NULL);
         }
+        case WHILE: {
+            AstStmtBlock *body;
+            AstNode *cond;
+            expect(a, LBRACE, "(");
+            cond=par_par_comp(a);
+            expect(a, RBRACE, ")");
+            body=par_parBlock(a);
+            return (AstNode *)ast_create_while(cond, body);
+        }
         default: a->p--;
     }
     AstNode *l=par_par_term(a);

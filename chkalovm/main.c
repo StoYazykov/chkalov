@@ -266,6 +266,10 @@ int main(int argc, char **argv) {
                 if(!f.value) i=v;
                 continue;
             }
+            case JUMP: {
+                i=v;
+                continue;
+            }
         }
     }
     if(debug) printf("Ended on instruction pointer %llx \r\n", i);

@@ -95,6 +95,14 @@ AstStmtIf *ast_create_if(AstNode *c, AstStmtBlock *b, AstStmtBlock *e) {
     return ifi;
 }
 
+AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b) {
+    AstStmtWhile *whi=malloc(sizeof(AstStmtWhile));
+    whi->base.type=AST_STMT_WHILE;
+    whi->cond=c;
+    whi->body=b;
+    return whi;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {
@@ -146,6 +154,13 @@ void ast_free(AstNode *node) {
             ast_free(c->left);
             ast_free(c->right);
             free(c);
+            break;
+        }
+        case AST_STMT_WHILE: {
+            AstStmtWhile *w=(AstStmtWhile *)node;
+            ast_free(w->cond);
+            ast_free(w->body);
+            free(w);
             break;
         }
     }
@@ -214,7 +229,7 @@ void ast_print(AstNode *node, int indent) {
             break;
         }
         case AST_STMT_IF: {
-            AstStmtIf *stmt=(AstStmtIf*)node;
+            AstStmtIf *stmt=(AstStmtIf *)node;
             printf("IF\n");
             printf("CONDITION:\n");
             ast_print(stmt->cond, indent+1);
@@ -224,6 +239,15 @@ void ast_print(AstNode *node, int indent) {
                 printf("ELSE:\n");
                 ast_print(stmt->els, indent+1);
             }
+            break;
+        }
+        case AST_STMT_WHILE: {
+            AstStmtWhile *stmt=(AstStmtWhile *)node;
+            printf("WHILE\n");
+            printf("CONDITION:\n");
+            ast_print(stmt->cond, indent+1);
+            printf("BODY:\n");
+            ast_print(stmt->body, indent+1);
             break;
         }
     }
@@ -286,6 +310,7 @@ AstNode *fold(AstNode *node) {
         case AST_STMT_VAR_DECL:
         case AST_EXPR_LITERAL:
         case AST_STMT_IF:
+        case AST_STMT_WHILE:
             return node;
     }
 }
