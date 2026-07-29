@@ -24,6 +24,7 @@
 #include "ast.h"
 #include "token.h"
 #include <ctype.h>
+#include "lexer.h"
 #include "../chkalov.h"
 
 typedef struct {
