@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     fread(heap, 1, t, a);
     hp+=t;
     fread(&t, 1, sz(t), a);
-    printf("Bytecode size: %llx \r\n", t);
+    if(debug) printf("Bytecode size: %llx \r\n", t);
     cv_resize(&vm, t);
     fread(vm.d, 1, t, a);
     int64_t tmp;
@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
             }
         }
     }
-    printf("Ended on instruction pointer %llx \r\n", i);
+    if(debug) printf("Ended on instruction pointer %llx \r\n", i);
     cv_free(&stack);
     if(debug) {
         printf("Heap (hp=%llx): ", hp);

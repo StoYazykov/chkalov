@@ -125,12 +125,11 @@ void codegen(AstNode *node, Parser *a) {
             codegen(ifi->body, a);
             tar=a->code.s;
             e=selszu(tar);
-            printf("cs=%llu; tar=%llu; e=%x \r\n", cs, tar, e);
+            if(a->debug) printf("cs=%llu; tar=%llu; e=%x \r\n", cs, tar, e);
             tar-=(8-e);
             memcpy(a->code.d+cs+2, &tar, e);
             if(e<8) {
                 memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
-                printf("memmove: to \r\n");
                 ((uint8_t *)a->code.d)[cs+1]=PTR|e;
                 a->code.s-=(8-e);
             }
