@@ -145,6 +145,7 @@ int main(int argc, char **argv) {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
                 f.value=g.value+h.value;
+                f.type=LONG;
                 cv_push(&stack, &f);
                 break;
             }

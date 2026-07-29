@@ -184,6 +184,12 @@ AstNode *par_par_primary(Parser *a) {
             expect(a, RBRACE, "')'");
             return p;
         }
+        case ID: {
+            variable var;
+            scos_getv(&a->scopes, t.value, &var);
+            if(!var.name) error("Undeclared variable \'%s\'", t.value);
+            return (AstNode *)ast_create_variable(t.value);
+        }
         case STRING: return(AstNode *)ast_create_literal(STRING, t.value);
     }
     return NULL;
@@ -243,17 +249,6 @@ AstNode *par_par_expr(Parser *a) {
             } while(par_this(a)->type==COMMA&&a->p++);
             return res;
         }
-        case ID: {
-            variable var;
-            Token *w=par_this(a);
-            scos_getv(&a->scopes, t->value, &var);
-            if(!var.name) error("Undeclared variable: %s", t->value);
-            if(w->type==ASSIGN) {
-                a->p++;
-                return ast_create_assign(t->value, par_par_comp(a));
-            }
-            else return ast_create_variable(t->value);
-        }
         case IF: {
             AstStmtBlock *body;
             AstNode *cond;
@@ -271,6 +266,16 @@ AstNode *par_par_expr(Parser *a) {
             expect(a, RBRACE, ")");
             body=par_parBlock(a);
             return (AstNode *)ast_create_while(cond, body);
+        }
+        case ID: {
+            variable var;
+            Token *w=par_this(a);
+            scos_getv(&a->scopes, t->value, &var);
+            if(!var.name) error("Undeclared variable: %s", t->value);
+            if(w->type==ASSIGN) {
+                a->p++;
+                return ast_create_assign(t->value, par_par_comp(a));
+            }
         }
         default: a->p--;
     }

@@ -27,8 +27,7 @@ Slot print(size_t argc, Slot *argp, ChkEnv *env) {
 }
 
 Slot println(size_t argc, Slot *argp, ChkEnv *env) {
-    if(ISSTR(argp->type)) puts(*env->_heap+argp->value);
-    else printf("%d\r\n", argp->value);
+    printf("%d\r\n", argp->value);
     return (Slot){0x00};
 }
 

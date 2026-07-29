@@ -81,12 +81,13 @@ int main(int argc, char **argv) {
     int64_t v;
     i=0;
     while(i<t) {
+        printf(" %-4x", i);
         o=c[i++];
         ty=c[i++];
         v=0;
         memcpy(&v, c+i, ty&0x0f);
         i+=ty&0x0f;
-        printf(" %-4x:  %-10s", i, opcodes[o]);
+        printf(":  %-10s", opcodes[o]);
         if(ty) printf("%-10s%-10llx(%llu)", types[(ty&0xf0)>>4], v, ty&0x0F);
         printf(" \r\n");
     }
