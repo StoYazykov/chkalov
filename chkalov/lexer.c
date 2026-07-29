@@ -75,6 +75,12 @@ void lexer(void *b, ds l) {
             cv_push(&a->file, &t);
             continue;
         }
+        IFCS(l+pos, "while", 5) {
+            pos+=5;
+            t=(Token){WHILE, strdup("while")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         if(isalpha(l[pos])) { // ID
             size_t start=pos;
             while(pos<strlen(l)&&isalnum(l[pos])) pos++;

@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
         "Chkalov Bytecode Disassembler version 1.00.\r\n"
         "Usage: ./chkdis <flags> <filename>\r\n"
         "Flags: \r\n"
-        "p - view pool\r\n"
+        "h - view heap image\r\n"
         "b - view bytecode\r\n"
         );
         return 0;
@@ -57,14 +57,20 @@ int main(int argc, char **argv) {
     fread(&magic, 1, sz(uint32_t), a);
     if(magic!=0x05020100) error("Hex magic number incorrect!");
     cv vm;
-    Pool *p;
-    uint8_t vp=!!strchr(argv[1], 'p'), vb=!!strchr(argv[1], 'b');
+    char *p;
+    uint8_t vp=!!strchr(argv[1], 'h'), vb=!!strchr(argv[1], 'b');
     cv_init(&vm, 8, sz(unsigned char));
     uint64_t i,b;
-    cv pool;
-    cv_init(&pool, 8, sz(Pool));
     fread(&t, 1, sz(uint64_t), a);
-    fseek(a, t, SEEK_CUR);
+    p=malloc(t);
+    fread(p, 1, t, a);
+    if(vp) {
+        printf("Heap (hp=%llx): ", t);
+        for(int i=0; i<t; i++) {
+            printf("%c", p[i]?p[i]:'$');
+        }
+        puts("\r\nHeap end");
+    }
     if(!vb) goto PEND;
     fread(&t, 1, sz(t), a);
     printf("Bytecode size: %llx \r\n", t);

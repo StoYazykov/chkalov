@@ -89,6 +89,11 @@ typedef struct {
     AstStmtBlock *body, *els;
 } AstStmtIf;
 
+typedef struct {
+    AstNode base, *cond;
+    AstStmtBlock *body;
+} AstStmtWhile;
+
 AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, AstNode *arg);
 AstExprLiteral* ast_create_literal(TokenType t, char *v);
