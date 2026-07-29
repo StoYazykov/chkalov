@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
         memcpy(&v, c+i, ty&0x0f);
         i+=ty&0x0f;
         printf(":  %-10s", opcodes[o]);
-        if(ty) printf("%-10s%-10llx(%llu)", types[(ty&0xf0)>>4], v, ty&0x0F);
+        if(ty) printf("%-10s%-10llx(%u)", types[(ty&0xf0)>>4], v, ty&0x0F);
         printf(" \r\n");
     }
 PEND:
