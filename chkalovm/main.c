@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         error("Not setted environment variable CHKALOV!\n");
         return 0;
     }
-
+    puts("Chkalov Virtual Machine (version " VERSION ")");
     FILE *a;
     a=fopen(argv[1], "rb");
     if(argc>=3) debug=CSUB(argv[2], "-d", 2);

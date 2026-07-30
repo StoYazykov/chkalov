@@ -3,7 +3,7 @@
 int main(int argc, char **argv) {
     if(argc<3) {
         puts(
-        "Chkalov Bytecode Disassembler version 1.00.\r\n"
+        "Chkalov Bytecode Disassembler (version " VERSION ")\r\n"
         "Usage: ./chkdis <flags> <filename>\r\n"
         "Flags: \r\n"
         "h - view heap image\r\n"

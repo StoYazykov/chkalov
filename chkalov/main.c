@@ -21,11 +21,12 @@
 #include "parser.h"
 
 int main(int argc, char **argv) {
+    puts("Chkalov Compiler (version " VERSION ")\r\n");
     if(argc<3) {
         puts("Usage: chkc <input> <output> [flags]");
         puts("    flags: ");
         puts("  o - disable optimisation");
-        puts("  d - out debug info");
+        puts("  d - out debug info\r\n");
         return 1;
     }
     if(!getenv("CHKALOV")) {
@@ -62,6 +63,6 @@ int main(int argc, char **argv) {
     codegen(parser.root, &parser);
     if(debug) printf("\r\nBefore par_free... \r\n");
     par_free(&parser);
-    if(debug) printf("Done! \r\n");
+    printf("Compilation succesfull! \r\n");
     return 0;
 }

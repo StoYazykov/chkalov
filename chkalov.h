@@ -20,6 +20,8 @@
 #ifndef CHKALOV_H
 #define CHKALOV_H
 
+#define VERSION "0.1.0"
+
 #define _POSIX_C_SOURCE 200809L
 
 #define ISSTR(a) ((a&0xf0)==STR)
