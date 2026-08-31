@@ -35,5 +35,6 @@ void cv_pop(cv *v, void *e);
 void cv_popr(cv *v);
 void *cv_back(cv *v);
 void *cv_eptr(cv *v, size_t i);
+bool cv_equ(cv *a, cv *b);
 void cv_free(cv *v);
 #endif

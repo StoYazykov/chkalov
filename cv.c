@@ -54,6 +54,12 @@ void cv_popr(cv *v) {
     v->s--;
 }
 
+void cv_copy(cv *t, cv *f) {
+    t->c=f->c, t->es=f->es, t->s=f->s;
+    t->d=malloc(t->c*t->es);
+    memcpy(t->d, f->d, t->s*t->es);
+}
+
 // последний элемент. Не POP'ит. Просто возвращает его в *e.
 void *cv_back(cv *v) {
     return v->d+(v->s-1)*v->es;
@@ -62,6 +68,10 @@ void *cv_back(cv *v) {
 // Возвращает, указатель на элемент с индексом i. Осторожно!!! Он изменяемый!
 void *cv_eptr(cv *v, size_t i) {
     return (v->d+(i*v->es));
+}
+
+bool cv_equ(cv *a, cv *b) {
+    return (a->s&&a->s==b->s&&a->es==b->es&&!memcmp(a->d, b->d, a->s*a->es));
 }
 
 // освобождение. Сказать нечего.
