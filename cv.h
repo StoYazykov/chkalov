@@ -21,6 +21,7 @@
 #define _CV_H
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct {
     void *d; // данные.
