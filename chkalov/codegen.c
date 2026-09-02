@@ -131,24 +131,15 @@ void codegen(AstNode *node, Parser *a) {
             break;
         }
         case AST_STMT_IF: {
-            /*
             AstStmtIf *ifi=(AstStmtIf *)node;
             uintptr_t cs, tar;
             uint8_t e;
             codegen(ifi->cond, a);
             cs=a->code.s;
-            par_render(a, JMP_IFN, 0);
+            par_render(a, JMP_IF, 0);
             codegen(ifi->body, a);
             tar=a->code.s;
-            e=selszu(tar);
-            if(a->debug) printf("cs=%llu; tar=%llu; e=%x \r\n", cs, tar, e);
-            tar-=(8-e);
-            memcpy(a->code.d+cs+2, &tar, e);
-            if(e<8) {
-                memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
-                a->code.s-=(8-e);
-            }
-            ((uint8_t *)a->code.d)[cs+1]=PTR|e;*/
+            ((Vm *)cv_eptr(&a->code, cs))->value=tar;
             break;
         }
         case AST_STMT_WHILE: {/*

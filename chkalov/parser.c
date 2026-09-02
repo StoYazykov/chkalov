@@ -207,7 +207,7 @@ AstNode *par_par_term(Parser *a) {
     Token op;
     if(a->debug) puts("par term start");
     AstNode *l=par_par_primary(a);
-    if(a->debug) printf("after calling primary (in term): p=%llu token='%s'\n", a->p, par_this(a)->value);
+    if(a->debug&&a->p<a->file.s) printf("after calling primary (in term): p=%llu token='%s'\n", a->p, par_this(a)->value);
     while(a->p<a->file.s) {
         op=*par_this(a);
         if(!((op.type==STAR)||(op.type==SLASH))) {

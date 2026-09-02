@@ -47,9 +47,10 @@ int main(int argc, char **argv) {
     uint8_t isize;
     fread(&magic, 1, sz(uint32_t), a);
     if(magic!=0x05020200) error("Hex magic number incorrect!");
-    cv vm;
-    cv_init(&vm, 8, sz(unsigned char));
-    uint64_t i,b;
+    cv vm, raw;
+    cv_init(&vm, 8, sz(Vm));
+    cv_init(&raw, 8, 1);
+    uint64_t i, b;
     size_t hs, hp=0;
     char *heap=malloc(hs=1024);
     cv stack, vars;
@@ -61,20 +62,32 @@ int main(int argc, char **argv) {
     hp+=t;
     fread(&t, 1, sz(t), a);
     if(debug) printf("Bytecode size: %llx \r\n", t);
-    cv_resize(&vm, t);
-    fread(vm.d, 1, t, a);
+    cv_resize(&raw, t);
+    fread(raw.d, 1, t, a);
     int64_t tmp;
     unsigned char o,ty;
     int64_t v;
     i=0;
     int64_t g, h, f, *p;
-    unsigned char *c=vm.d;
-    while(i<t) {
-        o=c[i++];
+    Vm *P, *end;
+    char *c=raw.d;
+
+    while(i<raw.s) {
+        Vm q;
+        q.opcode=c[i++];
         isize=c[i++];
-        v=0;
-        memcpy(&v, (unsigned char*)vm.d+i, isize);
+        q.value=0;
+        memcpy(&q.value, c+i, isize);
+        cv_push(&vm, &q);
         i+=isize;
+    }
+
+    P=(Vm *)vm.d;
+    end=((Vm *)vm.d)+vm.s;
+
+    while(P<end) {
+        o=P->opcode;
+        v=P->value;
         switch(o) {
             case PUSH: {
                 cv_push(&stack, &v);
@@ -82,6 +95,7 @@ int main(int argc, char **argv) {
                 break;
             }
             case CALL: {
+                if(debug) puts("call");
                 ds m, l, r;
                 r=heap+v;
                 ds d=strchr(r, '.');
@@ -133,6 +147,7 @@ int main(int argc, char **argv) {
             // }
            case STORE: {
                 int64_t val;
+                if(debug) puts("store");
                 cv_pop(&stack, &val);
                 if(v>=vars.s) {
                     cv_resize(&vars, v+1);
@@ -169,11 +184,13 @@ int main(int argc, char **argv) {
                 break;
             }
             case LOAD: {
+                if(debug) puts("load");
                 if(!(v<vars.s)) error("Index out of bounds: %llx", v);
                 cv_push(&stack, cv_eptr(&vars, v));
                 break;
             }
             case CMP_EQ: {
+                if(debug) puts("cmp_eq");
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
                 f=g==h;
@@ -220,20 +237,25 @@ int main(int argc, char **argv) {
                 break;
             }
             case JMP_IF: {
+                if(debug) puts("jmp_if");
                 cv_pop(&stack, &f);
-                if(f) i=v;
+                if(f) P=((Vm *)vm.d)+v;
+                else P++;
                 continue;
             }
             case JMP_IFN: {
+                if(debug) puts("jmp_ifn");
                 cv_pop(&stack, &f);
-                if(!f) i=v;
+                if(!f) P=((Vm *)vm.d)+v;
+                else P++;
                 continue;
             }
             case JUMP: {
-                i=v;
+                P=((Vm *)vm.d)+v;
                 continue;
             }
         }
+        P++;
     }
     if(debug) printf("Ended on instruction pointer %llx \r\n", i);
     cv_free(&stack);

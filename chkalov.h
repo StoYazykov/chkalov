@@ -44,7 +44,7 @@
     #include <dlfcn.h>
 #endif
 
-#define error(...) (fprintf(stderr, "Error: %s!\r\n"),exit(0x08),0)
+#define error(...) (fprintf(stderr, "Error: %s!\r\n" __VA_ARGS__),exit(0x08),0)
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -118,6 +118,6 @@ typedef struct {
 } Vm;
 
 uint8_t selsz(int64_t a);
-uint8_t selszu(int64_t a);
+uint8_t selszu(uint64_t a);
 
 #endif

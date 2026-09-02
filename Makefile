@@ -43,7 +43,7 @@ DIS_SRC = $(DIS_DIR)/main.c \
 CHKC = $(CHKALOV_DIR)/chkc$(EXT)
 CHKVM = $(CHKALOV_DIR)/chkvm$(EXT)
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
-DIS = $(CHKALOV_DIR)/chkdis$(EXt)
+DIS = $(CHKALOV_DIR)/chkdis$(EXT)
 #ITT = $(CHKALOV_DIR)/chkalovitt
 
 # Объектные файлы
