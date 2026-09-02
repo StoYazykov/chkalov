@@ -21,6 +21,7 @@
 #define _AST_H
 
 #include "token.h"
+#include "../cv.h"
 
 typedef enum {
     AST_STMT_BLOCK=0,
@@ -48,12 +49,12 @@ typedef struct {
 typedef struct {
     AstNode base;
     char *name;
-    AstNode *arg;
+    cv args; // AstNode *
 } AstStmtCall;
 
 typedef struct {
     AstNode base;
-    TokenType type;
+    TokenType lit_type;
     char *value;
 } AstExprLiteral;
 
@@ -96,7 +97,7 @@ typedef struct {
 } AstStmtWhile;
 
 AstStmtBlock* ast_create_block();
-AstStmtCall* ast_create_call(char *n, AstNode *arg);
+AstStmtCall* ast_create_call(char *n, cv args);
 AstExprLiteral* ast_create_literal(TokenType t, char *v);
 AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r);
 AstStmtAssign *ast_create_assign(char *n, AstNode *v);

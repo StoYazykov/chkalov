@@ -71,7 +71,7 @@ void *cv_eptr(cv *v, size_t i) {
 }
 
 bool cv_equ(cv *a, cv *b) {
-    return (a->s&&a->s==b->s&&a->es==b->es&&!memcmp(a->d, b->d, a->s*a->es));
+    return (a->s==b->s&&a->es==b->es&&!memcmp(a->d, b->d, a->s*a->es));
 }
 
 // освобождение. Сказать нечего.

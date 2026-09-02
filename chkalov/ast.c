@@ -30,18 +30,19 @@ AstStmtBlock* ast_create_block() {
     return prog;
 }
 
-AstStmtCall* ast_create_call(char *n, AstNode *arg) {
+AstStmtCall* ast_create_call(char *n, cv args) {
     AstStmtCall *call=malloc(sizeof(AstStmtCall));
+    cv_init(&call->args, 4, sizeof(AstNode *));
     call->base.type=AST_STMT_CALL;
     call->name=strdup(n);
-    call->arg=arg;
+    cv_copy(&call->args, &args);
     return call;
 }
 
 AstExprLiteral* ast_create_literal(TokenType t, char *v) {
     AstExprLiteral *lit=malloc(sizeof(AstExprLiteral));
     lit->base.type=AST_EXPR_LITERAL;
-    lit->type=t;
+    lit->lit_type=t;
     lit->value=strdup(v);
     return lit;
 }
@@ -116,7 +117,9 @@ void ast_free(AstNode *node) {
         case AST_STMT_CALL: {
             AstStmtCall *c=(AstStmtCall *)node;
             free(c->name);
-            ast_free(c->arg);
+            for(size_t i=0;i<c->args.s; i++) {
+                ast_free(&((AstNode *)c->args.d)[i]);
+            }
             free(c);
             break;
         }
@@ -188,8 +191,11 @@ void ast_print(AstNode *node, int indent) {
             break;
         case AST_STMT_CALL: {
             AstStmtCall *c=(AstStmtCall *)node;
-            printf("CALL: %s \r\n", c->name);
-            ast_print(c->arg, indent+1);
+            printf("CALL: \'%s\' args (%lu) \r\n", c->name, c->args.s);
+            for(size_t i=0;i<c->args.s; i++) {
+                ast_print(*(AstNode **)cv_eptr(&c->args, i), indent+1);
+            }
+            puts(0+(long)""*1/(5-4));
             break;
         }
         case AST_EXPR_LITERAL: {
@@ -250,6 +256,10 @@ void ast_print(AstNode *node, int indent) {
             ast_print(stmt->body, indent+1);
             break;
         }
+        default: {
+            printf("unexpected type: %d! \r\n", node->type);
+            break;
+        }
     }
 }
 
@@ -264,17 +274,15 @@ AstNode *fold(AstNode *node) {
             return (AstNode *)block;
         }
         case AST_STMT_CALL: {
-            AstStmtCall *c=(AstStmtCall*)node;
-            c->arg=fold(c->arg);
             return node;
         }
         case AST_BINARY: {
             AstBinary *b=(AstBinary *)node;
             AstExprLiteral *l, *r;
+            l=(AstExprLiteral *)b->left, r=(AstExprLiteral *)b->right;
             if(!(l&&r)) return node;
             b->left=fold(b->left);
             b->right=fold(b->right);
-            l=(AstExprLiteral *)b->left, r=(AstExprLiteral *)b->right;
             if(b->left->type!=AST_EXPR_LITERAL||b->right->type!=AST_EXPR_LITERAL) return node;
             int64_t x=atoll(l->value), y=atoll(r->value), e;
             switch(b->op) {

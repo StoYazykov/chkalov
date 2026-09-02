@@ -24,4 +24,6 @@
 
 void codegen(AstNode *node, Parser *a);
 
+uint8_t type_expr(AstNode *node, Parser *a);
+
 #endif

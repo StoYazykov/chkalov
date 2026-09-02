@@ -46,12 +46,7 @@
     #include <dlfcn.h>
 #endif
 
-#define error(...)do{\
-fprintf(stderr, "Error: ");\
-fprintf(stderr, __VA_ARGS__);\
-fprintf(stderr, "!\r\n");\
-exit(0x08);\
-}while(0)
+#define error(...) (fprintf(stderr, "Error: %s!\r\n"),exit(0x08),0)
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -121,14 +116,9 @@ exit(0x08);\
 
 typedef struct {
     unsigned char opcode;
-    unsigned char type;
     int64_t value; // 64 bits - maximal size, will truncated in par_free(a). //
 } Vm;
 
-typedef struct {
-    unsigned char type;
-    int64_t value;
-} Slot;
 
 // ----------------------------------------------//
 //              Pool entry structure!            //

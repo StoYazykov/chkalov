@@ -68,52 +68,18 @@ Token *par_post(Parser *a) {
 }
 
 void par_init(Parser *n, const ds fni, const ds fno, int deb) {
+    FILE *a=fopen(fni, "rb");
     memset(n, 0, sizeof(Parser));
-    cv_init(&n->code, 256, sizeof(unsigned char));
+    n->fn=strdup(fno);
+    cv_init(&n->code, 32, sizeof(Vm));
     n->hp=0;
     n->heap=malloc(n->hs=1024);
     n->root=ast_create_block();
-    cv_init(&n->imports, 4, sizeof(Import));
+    cv_init(&n->libs, 4, sizeof(Lib));
     scos_init(&n->scopes);
     scos_es(&n->scopes);
     cv_init(&n->file, 16, sizeof(Token));
     n->debug=deb;
-    char *env=getenv("CHKALOV");
-    if(n->debug) printf("  env ptr = %p\n", (void*)env);
-    if(!env) {
-        printf("  CHKALOV is NULL!\n");
-        return;
-    }
-    ds yyy=strdup(env);
-    ds_cat(&yyy, "/imports-table.txt", NULL);
-    if(n->debug) printf("  yyy = '%s'\n", yyy);
-    n->fn=strdup(fno);
-    FILE *a=fopen(yyy, "r");
-    if(!a) error("Imports table not found!");
-    char sa[128], section[128];
-    fgets(sa, sizeof(sa), a);
-    if(strncmp(sa, "$DOCTYPE CHKALOV IMPORTS <1.00>", 4)) error("Imports table (imports-table.txt) corrupted!");
-    while(!feof(a)) {
-        fgets(sa, sizeof(sa), a);
-        if(sa[0]=='%') {
-            sa[strcspn(sa, "\n")]=0;
-            strcpy(section, sa+1);
-            Import imp;
-            imp.name=strdup(sa+1);
-            cv_init(&imp.funcs, 4, sizeof(ds));
-            cv_push(&n->imports, &imp);
-        } else if(sa[0]=='+') {
-            sa[strcspn(sa, "\n")]=0;
-            for(uint64_t i=0ULL; i<n->imports.s; i++) {
-                Import *aa=(Import *)cv_eptr(&n->imports, i);
-                if(SEQU(section, aa->name)) {
-                    imp_add(aa, strdup(sa+1));
-                }
-            }
-        };
-    }
-    fclose(a);
-    a=fopen(fni, "rb");
     ds x;
     while(!feof(a)) {
         ds_gl(&x, a);
@@ -122,29 +88,59 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     fclose(a);
 }
 
-void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v) {
-    if(a->debug) printf("par_render: opcode=%x type=%x value=%llx\n", op, ty, v);
-    cv_push(&a->code, &op);
-    cv_push(&a->code, &ty);
-    size_t sz=ty&0x0f;
-    unsigned char *p=(unsigned char*)&v;
-    for(size_t i=0ULL;i<sz;i++) cv_push(&a->code, &p[i]);
+void par_render(Parser *a, uint8_t op, int64_t value) {
+    Vm vm;
+    vm.opcode=op, vm.value=value;
+    cv_push(&a->code, &vm);
+}
+
+ds par_mangle(Func *f) {
+    ds arg, ret=strdup(f->name);
+    size_t i;
+    for(i=0; i<f->args.s; i++) {
+        switch(*(char *)cv_eptr(&f->args, i)) {
+            case INT: arg="_i"; break;
+            case STR: arg="_s"; break;
+        }
+        ds_cat(&ret, arg, NULL);
+    }
+    return ret;
 }
 
 void par_free(Parser *z) {
+    cv final;
+    size_t i, j;
+    puts("\r\npar free \r\n=====");
+    cv_init(&final, 32, 1);
+    for(i=0; i<z->libs.s; i++) {
+        Lib *lib=cv_eptr(&z->libs, i);
+        for(int j=0; j<lib->funcs.s; j++) {
+            Func *func=cv_eptr(&lib->funcs, j);
+            printf("%s \r\n", par_mangle(func));
+        }
+    }
     if(z->debug) printf("par_free: fn = '%s'\n", z->fn);
-    FILE *fp = fopen(z->fn, "wb");
+    FILE *fp=fopen(z->fn, "wb");
     if(z->debug) printf("par_free: fp = %p\n", (void*)fp);
-    uint32_t magic=0x05020100;
-    uint64_t size=0, i, a, b, c; // 4 + 5 + 5 = 14 !!!!!
+    uint32_t magic=0x05020200;
+    uint64_t size=0; // 4 + 5 + 5 = 14 !!!!!
     fwrite(&magic, 1, sizeof(uint32_t), fp); ///// 0 2 1 5     9 0 0 0 0 10 0 0 0 0
     if(z->debug) puts("writing heap...");
     size=z->hp;
     fwrite(&size, 1, sz(size), fp);
     fwrite(z->heap, 1, size, fp);
-    size=z->code.s;
+
+    for(i=0; i<z->code.s; i++) {
+        Vm *vm=cv_eptr(&z->code, i);
+        cv_push(&final, &vm->opcode);
+        size=selsz(vm->value);
+        cv_push(&final, &size);
+        for(j=0; j<size; j++) cv_push(&final, ((char *)&vm->value)+j);
+    }
+
+    size=final.s;
     fwrite(&size, 1, sz(size), fp);
-    fwrite(z->code.d, 1, size, fp);
+    fwrite(final.d, 1, size, fp);
     fclose(fp);
     free(z->heap);
     cv_free(&z->code);
@@ -159,16 +155,28 @@ size_t par_heapIns(Parser *a, ds k) {
     return r;
 }
 
-bool imp_cont(Import *a, ds b) {
-    for(uint64_t i=0; i<a->funcs.s; i++) {
-        if(SEQU(*(ds*)cv_eptr(&a->funcs, i), b)) return true;
-    }
-    return false;
+void lib_add(Parser *a, ds n) {
+    Lib b;
+    cv_init(&b.funcs, 16, sizeof(Func));
+    b.name=strdup(n);
+    cv_push(&a->libs, &b);
 }
 
-void imp_add(Import *a, ds z) {
-    ds copy=strdup(z);
-    cv_push(&a->funcs, &copy);
+void func_add(Lib *a, Func z) {
+    Func *copy=malloc(sizeof(Func));
+    copy->name=strdup(z.name);
+    cv_copy(&copy->args, &z.args);
+    cv_push(&a->funcs, copy);
+}
+
+int func_find(Lib *a, Func z) {
+    Func *t;
+    size_t i;
+    for(i=0; i<a->funcs.s; i++) {
+        t=cv_eptr(&a->funcs, i);
+        if(!strcmp(t->name, z.name)&&cv_equ(&t->args, &z.args)) return 1;
+    }
+    return 0;
 }
 
 AstNode *par_par_primary(Parser *a) {
@@ -219,17 +227,48 @@ AstNode *par_par_expr(Parser *a) {
     if(a->debug) puts("par expr start");
     a->p++;
     switch(t->type) {
+        case NATIVE: {
+            Token *n=par_post(a);
+            Func z;
+            uint8_t c;
+            printf("library \'%s\', functions: \r\n", n->value);
+            lib_add(a, n->value);
+            expect(a, LPAREN, "\'{\'");
+            do {
+                n=par_post(a);
+                if(n->type!=ID) error("Expected function name!");
+                printf("%s ( ", n->value);
+                expect(a, LBRACE, "\'(\'");
+                cv_init(&z.args, 4, 1);
+                z.name=strdup(n->value);
+                do {
+                    n=par_post(a);
+                    c=par_stt(n->value);
+                    cv_push(&z.args, &c);
+                    printf("%s ", n->value);
+                    if(par_this(a)->type==COMMA) a->p++;
+                } while(par_this(a)->type!=RBRACE);
+                expect(a, RBRACE, "\')\'");
+                printf(") \r\n");
+                func_add((Lib *)cv_back(&a->libs), z);
+                if(par_this(a)->type==COMMA) a->p++;
+            } while (par_this(a)->type!=RPAREN);
+            expect(a, RPAREN, "\'}\'");
+            return NULL;
+        }
         case LCALL: {
-            AstStmtCall *asc;
+            cv q;
+            Token *m=par_post(a);
+            AstNode *n;
+            cv_init(&q, 4, sizeof(AstNode *));
             if(a->debug) puts("lcall");
-            Token *as=par_post(a);
             expect(a, LBRACE, "\'(\'");
-            if(a->debug) printf("this token: \'%s\' \r\n", par_this(a)->value);
-            arg=par_par_comp(a);
-            if(a->debug) printf("After par_par_comp: p=%zu, token='%s'\n", a->p, par_this(a)->value);
+            do {
+                n=par_par_comp(a);
+                cv_push(&q, &n);
+            } while(par_this(a)->type==COMMA&&a->p++);
             expect(a, RBRACE, "\')\'");
-            asc=ast_create_call(as->value, arg);
-            return (AstNode *)asc;
+            return (AstNode *)ast_create_call(m->value, q);
         }
         case VAR: {
             AstStmtVarDecl *svd;
@@ -237,7 +276,7 @@ AstNode *par_par_expr(Parser *a) {
             AstNode *decl;
             AstNode *res=NULL;
             do {
-                n=par_post(a);  // 'a', 'b', 'c'
+                n=par_post(a);
                 if(a->debug) printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
                 scos_addv(&a->scopes, n->value, par_stt(w->value));
                 decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value));

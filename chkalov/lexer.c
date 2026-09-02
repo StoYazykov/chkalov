@@ -32,7 +32,12 @@ void lexer(void *b, ds l) {
             Token abcv={EOF, strdup("")};
             cv_push(&a->file, &abcv);
         }
-
+        IFCS(l+pos, "native", 6) {
+            pos+=6;
+            t=(Token){NATIVE, strdup("native")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         IFCS(l+pos, "class", 5) {
             pos+=5;
             t=(Token){CLASS, strdup("class")};

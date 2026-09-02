@@ -37,25 +37,26 @@ int main(int argc, char **argv) {
         error("Not setted environment variable CHKALOV!\n");
         return 0;
     }
-    puts("Chkalov Virtual Machine (version " VERSION ")");
+    puts("Chkalov Virtual Machine (version " VERSION ")\r\n");
     FILE *a;
     a=fopen(argv[1], "rb");
     if(argc>=3) debug=CSUB(argv[2], "-d", 2);
     if(!a) error("Not found CVM file!");
     uint32_t magic;
     uint64_t t;
+    uint8_t isize;
     fread(&magic, 1, sz(uint32_t), a);
-    if(magic!=0x05020100) error("Hex magic number incorrect!");
+    if(magic!=0x05020200) error("Hex magic number incorrect!");
     cv vm;
     cv_init(&vm, 8, sz(unsigned char));
     uint64_t i,b;
     size_t hs, hp=0;
     char *heap=malloc(hs=1024);
     cv stack, vars;
-    cv_init(&stack, 8, sz(Slot));
-    cv_init(&vars, 8, sz(Slot));
+    cv_init(&stack, 8, sz(int64_t));
+    cv_init(&vars, 8, sz(int64_t));
     fread(&t, 1, sz(uint64_t), a);
-    heap=realloc(heap, (t>hs)?hs<<=1:hs);
+    heap=malloc((hs=(t<<1)));
     fread(heap, 1, t, a);
     hp+=t;
     fread(&t, 1, sz(t), a);
@@ -66,19 +67,17 @@ int main(int argc, char **argv) {
     unsigned char o,ty;
     int64_t v;
     i=0;
-    Slot g, h, f, *p;
+    int64_t g, h, f, *p;
     unsigned char *c=vm.d;
     while(i<t) {
         o=c[i++];
-        ty=c[i++];
+        isize=c[i++];
         v=0;
-        memcpy(&v, (unsigned char*)vm.d+i, ty&0x0f);
-        i+=ty&0x0f;
+        memcpy(&v, (unsigned char*)vm.d+i, isize);
+        i+=isize;
         switch(o) {
             case PUSH: {
-                f.type=ty;
-                f.value=v;
-                cv_push(&stack, &f);
+                cv_push(&stack, &v);
                 if(debug) puts("push!");
                 break;
             }
@@ -104,15 +103,15 @@ int main(int argc, char **argv) {
                 ds_cat(&s, ".so", NULL);
 #endif
                 void *h=dlopen(s, RTLD_LAZY);
-                typedef Slot (*CFUNC)(size_t argc, Slot *argp, ChkEnv *env);
-                CFUNC func = (CFUNC)dlsym(h, l);
+                typedef Int (*CFUNC)(size_t argc, int64_t *argp, ChkEnv *env);
+                CFUNC func=(CFUNC)dlsym(h, l);
                 if(!func) {
                     dlclose(h);
                     break;
                 }
-                Slot a;
+                int64_t a;
                 cv_pop(&stack, &a);
-                if(debug) printf("CALL: a.type=0x%02x, a.value=%llx\n", a.type, (long long)a.value);
+                if(debug) printf("CALL: a=%llx\n", a);
                 ChkEnv env;
                 env._heap=&heap;
                 env._hp=&hp;
@@ -132,7 +131,7 @@ int main(int argc, char **argv) {
             //     }
             //     break;
             // }
-            case STORE: {
+           /* case STORE: {
                 Slot val;
                 cv_pop(&stack, &val);
                 if(v>=vars.s) {
@@ -196,20 +195,6 @@ int main(int argc, char **argv) {
                 break;
             }
 
-            case GETFIELD: {
-                /*size_t off=0;
-                uint8_t sb;*/
-                cv_pop(&stack, &g); // base pointer
-                /*memcpy(&off, (uint8_t *)&v, (ty&0x0f)-1);
-                printf("offset size: %x\r\n", (ty&0x0f)-1);
-                memcpy(&sb, ((uint8_t *)&v)+((ty&0x0f)-1), 1);
-                if(debug) printf("Getfield: base pointer %x, offset %x, common byte %x \r\n", g.value, off, sb);*/
-                f.value=0;
-                memcpy(&f.value, (char*)heap+g.value+v, 1);
-                if(debug) printf("f.value: %llx \r\n", f.value);
-                cv_push(&stack, &f);
-                break;
-            }
             case CMP_EQ: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
@@ -270,7 +255,7 @@ int main(int argc, char **argv) {
             case JUMP: {
                 i=v;
                 continue;
-            }
+            }*/
         }
     }
     if(debug) printf("Ended on instruction pointer %llx \r\n", i);

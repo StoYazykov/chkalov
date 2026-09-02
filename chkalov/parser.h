@@ -28,12 +28,14 @@
 #include "../chkalov.h"
 
 typedef struct {
-    cv funcs;
     ds name;
-} Import;
+    cv args;
+} Func;
 
-bool imp_cont(Import *a, ds b);
-void imp_add(Import *a, ds z);
+typedef struct {
+    ds name;
+    cv funcs;
+} Lib;
 
 typedef struct {
     ds fn;
@@ -41,21 +43,26 @@ typedef struct {
     cv code, file;
     char *heap;
     size_t hp, hs;
-    cv imports;
+    cv libs;
     AstStmtBlock *root;
     ScopeStack scopes;
     size_t p;
 } Parser;
 
+void lib_add(Parser *a, ds n);
+void func_add(Lib *a, Func z);
+int func_find(Lib *a, Func z);
+
 void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);
+ds par_mangle(Func *f);
 void par_free(Parser *a);
 Token* par_this(Parser *a);
 Token* par_next(Parser *a);
 uint8_t par_stt(ds s);
 char *par_tts(uint8_t t);
 Token* par_post(Parser *a);
-void par_render(Parser *a, uint8_t op, uint8_t ty, int64_t v);
+void par_render(Parser *a, uint8_t op, int64_t v);
 void par_parFile(Parser *a);
 void expect(Parser *a, TokenType t, char *s);
 AstNode *par_par_primary(Parser *a);

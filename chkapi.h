@@ -23,3 +23,5 @@ typedef struct {
     char **_heap;
     size_t *_hs, *_hp;
 } ChkEnv;
+
+typedef int Int;

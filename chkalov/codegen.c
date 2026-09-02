@@ -30,17 +30,32 @@ void codegen(AstNode *node, Parser *a) {
             break;
         }
         case AST_STMT_CALL: {
-            size_t j;
+            size_t i, pos;
+            uint8_t t;
             AstStmtCall *call=(AstStmtCall *)node;
-            codegen(call->arg, a);
-            char *method=call->name;
-            for(size_t i=0; i<a->imports.s; i++) {
-                Import ppp=*((Import *)cv_eptr(&a->imports, i));
-                if(imp_cont(&ppp, method)) {
-                    ds aaa=strdup(ppp.name);
-                    ds_cat(&aaa, ".", method, NULL);
-                    j=par_heapIns(a, aaa);
-                    par_render(a, CALL, STR|selszu(j), j);
+            Lib *lib;
+            Func key;
+            cv types;
+            cv_init(&types, 4, 1);
+            AstNode **args=(AstNode **)call->args.d;
+            for(i=0; i<call->args.s; i++) {
+                t=type_expr(args[i], a);
+                cv_push(&types, &t);
+            }
+            for(i=0; i<a->libs.s; i++) {
+                size_t j;
+                lib=cv_eptr(&a->libs, i);
+                key.name=call->name;
+                key.args=types;
+
+                if(func_find(lib, key)) {
+                    ds final=strdup(lib->name), mangled=par_mangle(&key);
+                    ds_cat(&final, ".", mangled, NULL);
+                    for(j=0; j<call->args.s; j++) codegen(args[j], a);
+                    pos=par_heapIns(a, final);
+                    par_render(a, CALL, pos);
+                    free(final);
+                    free(mangled);
                     break;
                 }
             }
@@ -50,16 +65,16 @@ void codegen(AstNode *node, Parser *a) {
         case AST_EXPR_LITERAL: {
             long long j;
             AstExprLiteral *lit=(AstExprLiteral *)node;
-            switch(lit->type) {
+            switch(lit->lit_type) {
                 case NUMBER: {
                     j=atoll(lit->value);
-                    par_render(a, PUSH, LONG|selsz(j), j);
+                    par_render(a, PUSH, j);
                     if(a->debug) puts("push long");
                     break;
                 }
                 case STRING: {
                     j=par_heapIns(a, lit->value);
-                    par_render(a, PUSH, STR|selszu(j), j);
+                    par_render(a, PUSH, j);
                     if(a->debug) puts("push string");
                     break;
                 }
@@ -71,16 +86,16 @@ void codegen(AstNode *node, Parser *a) {
             codegen(bin->left, a);
             codegen(bin->right, a);
             switch(bin->op) {
-                case PLUS: par_render(a, ADD, 0, 0); break;
-                case MINUS: par_render(a, SUB, 0, 0); break;
-                case STAR: par_render(a, MUL, 0, 0); break;
-                case SLASH: par_render(a, DIV, 0, 0); break;
-                case EQ: par_render(a, CMP_EQ, 0, 0); break;
-                case NEQ: par_render(a, CMP_NEQ, 0, 0); break;
-                case LT: par_render(a, CMP_LT, 0, 0); break;
-                case BT: par_render(a, CMP_BT, 0, 0); break;
-                case LE: par_render(a, CMP_LE, 0, 0); break;
-                case BE: par_render(a, CMP_BE, 0, 0); break;
+                case PLUS: par_render(a, ADD, 0); break;
+                case MINUS: par_render(a, SUB, 0); break;
+                case STAR: par_render(a, MUL, 0); break;
+                case SLASH: par_render(a, DIV, 0); break;
+                case EQ: par_render(a, CMP_EQ, 0); break;
+                case NEQ: par_render(a, CMP_NEQ, 0); break;
+                case LT: par_render(a, CMP_LT, 0); break;
+                case BT: par_render(a, CMP_BT, 0); break;
+                case LE: par_render(a, CMP_LE, 0); break;
+                case BE: par_render(a, CMP_BE, 0); break;
                 default: error("Unknown binary operator: %d", bin->op);
             }
             break;
@@ -89,8 +104,8 @@ void codegen(AstNode *node, Parser *a) {
             AstStmtVarDecl *svd=(AstStmtVarDecl *)node;
             variable var;
             scos_getv(&a->scopes, svd->name, &var);
-            par_render(a, PUSH, svd->var_type, 0);
-            par_render(a, STORE, IDX|selszu(var.id), var.id);
+            par_render(a, PUSH, 0);
+            par_render(a, STORE, var.id);
             break;
         }
         case AST_EXPR_COMMA: {
@@ -103,25 +118,26 @@ void codegen(AstNode *node, Parser *a) {
             AstExprVariable *var=(AstExprVariable *)node;
             variable vat;
             scos_getv(&a->scopes, var->name, &vat);
-            par_render(a, LOAD, IDX|selszu(vat.id), vat.id);
+            par_render(a, LOAD, vat.id);
             break;
         }
         case AST_STMT_ASSIGN: {
             AstStmtAssign *ass=(AstStmtAssign *)node;
             variable vat;
             codegen(ass->value, a);
-            par_render(a, DUP, 0, 0);
+            par_render(a, DUP, 0);
             scos_getv(&a->scopes, ass->name, &vat);
-            par_render(a, STORE, IDX|selszu(vat.id), vat.id);
+            par_render(a, STORE, vat.id);
             break;
         }
         case AST_STMT_IF: {
+            /*
             AstStmtIf *ifi=(AstStmtIf *)node;
             uintptr_t cs, tar;
             uint8_t e;
             codegen(ifi->cond, a);
             cs=a->code.s;
-            par_render(a, JMP_IFN, PTR|8, 0);
+            par_render(a, JMP_IFN, 0);
             codegen(ifi->body, a);
             tar=a->code.s;
             e=selszu(tar);
@@ -132,10 +148,10 @@ void codegen(AstNode *node, Parser *a) {
                 memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
                 a->code.s-=(8-e);
             }
-            ((uint8_t *)a->code.d)[cs+1]=PTR|e;
+            ((uint8_t *)a->code.d)[cs+1]=PTR|e;*/
             break;
         }
-        case AST_STMT_WHILE: {
+        case AST_STMT_WHILE: {/*
             AstStmtWhile *whi=(AstStmtWhile *)node;
             uintptr_t ls=a->code.s, cs, tar;
             uint8_t e;
@@ -152,8 +168,18 @@ void codegen(AstNode *node, Parser *a) {
                 memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
                 a->code.s-=(8-e);
             }
-            ((uint8_t *)a->code.d)[cs+1]=PTR|e;
+            ((uint8_t *)a->code.d)[cs+1]=PTR|e;*/
             break;
         }
+    }
+}
+
+uint8_t type_expr(AstNode *node, Parser *a) {
+    switch(node->type) {
+        case AST_EXPR_LITERAL: {
+            AstExprLiteral *lit=(AstExprLiteral *)node;
+            return (lit->lit_type==NUMBER)?INT:(lit->lit_type==STRING)?STR:error("Error!");
+        }
+        default: return 0;
     }
 }
