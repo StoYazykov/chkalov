@@ -207,28 +207,28 @@ int main(int argc, char **argv) {
             case CMP_BT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f=g>h;
+                f=g<=h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_LT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f=g<h;
+                f=g>=h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_BE: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f=g>=h;
+                f=g<h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_LE: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f=g<=h;
+                f=g>h;
                 cv_push(&stack, &f);
                 break;
             }

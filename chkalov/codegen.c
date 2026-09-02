@@ -136,7 +136,7 @@ void codegen(AstNode *node, Parser *a) {
             uint8_t e;
             codegen(ifi->cond, a);
             cs=a->code.s;
-            par_render(a, JMP_IF, 0);
+            par_render(a, JMP_IFN, 0);
             codegen(ifi->body, a);
             tar=a->code.s;
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
