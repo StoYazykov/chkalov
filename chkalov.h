@@ -24,8 +24,6 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#define ISSTR(a) ((a&0xf0)==STR)
-#define ISNUM(a) (!ISSTR(a))
 #define CSUB(a,b,c) (!strncmp(a, b, c))
 #define IFCS(a,b,c) if(CSUB(a,b,c))
 #define SEQU(a,b) (!strcmp(a,b))
@@ -95,15 +93,15 @@
 //            Types definitions!                 //
 // ----------------------------------------------//
 
-#define CHAR 0x10
-#define XSHORT 0x20
-#define SHORT 0x30
-#define INT 0x40
-#define LONG 0x50
-#define STR 0x60 // string in HEAP
+#define CHAR 0x01
+#define XSHORT 0x02
+#define SHORT 0x03
+#define INT 0x04
+#define LONG 0x05
+#define STR 0x06 // string in HEAP
 #define LIBRARY STR
-#define PTR 0x80
-#define IDX 0x90
+#define PTR 0x07
+#define IDX 0x08
 
 #define sz(type) (sizeof(type))
 
@@ -119,17 +117,7 @@ typedef struct {
     int64_t value; // 64 bits - maximal size, will truncated in par_free(a). //
 } Vm;
 
-
-// ----------------------------------------------//
-//              Pool entry structure!            //
-// ----------------------------------------------//
-
-typedef struct {
-    unsigned char type;
-    ds value;
-} Pool;
-
-uint8_t selstrt(uint64_t a);
 uint8_t selsz(int64_t a);
+uint8_t selszu(int64_t a);
 
 #endif
