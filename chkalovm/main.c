@@ -32,45 +32,45 @@ void *env_alloc(ChkEnv *e, size_t s) {
 
 int main(int argc, char **argv) {
     bool debug=false;
+    uint32_t magic;
+    size_t t, hs, hp=0, i=0;
+    uint8_t isize, o;
+    FILE *a;
+    char *heap, *c;
+    int64_t v, g, h, f, *p;
+    Vm *P, *end;
+    cv vm, raw, stack, vars;
 
     if (!getenv("CHKALOV")) {
         error("Not setted environment variable CHKALOV!\n");
         return 0;
     }
+
     puts("Chkalov Virtual Machine (version " VERSION ")\r\n");
-    FILE *a;
+
     a=fopen(argv[1], "rb");
     if(argc>=3) debug=CSUB(argv[2], "-d", 2);
     if(!a) error("Not found CVM file!");
-    uint32_t magic;
-    uint64_t t;
-    uint8_t isize;
+
     fread(&magic, 1, sz(uint32_t), a);
     if(magic!=0x05020200) error("Hex magic number incorrect!");
-    cv vm, raw;
+
     cv_init(&vm, 8, sz(Vm));
     cv_init(&raw, 8, 1);
-    uint64_t i, b;
-    size_t hs, hp=0;
-    char *heap;
-    cv stack, vars;
     cv_init(&stack, 8, sz(int64_t));
     cv_init(&vars, 8, sz(int64_t));
+
     fread(&t, 1, sz(uint64_t), a);
     heap=malloc((hs=(t<<1)));
+
     fread(heap, 1, t, a);
     hp+=t;
+
     fread(&t, 1, sz(t), a);
     if(debug) printf("Bytecode size: %llx \r\n", t);
     cv_resize(&raw, t);
     fread(raw.d, 1, t, a);
-    int64_t tmp;
-    unsigned char o,ty;
-    int64_t v;
-    i=0;
-    int64_t g, h, f, *p;
-    Vm *P, *end;
-    char *c=raw.d;
+    c=raw.d;
 
     while(i<raw.s) {
         Vm q;
