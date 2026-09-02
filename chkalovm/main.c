@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     cv_init(&raw, 8, 1);
     uint64_t i, b;
     size_t hs, hp=0;
-    char *heap=malloc(hs=1024);
+    char *heap;
     cv stack, vars;
     cv_init(&stack, 8, sz(int64_t));
     cv_init(&vars, 8, sz(int64_t));
