@@ -131,43 +131,41 @@ int main(int argc, char **argv) {
             //     }
             //     break;
             // }
-           /* case STORE: {
-                Slot val;
+           case STORE: {
+                int64_t val;
                 cv_pop(&stack, &val);
                 if(v>=vars.s) {
                     cv_resize(&vars, v+1);
                 }
-                *(Slot *)(cv_eptr(&vars, v))=val;
+                *(int64_t *)(cv_eptr(&vars, v))=val;
                 break;
             }
             case ADD: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=g.value+h.value;
-                f.type=LONG;
-                cv_push(&stack, &f);
+                g+=h;
+                cv_push(&stack, &g);
                 break;
             }
             case SUB: {
                 cv_pop(&stack, &h);
                 cv_pop(&stack, &g);
-                f.value=g.value-h.value;
-                cv_push(&stack, &f);
+                g-=h;
+                cv_push(&stack, &g);
                 break;
             }
             case MUL: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=g.value*h.value;
-                cv_push(&stack, &f);
+                g*=h;
+                cv_push(&stack, &g);
                 break;
             }
             case DIV: {
                 cv_pop(&stack, &h);
                 cv_pop(&stack, &g);
-                if(!h.value) error("Division by zero");
-                f.value=g.value/h.value;
-                cv_push(&stack, &f);
+                g/=h;
+                cv_push(&stack, &g);
                 break;
             }
             case LOAD: {
@@ -175,87 +173,66 @@ int main(int argc, char **argv) {
                 cv_push(&stack, cv_eptr(&vars, v));
                 break;
             }
-            case ALLOC: {
-                if(debug) printf("Alloc: type %x, value %x, heap size %x, heap pointer %x \r\n", ty, v, hs, hp);
-                size_t sz=v;
-                if(sz>=hs) {
-                    heap=realloc(heap, hs=sz<<1);
-                    if(debug) printf("Reallocated: heap size %x, heap pointer %x \r\n", hs, hp);
-                }
-                g.value=hp;
-                hp+=sz;
-                cv_push(&stack, &g);
-                break;
-            }
-            case SETFIELD: {
-                cv_pop(&stack, &g); // base pointer
-                cv_pop(&stack, &h); // value
-                if(debug) printf("Setfield: base pointer %x, offset %x \r\n", g.value, v);
-                memcpy(heap+g.value+v, &h.value, h.type&0x0f);
-                break;
-            }
-
             case CMP_EQ: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=h.value==g.value;
+                f=g==h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_NEQ: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=h.value!=g.value;
+                f=g!=h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_BT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=h.value>g.value;
+                f=g>h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_LT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=h.value<g.value;
+                f=g<h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_BE: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=h.value>=g.value;
+                f=g>=h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_LE: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f.value=h.value<=g.value;
+                f=g<=h;
                 cv_push(&stack, &f);
                 break;
             }
             case DUP: {
-                p=cv_back(&stack);
-                cv_push(&stack, p);
+                cv_push(&stack, cv_back(&stack));
                 break;
             }
             case JMP_IF: {
                 cv_pop(&stack, &f);
-                if(f.value) i=v;
+                if(f) i=v;
                 continue;
             }
             case JMP_IFN: {
                 cv_pop(&stack, &f);
-                if(!f.value) i=v;
+                if(!f) i=v;
                 continue;
             }
             case JUMP: {
                 i=v;
                 continue;
-            }*/
+            }
         }
     }
     if(debug) printf("Ended on instruction pointer %llx \r\n", i);
