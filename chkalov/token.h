@@ -31,14 +31,14 @@ typedef enum {
     LPAREN, RPAREN, LBRACE, RBRACE,
     COMMA, DOT, COLON,
     CLASS
-} TokenType;
+} TokType;
 
 typedef struct {
-    TokenType type;
+    TokType type;
     ds value;
 } Token;
 
-void tok_init(Token *a, TokenType b, ds c);
+void tok_init(Token *a, TokType b, ds c);
 void tok_free(Token *a);
 
 #endif

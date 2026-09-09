@@ -53,7 +53,13 @@ void par_parFile(Parser *a) {
 
 void expect(Parser *a, TokenType t, char *s) {
     if(par_this(a)->type==t) a->p++;
-    else error("Expected %s, detected: %s", s, par_this(a)->value);
+    else {
+        if(par_this(a)->value) {
+            error("Expected %s, detected: %s", s, par_this(a)->value);
+        } else {
+            error("Expected %s, but end of file", s);
+        }
+    }
 }
 
 Token *par_this(Parser *a) {
@@ -188,7 +194,7 @@ AstNode *par_par_primary(Parser *a) {
         case NUMBER: return (AstNode *)ast_create_literal(NUMBER, t.value);
         case LBRACE: {
             AstNode *p;
-            p=par_par_expr(a);
+            p=par_par_comp(a);
             expect(a, RBRACE, "')'");
             return p;
         }
@@ -249,7 +255,7 @@ AstNode *par_par_expr(Parser *a) {
                     if(par_this(a)->type==COMMA) a->p++;
                 } while(par_this(a)->type!=RBRACE);
                 expect(a, RBRACE, "\')\'");
-                printf(") \r\n");
+                printf(")\r\n");
                 expect(a, COLON, ":");
                 n=par_post(a);
                 z.ret_type=par_stt(n->value);
@@ -278,6 +284,7 @@ AstNode *par_par_expr(Parser *a) {
             Token *n, *w=par_post(a);
             AstNode *decl;
             AstNode *res=NULL;
+            expect(a, COLON, ":");
             do {
                 n=par_post(a);
                 if(a->debug) printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
@@ -373,6 +380,7 @@ void par_optim(Parser *a) {
 AstStmtBlock *par_parBlock(Parser *a) {
     AstStmtBlock *block=ast_create_block();
     AstNode *an;
+    expect(a, LPAREN, "{");
     while(a->p<a->file.s&&par_this(a)->type!=RPAREN) {
         an=par_par_expr(a);
         if(an) ast_add(block, an);

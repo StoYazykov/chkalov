@@ -47,7 +47,7 @@
     #include <dlfcn.h>
 #endif
 
-#define error(...) (fprintf(stderr, "Error: %s!\r\n" __VA_ARGS__),exit(0x08),0)
+#define error(...) (fprintf(stderr, "Error: " __VA_ARGS__),fprintf(stderr, "!\r\n"),exit(0x08),0)
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include "ds.h"
 #include "cv.h"
+
 // ----------------------------------------------//
 //              VM opcodes definitions           //
 // ----------------------------------------------//
@@ -94,7 +95,7 @@
 
 
 // ----------------------------------------------//
-//            Types definitions!                 //
+//            Types definitions                  //
 // ----------------------------------------------//
 
 #define NUL 0x00

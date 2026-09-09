@@ -19,7 +19,7 @@
 
 #include "token.h"
 
-void tok_init(Token *a, TokenType b, ds c) {
+void tok_init(Token *a, TokType b, ds c) {
     a->value=NULL;
     ds_str(&a->value, c);
     a->type=b;
