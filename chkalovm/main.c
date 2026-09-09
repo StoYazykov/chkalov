@@ -124,14 +124,18 @@ int main(int argc, char **argv) {
                     break;
                 }
                 int64_t a;
-                cv_pop(&stack, &a);
+                cv_pop(&stack, &f);
+                int64_t args[16];
+                for(size_t k=0; k<f; k++) {
+                    cv_pop(&stack, &args[k]);
+                }
                 if(debug) printf("CALL: a=%llx\n", a);
                 ChkEnv env;
                 env._heap=&heap;
                 env._hp=&hp;
                 env._hs=&hs;
                 env.alloc=env_alloc;
-                g=func(1, &a, &env);
+                g=func(f, args, &env);
                 cv_push(&stack, &g);
                 dlclose(h);
                 break;
@@ -207,14 +211,14 @@ int main(int argc, char **argv) {
             case CMP_BT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f=g<=h;
+                f=g<h;
                 cv_push(&stack, &f);
                 break;
             }
             case CMP_LT: {
                 cv_pop(&stack, &g);
                 cv_pop(&stack, &h);
-                f=g>=h;
+                f=g>h;
                 cv_push(&stack, &f);
                 break;
             }

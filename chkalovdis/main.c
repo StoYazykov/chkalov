@@ -76,8 +76,8 @@ int main(int argc, char **argv) {
         memcpy(&v, c+i, isize);
         i+=isize;
 
-        printf(":  %-10s", opcodes[o]);
-        printf("%-10x%-10llx", isize, v);
+        printf("%-10s", opcodes[o]);
+        printf("%-10llx", v);
         printf(" \r\n");
     }
 PEND:

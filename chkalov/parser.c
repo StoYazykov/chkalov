@@ -26,7 +26,6 @@ static Scope nullscope;
 
 uint8_t par_stt(ds s) {
     if(SEQU(s, "Int")) return INT;
-    if(SEQU(s, "Xshort")) return XSHORT;
     if(SEQU(s, "Char")) return CHAR;
     if(SEQU(s, "String")) return STR;
     if(SEQU(s, "Long")) return LONG;
@@ -96,11 +95,12 @@ void par_render(Parser *a, uint8_t op, int64_t value) {
 
 ds par_mangle(Func *f) {
     ds arg, ret=strdup(f->name);
+    ds_cat(&ret, "_", NULL);
     size_t i;
     for(i=0; i<f->args.s; i++) {
         switch(*(char *)cv_eptr(&f->args, i)) {
-            case INT: arg="_i"; break;
-            case STR: arg="_s"; break;
+            case INT: arg="i"; break;
+            case STR: arg="s"; break;
         }
         ds_cat(&ret, arg, NULL);
     }
@@ -250,6 +250,9 @@ AstNode *par_par_expr(Parser *a) {
                 } while(par_this(a)->type!=RBRACE);
                 expect(a, RBRACE, "\')\'");
                 printf(") \r\n");
+                expect(a, COLON, ":");
+                n=par_post(a);
+                z.ret_type=par_stt(n->value);
                 func_add((Lib *)cv_back(&a->libs), z);
                 if(par_this(a)->type==COMMA) a->p++;
             } while (par_this(a)->type!=RPAREN);
@@ -264,8 +267,8 @@ AstNode *par_par_expr(Parser *a) {
             if(a->debug) puts("lcall");
             expect(a, LBRACE, "\'(\'");
             do {
-                n=par_par_comp(a);
-                cv_push(&q, &n);
+                n=par_par_expr(a);
+                par_split_commas(n, &q);
             } while(par_this(a)->type==COMMA&&a->p++);
             expect(a, RBRACE, "\')\'");
             return (AstNode *)ast_create_call(m->value, q);
@@ -291,9 +294,7 @@ AstNode *par_par_expr(Parser *a) {
         case IF: {
             AstStmtBlock *body;
             AstNode *cond;
-            expect(a, LBRACE, "(");
             cond=par_par_comp(a);
-            expect(a, RBRACE, ")");
             body=par_parBlock(a);
             return (AstNode *)ast_create_if(cond, body, NULL);
         }
@@ -377,4 +378,15 @@ AstStmtBlock *par_parBlock(Parser *a) {
         if(an) ast_add(block, an);
     }
     return block;
+}
+
+void par_split_commas(AstNode *n, cv *q) {
+    if(n->type==AST_EXPR_COMMA) {
+        AstExprComma *com=(AstExprComma *)n;
+        par_split_commas(com->left, q);
+        par_split_commas(com->right, q);
+        free(com);
+    } else {
+        cv_push(q, &n);
+    }
 }

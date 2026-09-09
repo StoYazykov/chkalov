@@ -29,3 +29,16 @@ Int println_s(size_t argc, int64_t *argp, ChkEnv *env) {
     return 0;
 }
 
+Int printi_i(size_t argc, int64_t *argp, ChkEnv *env) {
+    printf("%d", argp[0]);
+    return 0;
+}
+
+Int print_s(size_t argc, int64_t *argp, ChkEnv *env) {
+    printf("%s", argp[0]+(*env->_heap));
+    return 0;
+}
+
+Int sum_ii(size_t argc, int64_t *argp, ChkEnv *env) {
+    return argp[0]+argp[1];
+}

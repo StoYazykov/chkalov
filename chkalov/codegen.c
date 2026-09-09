@@ -53,6 +53,7 @@ void codegen(AstNode *node, Parser *a) {
                     ds_cat(&final, ".", mangled, NULL);
                     for(j=0; j<call->args.s; j++) codegen(args[j], a);
                     pos=par_heapIns(a, final);
+                    par_render(a, PUSH, call->args.s);
                     par_render(a, CALL, pos);
                     free(final);
                     free(mangled);
@@ -152,7 +153,7 @@ void codegen(AstNode *node, Parser *a) {
             codegen(whi->body, a);
             par_render(a, JUMP, PTR|selszu(ls), ls);
             tar=a->code.s;
-            e=selszu(tar);
+            e=selszu(tar)+8;
             tar-=(8-e);
             memcpy(a->code.d+cs+2, &tar, e);
             if(e<8) {
@@ -166,11 +167,33 @@ void codegen(AstNode *node, Parser *a) {
 }
 
 uint8_t type_expr(AstNode *node, Parser *a) {
+    int conv_table[5][5]={
+    //             NULL CHAR SHORT INT LONG STR
+    /* NULL */  {  0,   0,   0,    0,  0,   0},
+    /* CHAR */  {  0,   1,   1,    1,  1,   0},
+    /* SHORT */ {  0,   0,   1,    1,  1,   0},
+    /* INT */   {  0,   0,   0,    1,  1,   0},
+    /* LONG */  {  0,   0,   0,    0,  1,   0},
+    /* STR  */  {  0,   0,   0,    0,  0,   1},
+    };
+
     switch(node->type) {
         case AST_EXPR_LITERAL: {
             AstExprLiteral *lit=(AstExprLiteral *)node;
             return (lit->lit_type==NUMBER)?INT:(lit->lit_type==STRING)?STR:error("Error!");
         }
+        case AST_EXPR_VARIABLE: {
+            AstExprVariable *var=(AstExprVariable *)node;
+            variable v;
+            scos_getv(&a->scopes, var->name, &v);
+            return v.type;
+        }
+        case AST_BINARY: {
+            AstBinary *bin=(AstBinary *)node;
+            uint8_t left=type_expr(bin->left, a);
+            uint8_t right=type_expr(bin->right, a);
+            if(conv_table[left][right]) return MAX(left, right);
+        } // fall-through
         default: return 0;
     }
 }

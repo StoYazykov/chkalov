@@ -28,6 +28,9 @@
 #define IFCS(a,b,c) if(CSUB(a,b,c))
 #define SEQU(a,b) (!strcmp(a,b))
 
+#define MAX(a, b) ((a)>(b)?(a):(b))
+
+
 #ifdef _WIN32
     #include <windows.h>
     #define RTLD_LAZY 0
@@ -58,6 +61,8 @@
 
 // 0x00..0x07 opcodes is reserved.
 
+#define INCORRECT 0x00
+
 #define LOAD 0x08
 #define PUSH 0x09
 #define STORE 0x0A
@@ -70,16 +75,15 @@
 
 #define CALL 0x11
 
-#define ALLOC 0x12
+#define CMP_EQ 0x12    // if equal ==
+#define CMP_NEQ 0x13   // if not equal !=
+#define CMP_LT 0x14    // if less <
+#define CMP_BT 0x15    // if big >
+#define CMP_BE 0x16   // if big or equal >=
+#define CMP_LE 0x17   // if less or equal <=
+#define JUMP 0x18
 
-#define CMP_EQ 0x13    // if equal ==
-#define CMP_NEQ 0x14   // if not equal !=
-#define CMP_LT 0x15    // if less <
-#define CMP_BT 0x16    // if big >
-#define CMP_BE 0x17   // if big or equal >=
-#define CMP_LE 0x18   // if less or equal <=
-#define JUMP 0x19
-
+#define ALLOC 0x19
 #define SETFIELD 0x1A
 #define GETFIELD 0x1B
 
@@ -93,15 +97,15 @@
 //            Types definitions!                 //
 // ----------------------------------------------//
 
+#define NUL 0x00
 #define CHAR 0x01
-#define XSHORT 0x02
-#define SHORT 0x03
-#define INT 0x04
-#define LONG 0x05
-#define STR 0x06 // string in HEAP
+#define SHORT 0x02
+#define INT 0x03
+#define LONG 0x04
+#define STR 0x05 // string in HEAP
 #define LIBRARY STR
-#define PTR 0x07
-#define IDX 0x08
+#define PTR 0x06
+#define IDX 0x07
 
 #define sz(type) (sizeof(type))
 
