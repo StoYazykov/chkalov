@@ -150,10 +150,14 @@ void codegen(AstNode *node, Parser *a) {
             codegen(whi->cond, a);
             cs=a->code.s;
             par_render(a, JMP_IFN, 0);
+            printf("WHILE: before body: s=%zu\n", a->code.s);
             codegen(whi->body, a);
+            printf("WHILE: after body: s=%zu\n", a->code.s);
             par_render(a, JUMP, ls);
             tar=a->code.s;
+            printf("WHILE: after jump: s=%zu, tar=%zu\n", a->code.s, tar);
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
+            printf("WHILE: ls=%zu, cs=%zu, tar=%zu\n", ls, cs, tar);
             break;
         }
     }

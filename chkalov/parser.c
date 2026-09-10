@@ -383,6 +383,7 @@ AstStmtBlock *par_parBlock(Parser *a) {
         an=par_par_expr(a);
         if(an) ast_add(block, an);
     }
+    if(par_this(a)->type==RPAREN) a->p++;
     return block;
 }
 

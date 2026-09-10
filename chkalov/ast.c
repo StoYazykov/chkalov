@@ -245,6 +245,7 @@ void ast_print(AstNode *node, int indent) {
                 printf("ELSE:\n");
                 ast_print(stmt->els, indent+1);
             }
+            puts("IF BODY END");
             break;
         }
         case AST_STMT_WHILE: {
@@ -254,6 +255,7 @@ void ast_print(AstNode *node, int indent) {
             ast_print(stmt->cond, indent+1);
             printf("BODY:\n");
             ast_print(stmt->body, indent+1);
+            puts("WHILE BODY END");
             break;
         }
         default: {

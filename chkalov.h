@@ -60,9 +60,14 @@
 //              VM opcodes definitions           //
 // ----------------------------------------------//
 
-// 0x00..0x07 opcodes is reserved.
-
 #define INCORRECT 0x00
+
+// Extended opcodes
+
+#define M_INC 0x01 // multi-increment
+#define M_DEC 0x02 // multi-decrement
+
+// Default opcodes
 
 #define LOAD 0x08
 #define PUSH 0x09
