@@ -143,24 +143,17 @@ void codegen(AstNode *node, Parser *a) {
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
             break;
         }
-        case AST_STMT_WHILE: {/*
+        case AST_STMT_WHILE: {
             AstStmtWhile *whi=(AstStmtWhile *)node;
             uintptr_t ls=a->code.s, cs, tar;
             uint8_t e;
             codegen(whi->cond, a);
             cs=a->code.s;
-            par_render(a, JMP_IFN, PTR|8, 0);
+            par_render(a, JMP_IFN, 0);
             codegen(whi->body, a);
-            par_render(a, JUMP, PTR|selszu(ls), ls);
+            par_render(a, JUMP, ls);
             tar=a->code.s;
-            e=selszu(tar)+8;
-            tar-=(8-e);
-            memcpy(a->code.d+cs+2, &tar, e);
-            if(e<8) {
-                memmove(a->code.d+cs+2+e, a->code.d+cs+10, a->code.s-(cs+10));
-                a->code.s-=(8-e);
-            }
-            ((uint8_t *)a->code.d)[cs+1]=PTR|e;*/
+            ((Vm *)cv_eptr(&a->code, cs))->value=tar;
             break;
         }
     }

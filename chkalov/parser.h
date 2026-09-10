@@ -66,7 +66,7 @@ void par_split_commas(AstNode *n, cv *q);
 Token* par_post(Parser *a);
 void par_render(Parser *a, uint8_t op, int64_t v);
 void par_parFile(Parser *a);
-void expect(Parser *a, TokenType t, char *s);
+void expect(Parser *a, TokType t, char *s);
 AstNode *par_par_primary(Parser *a);
 AstNode *par_par_term(Parser *a);
 AstNode *par_par_expr(Parser *a);

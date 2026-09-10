@@ -51,7 +51,7 @@ void par_parFile(Parser *a) {
     }
 }
 
-void expect(Parser *a, TokenType t, char *s) {
+void expect(Parser *a, TokType t, char *s) {
     if(par_this(a)->type==t) a->p++;
     else {
         if(par_this(a)->value) {
@@ -308,9 +308,7 @@ AstNode *par_par_expr(Parser *a) {
         case WHILE: {
             AstStmtBlock *body;
             AstNode *cond;
-            expect(a, LBRACE, "(");
             cond=par_par_comp(a);
-            expect(a, RBRACE, ")");
             body=par_parBlock(a);
             return (AstNode *)ast_create_while(cond, body);
         }

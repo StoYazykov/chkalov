@@ -39,7 +39,7 @@ AstStmtCall* ast_create_call(char *n, cv args) {
     return call;
 }
 
-AstExprLiteral* ast_create_literal(TokenType t, char *v) {
+AstExprLiteral* ast_create_literal(TokType t, char *v) {
     AstExprLiteral *lit=malloc(sizeof(AstExprLiteral));
     lit->base.type=AST_EXPR_LITERAL;
     lit->lit_type=t;
@@ -47,7 +47,7 @@ AstExprLiteral* ast_create_literal(TokenType t, char *v) {
     return lit;
 }
 
-AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r) {
+AstBinary *ast_create_binary(TokType t, AstNode *l, AstNode *r) {
     AstBinary *bin=malloc(sizeof(AstBinary));
     bin->base.type=AST_BINARY;
     bin->op=t;

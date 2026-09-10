@@ -54,7 +54,7 @@ typedef struct {
 
 typedef struct {
     AstNode base;
-    TokenType lit_type;
+    TokType lit_type;
     char *value;
 } AstExprLiteral;
 
@@ -98,8 +98,8 @@ typedef struct {
 
 AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, cv args);
-AstExprLiteral* ast_create_literal(TokenType t, char *v);
-AstBinary *ast_create_binary(TokenType t, AstNode *l, AstNode *r);
+AstExprLiteral* ast_create_literal(TokType t, char *v);
+AstBinary *ast_create_binary(TokType t, AstNode *l, AstNode *r);
 AstStmtAssign *ast_create_assign(char *n, AstNode *v);
 AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt);
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r);
