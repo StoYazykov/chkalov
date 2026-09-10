@@ -84,6 +84,7 @@ int main(int argc, char **argv) {
 
     P=(Vm *)vm.d;
     end=((Vm *)vm.d)+vm.s;
+    cv_free(&raw);
 
     while(P<end) {
         o=P->opcode;
@@ -262,7 +263,6 @@ int main(int argc, char **argv) {
         P++;
     }
     if(debug) printf("Ended on instruction pointer %llx \r\n", i);
-    cv_free(&stack);
     if(debug) {
         printf("Heap (hp=%llx): ", hp);
         for(int i=0; i<hp; i++) {
@@ -270,7 +270,10 @@ int main(int argc, char **argv) {
         }
         puts("\r\nHeap end");
     }
-    free(heap);
+
+    cv_free(&vm);
     cv_free(&vars);
+    cv_free(&stack);
+    free(heap);
     return 0;
 }

@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     printf("Bytecode size (in bytes): %llx \r\n", t);
     cv_resize(&vm, t);
     fread(vm.d, 1, t, a);
-    unsigned char *c = vm.d;
+    unsigned char *c=vm.d;
     uint8_t o, isize;
     int64_t v;
     size_t i=0;
@@ -77,10 +77,11 @@ int main(int argc, char **argv) {
         i+=isize;
 
         printf("%-10s", opcodes[o]);
-        printf("%-10llx", v);
+        printf("%10llXh / %-10lld", v, v);
         printf(" \r\n");
     }
 PEND:
     fclose(a);
+    cv_free(&vm);
     return 0;
 }
