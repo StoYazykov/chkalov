@@ -90,7 +90,8 @@ int main(int argc, char **argv) {
         o=P->opcode;
         v=P->value;
         switch(o) {
-            case PUSH: {
+            case PUSH:
+            case S_PUSH: {
                 cv_push(&stack, &v);
                 if(debug) puts("push!");
                 break;

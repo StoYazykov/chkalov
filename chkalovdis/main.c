@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     if(!vb) goto PEND;
     fread(&t, 1, sz(t), a);
     size_t size=t;
-    printf("Bytecode size (in bytes): %llx \r\n", t);
+    printf("Bytecode size (in bytes): %llXh / %lld \r\n", t, t);
     cv_resize(&vm, t);
     fread(vm.d, 1, t, a);
     unsigned char *c=vm.d;
@@ -78,10 +78,12 @@ int main(int argc, char **argv) {
 
         printf("%-10s", opcodes[o]);
         printf("%10llXh / %-10lld", v, v);
+        if(o==CALL||o==S_PUSH) printf("%10s %s", "//", p+v);
         printf(" \r\n");
     }
 PEND:
     fclose(a);
     cv_free(&vm);
+    free(p);
     return 0;
 }

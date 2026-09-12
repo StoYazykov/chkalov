@@ -75,7 +75,7 @@ void codegen(AstNode *node, Parser *a) {
                 }
                 case STRING: {
                     j=par_heapIns(a, lit->value);
-                    par_render(a, PUSH, j);
+                    par_render(a, S_PUSH, j);
                     if(a->debug) puts("push string");
                     break;
                 }

@@ -68,9 +68,9 @@
 #define M_DEC 0x02 // multi-decrement
 
 // Default opcodes
-
-#define LOAD 0x08
-#define PUSH 0x09
+#define LOAD 0x07
+#define PUSH 0x08
+#define S_PUSH 0x09
 #define STORE 0x0A
 #define INC 0x0B
 #define DEC 0x0C
