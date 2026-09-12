@@ -52,7 +52,7 @@ typedef struct {
 
 void lib_add(Parser *a, ds n);
 void func_add(Lib *a, Func z);
-int func_find(Lib *a, Func z);
+Func *func_find(Lib *a, Func z);
 
 void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);

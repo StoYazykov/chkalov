@@ -185,6 +185,32 @@ uint8_t type_expr(AstNode *node, Parser *a) {
             scos_getv(&a->scopes, var->name, &v);
             return v.type;
         }
+        case AST_STMT_CALL: {
+            AstStmtCall *call=(AstStmtCall *)node;
+            Lib *lib;
+            Func key, *result;
+            size_t i;
+            cv types;
+            cv_init(&types, 4, 1);
+            AstNode **args=(AstNode **)call->args.d;
+            for(i=0; i<call->args.s; i++) {
+                uint8_t type=type_expr(args[i], a);
+                cv_push(&types, &type);
+            }
+            for(i=0; i<a->libs.s; i++) {
+                size_t j;
+                lib=cv_eptr(&a->libs, i);
+                key.name=call->name;
+                key.args=types;
+                printf("Candidate: \'%s\', types: ", call->name);
+                if(result=func_find(lib, key)) {
+                    printf("CALL type_expr: name=%s, ret=%d\n", call->name, result->ret_type);
+                    return result->ret_type;
+                }
+            }
+            cv_free(&types);
+            return 0;
+        }
         case AST_BINARY: {
             AstBinary *bin=(AstBinary *)node;
             uint8_t left=type_expr(bin->left, a);
