@@ -98,12 +98,14 @@
 #define JMP_IF 0x1D
 #define JMP_IFN 0x1E
 
+#define INVOKE 0x1F
+
 
 // ----------------------------------------------//
 //            Types definitions                  //
 // ----------------------------------------------//
 
-#define NUL 0x00
+#define VOID 0x00
 #define CHAR 0x01
 #define SHORT 0x02
 #define INT 0x03

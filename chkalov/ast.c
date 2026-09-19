@@ -104,6 +104,15 @@ AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b) {
     return whi;
 }
 
+AstStmtFun *ast_create_fun(char *n, cv args, uint8_t ret_type, AstStmtBlock *b) {
+    AstStmtFun *fun=malloc(sizeof(AstStmtFun));
+    fun->base.type=AST_STMT_FUN;
+    fun->name=strdup(n);
+    cv_copy(&fun->args, &args);
+    fun->ret_type=ret_type;
+    fun->body=b;
+}
+
 void ast_free(AstNode *node) {
     if(!node) return;
     switch(node->type) {

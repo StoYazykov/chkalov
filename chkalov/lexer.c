@@ -38,6 +38,12 @@ void lexer(void *b, ds l) {
             cv_push(&a->file, &t);
             continue;
         }
+        IFCS(l+pos, "return", 6) {
+            pos+=6;
+            t=(Token){RETURN, strdup("return")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         IFCS(l+pos, "class", 5) {
             pos+=5;
             t=(Token){CLASS, strdup("class")};
@@ -50,6 +56,12 @@ void lexer(void *b, ds l) {
             cv_push(&a->file, &t);
             continue;
         }
+        IFCS(l+pos, "fun", 3) {
+            pos+=3;
+            t=(Token){FUN, strdup("fun")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         IFCS(l+pos, "==", 2) {
             pos+=2;
             t=(Token){EQ, strdup("==")};
@@ -59,7 +71,6 @@ void lexer(void *b, ds l) {
         IFCS(l+pos, "!=", 2) {
             pos+=2;
             t=(Token){NEQ, strdup("!=")};
-            cv_push(&a->file, &t);
             continue;
         }
         IFCS(l+pos, ">=", 2) {

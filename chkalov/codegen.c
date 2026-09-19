@@ -165,8 +165,8 @@ void codegen(AstNode *node, Parser *a) {
 
 uint8_t type_expr(AstNode *node, Parser *a) {
     int conv_table[5][5]={
-    //             NULL CHAR SHORT INT LONG STR
-    /* NULL */  {  0,   0,   0,    0,  0,   0},
+    //             VOID CHAR SHORT INT LONG STR
+    /* VOID */  {  0,   0,   0,    0,  0,   0},
     /* CHAR */  {  0,   1,   1,    1,  1,   0},
     /* SHORT */ {  0,   0,   1,    1,  1,   0},
     /* INT */   {  0,   0,   0,    1,  1,   0},

@@ -62,6 +62,10 @@ void expect(Parser *a, TokType t, char *s) {
     }
 }
 
+void skip(Parser *a, TokType *t) {
+    if(par_this(a)->type==t) a->p++;
+}
+
 Token *par_this(Parser *a) {
     return (Token *)cv_eptr(&a->file, a->p);
 }
@@ -245,7 +249,7 @@ AstNode *par_par_expr(Parser *a) {
                 n=par_post(a);
                 if(n->type!=ID) error("Expected function name!");
                 printf("%s ( ", n->value);
-                expect(a, LBRACE, "\'(\'");
+                skip(a, LBRACE);
                 cv_init(&z.args, 4, 1);
                 z.name=strdup(n->value);
                 do {
@@ -254,10 +258,10 @@ AstNode *par_par_expr(Parser *a) {
                     cv_push(&z.args, &c);
                     printf("%s ", n->value);
                     if(par_this(a)->type==COMMA) a->p++;
-                } while(par_this(a)->type!=RBRACE);
-                expect(a, RBRACE, "\')\'");
+                } while(par_this(a)->type!=RBRACE&&par_this(a)->type!=COLON);
+                skip(a, RBRACE);
                 printf(")\r\n");
-                expect(a, COLON, ":");
+                skip(a, COLON);
                 n=par_post(a);
                 z.ret_type=par_stt(n->value);
                 func_add((Lib *)cv_back(&a->libs), z);
@@ -305,6 +309,28 @@ AstNode *par_par_expr(Parser *a) {
             cond=par_par_comp(a);
             body=par_parBlock(a);
             return (AstNode *)ast_create_if(cond, body, NULL);
+        }
+        case FUN: {
+            char *name=par_post(a)->value;
+            cv args;
+            uint8_t ret_type;
+            AstStmtBlock *body;
+            Token *n, *w;
+
+            printf("Function \'%s\' \r\n", name);
+            skip(a, LBRACE);
+            do {
+                n=par_post(a);
+                expect(a, COLON, ":");
+                w=par_post(a);
+                printf("type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
+            } while(par_this(a)->type==COMMA&&a->p++);
+            skip(a, RBRACE);
+            expect(a, COLON, ":");
+            n=par_post(a)->value;
+            printf("return type: \'%s\' \r\n", n);
+            body=par_parBlock(a);
+            return NULL;
         }
         case WHILE: {
             AstStmtBlock *body;
