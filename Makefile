@@ -27,7 +27,8 @@ COMPILER_SRC = $(CHKALOV_SRC)/main.c \
 	       $(CHKALOV_DIR)/chkalov.c \
 	       $(CHKALOV_SRC)/ast.c \
 	       $(CHKALOV_SRC)/codegen.c \
-	       $(CHKALOV_SRC)/lexer.c
+	       $(CHKALOV_SRC)/lexer.c \
+		$(CHKALOV_SRC)/native.c
 
 STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.c \

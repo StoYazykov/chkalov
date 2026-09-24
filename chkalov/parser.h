@@ -25,18 +25,8 @@
 #include "token.h"
 #include <ctype.h>
 #include "lexer.h"
+#include "types.h"
 #include "../chkalov.h"
-
-typedef struct {
-    ds name;
-    cv args;
-    uint8_t ret_type;
-} Func;
-
-typedef struct {
-    ds name;
-    cv funcs;
-} Lib;
 
 typedef struct {
     ds fn;
@@ -49,10 +39,6 @@ typedef struct {
     ScopeStack scopes;
     size_t p;
 } Parser;
-
-void lib_add(Parser *a, ds n);
-void func_add(Lib *a, Func z);
-Func *func_find(Lib *a, Func z);
 
 void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);
