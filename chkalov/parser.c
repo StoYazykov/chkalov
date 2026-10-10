@@ -403,6 +403,7 @@ AstNode *par_par_comp(Parser *a) {
 void par_optim(Parser *a) {
     a->root=(AstStmtBlock *)fold((AstNode *)a->root);
 }
+
 AstStmtBlock *par_parBlock(Parser *a) {
     AstStmtBlock *block=ast_create_block();
     AstNode *an;

@@ -324,12 +324,11 @@ AstNode *fold(AstNode *node) {
         }
         case AST_BINARY: {
             AstBinary *b=(AstBinary *)node;
-            AstExprLiteral *l, *r;
-            l=(AstExprLiteral *)b->left, r=(AstExprLiteral *)b->right;
-            if(!(l&&r)) return node;
             b->left=fold(b->left);
             b->right=fold(b->right);
             if(b->left->type!=AST_EXPR_LITERAL||b->right->type!=AST_EXPR_LITERAL) return node;
+            AstExprLiteral *l=(AstExprLiteral *)b->left;
+            AstExprLiteral *r=(AstExprLiteral *)b->right;
             int64_t x=atoll(l->value), y=atoll(r->value), e;
             switch(b->op) {
                 case PLUS: e=x+y; break;
