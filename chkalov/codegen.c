@@ -57,11 +57,20 @@ void codegen(AstNode *node, Parser *a) {
                     par_render(a, CALL, pos);
                     free(final);
                     free(mangled);
-                    break;
+                    cv_free(&types);
+                    return;
                 }
             }
-            if(a->debug) puts("call");
-            break;
+            size_t addr=user_func_find(&a->funcs, call->name);
+            if(addr==NONE) error("Undeclared function: \'%s\'", par_mangle(call));
+            size_t j;
+            for(j=0; j<call->args.s; j++) {
+                codegen(args[j], a);
+                par_render(a, ARG, 0);
+            }
+
+            par_render(a, INVOKE, addr);
+            return;
         }
         case AST_EXPR_LITERAL: {
             long long j;
@@ -160,6 +169,23 @@ void codegen(AstNode *node, Parser *a) {
             printf("WHILE: ls=%zu, cs=%zu, tar=%zu\n", ls, cs, tar);
             break;
         }
+        case AST_STMT_FUN: {
+            AstStmtFun *fun=(AstStmtFun *)node;
+            size_t addr=a->code.s;
+
+            user_func_add(&a->funcs, fun->name, addr, INT);
+            printf("func: %s at %zx, body=%p, count=%zu\n", fun->name, addr, fun->body, fun->body->count);
+            if(a->debug) printf("func: %s at %zx\n", fun->name, addr);
+
+            codegen(fun->body, a);
+            break;
+        }
+        case AST_STMT_RET: {
+            AstStmtRet *ret=(AstStmtRet *)node;
+            codegen(ret->value, a);
+            par_render(a, RET, 0);
+            break;
+        }
     }
 }
 
@@ -177,7 +203,7 @@ uint8_t type_expr(AstNode *node, Parser *a) {
     switch(node->type) {
         case AST_EXPR_LITERAL: {
             AstExprLiteral *lit=(AstExprLiteral *)node;
-            return (lit->lit_type==NUMBER)?INT:(lit->lit_type==STRING)?STR:error("Error!");
+            return (lit->lit_type==NUMBER)?INT:(lit->lit_type==STRING)?STR:error("Error");
         }
         case AST_EXPR_VARIABLE: {
             AstExprVariable *var=(AstExprVariable *)node;
@@ -186,30 +212,40 @@ uint8_t type_expr(AstNode *node, Parser *a) {
             return v.type;
         }
         case AST_STMT_CALL: {
+            size_t i, pos;
+            uint8_t t;
             AstStmtCall *call=(AstStmtCall *)node;
             Lib *lib;
-            Func key, *result;
-            size_t i;
+            Func key;
             cv types;
             cv_init(&types, 4, 1);
             AstNode **args=(AstNode **)call->args.d;
             for(i=0; i<call->args.s; i++) {
-                uint8_t type=type_expr(args[i], a);
-                cv_push(&types, &type);
+                t=type_expr(args[i], a);
+                cv_push(&types, &t);
             }
             for(i=0; i<a->libs.s; i++) {
                 size_t j;
                 lib=cv_eptr(&a->libs, i);
                 key.name=call->name;
                 key.args=types;
-                printf("Candidate: \'%s\', types: ", call->name);
-                if(result=func_find(lib, key)) {
-                    printf("CALL type_expr: name=%s, ret=%d\n", call->name, result->ret_type);
-                    return result->ret_type;
+
+                if(func_find(lib, key)) {
+                    ds final=strdup(lib->name), mangled=par_mangle(&key);
+                    ds_cat(&final, ".", mangled, NULL);
+                    for(j=0; j<call->args.s; j++) codegen(args[j], a);
+                    pos=par_heapIns(a, final);
+                    par_render(a, PUSH, call->args.s);
+                    par_render(a, CALL, pos);
+                    free(final);
+                    free(mangled);
+                    cv_free(&types);
+                    return;
                 }
             }
-            cv_free(&types);
-            return 0;
+            size_t addr=user_func_find(&a->funcs, call->name);
+            if(addr==NONE) error("Undeclared function: '%s'!", call->name);
+            return INT;
         }
         case AST_BINARY: {
             AstBinary *bin=(AstBinary *)node;

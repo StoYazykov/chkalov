@@ -20,6 +20,11 @@
 #include "../chkalov.h"
 #include "../chkapi.h"
 
+typedef struct {
+    size_t vars_s, args_s;
+    Vm *ret_addr;
+} Frame;
+
 void *env_alloc(ChkEnv *e, size_t s) {
     //printf("Env_alloc! \r\n");
     if(s>=*e->_hs) {
@@ -33,13 +38,14 @@ void *env_alloc(ChkEnv *e, size_t s) {
 int main(int argc, char **argv) {
     bool debug=false;
     uint32_t magic;
-    size_t t, hs, hp=0, i=0;
+    size_t hs, hp=0, i=0, bp=0;
     uint8_t isize, o;
     FILE *a;
     char *heap, *c;
     int64_t v, g, h, f, *p;
     Vm *P, *end;
-    cv vm, raw, stack, vars;
+    cv vm, raw, stack, vars, frames, args;
+    Header hdr;
 
     if (!getenv("CHKALOV")) {
         error("Not setted environment variable CHKALOV!\n");
@@ -49,27 +55,25 @@ int main(int argc, char **argv) {
     puts("Chkalov Virtual Machine (version " VERSION ")\r\n");
 
     a=fopen(argv[1], "rb");
-    if(argc>=3) debug=CSUB(argv[2], "-d", 2);
+    if(argc>=3) debug=!!CSUB(argv[2], "-d", 2);
     if(!a) error("Not found CVM file!");
 
-    fread(&magic, 1, sz(uint32_t), a);
-    if(magic!=0x05020200) error("Hex magic number incorrect!");
+    fread(&hdr, 1, sz(Header), a);
+    if(hdr.magic!=0x05020200) error("Hex magic number incorrect!");
 
     cv_init(&vm, 8, sz(Vm));
     cv_init(&raw, 8, 1);
     cv_init(&stack, 8, sz(int64_t));
     cv_init(&vars, 8, sz(int64_t));
+    cv_init(&frames, 4, sz(Frame));
+    cv_init(&args, 4, sz(int64_t));
 
-    fread(&t, 1, sz(uint64_t), a);
-    heap=malloc((hs=(t<<1)));
+    heap=malloc((hs=(hdr.heap_size<<1)));
 
-    fread(heap, 1, t, a);
-    hp+=t;
-
-    fread(&t, 1, sz(t), a);
-    if(debug) printf("Bytecode size: %llx \r\n", t);
-    cv_resize(&raw, t);
-    fread(raw.d, 1, t, a);
+    if(debug) printf("Bytecode size: %llx \r\n", hdr.code_size);
+    cv_resize(&raw, hdr.code_size);
+    fread(heap, 1, hdr.heap_size, a);
+    fread(raw.d, 1, hdr.code_size, a);
     c=raw.d;
 
     while(i<raw.s) {
@@ -142,23 +146,15 @@ int main(int argc, char **argv) {
                 dlclose(h);
                 break;
             }
-            // case IFNE: {
-            //     int64_t a=pop(stack).value, b=pop(stack).value;
-            //     cout << "IFNE; " << a << " and " << b << '!' << endl;
-            //     if(a!=b) {
-            //         cout << hex << "!=. Jumping to " << v << "..." << '!' << dec << endl;
-            //         i=v;
-            //     }
-            //     break;
-            // }
+
            case STORE: {
                 int64_t val;
                 if(debug) puts("store");
                 cv_pop(&stack, &val);
-                if(v>=vars.s) {
-                    cv_resize(&vars, v+1);
+                if(bp+v>=vars.s) {
+                    cv_resize(&vars, bp+v+1);
                 }
-                *(int64_t *)(cv_eptr(&vars, v))=val;
+                *(int64_t *)(cv_eptr(&vars, bp+v))=val;
                 break;
             }
             case ADD: {
@@ -191,8 +187,8 @@ int main(int argc, char **argv) {
             }
             case LOAD: {
                 if(debug) puts("load");
-                if(!(v<vars.s)) error("Index out of bounds: %llx", v);
-                cv_push(&stack, cv_eptr(&vars, v));
+                if(bp+v>=vars.s) error("Index out of bounds: %llx", bp+v);
+                cv_push(&stack, cv_eptr(&vars, bp+v));
                 break;
             }
             case CMP_EQ: {
@@ -260,6 +256,34 @@ int main(int argc, char **argv) {
                 P=((Vm *)vm.d)+v;
                 continue;
             }
+            case INVOKE: {
+                Frame f;
+                f.vars_s=vars.s;
+                f.args_s=args.s;
+                f.ret_addr=P;
+                cv_push(&frames, &f);
+
+                for(size_t k=0; k<args.s; k++) {
+                    cv_push(&vars, cv_eptr(&args, k));
+                }
+                args.s=0;
+                bp=f.vars_s;
+                P=(Vm *)vm.d+v;
+                continue;
+            }
+            case RET: {
+                Frame *fr=cv_back(&frames);
+                vars.s=fr->vars_s;
+                args.s=fr->args_s;
+                bp=fr->vars_s;
+                P=fr->ret_addr;
+                frames.s--;
+                continue;
+            }
+            case ARG: {
+                cv_push(&args, &v);
+                break;
+            }
         }
         P++;
     }
@@ -275,6 +299,7 @@ int main(int argc, char **argv) {
     cv_free(&vm);
     cv_free(&vars);
     cv_free(&stack);
+    cv_free(&frames);
     free(heap);
     return 0;
 }

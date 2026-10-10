@@ -45,6 +45,8 @@ int main(int argc, char **argv) {
     /* 0x1D */ "jmp_if",
     /* 0x1E */ "jmp_ifn",
     /* 0x1F */ "invoke",
+    /* 0x20 */ "ret",
+    /* 0x21 */ "arg"
 };
 
     FILE *a=fopen(argv[2], "rb");

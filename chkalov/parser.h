@@ -26,19 +26,20 @@
 #include <ctype.h>
 #include "lexer.h"
 #include "types.h"
+#include "function.h"
 #include "../chkalov.h"
 
+
 typedef struct {
-    ds fn;
     int debug;
-    cv code, file;
-    char *heap;
-    size_t hp, hs;
-    cv libs;
+    cv code, file, funcs, libs, pool;
+    char *heap, *fn;
+    size_t hp, hs, p;
     AstStmtBlock *root;
     ScopeStack scopes;
-    size_t p;
 } Parser;
+
+#include "sema_check.h"
 
 void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);
@@ -59,6 +60,7 @@ AstNode *par_par_term(Parser *a);
 AstNode *par_par_expr(Parser *a);
 AstNode *par_par_comma(Parser *a, AstNode *l);
 AstNode *par_par_comp(Parser *a);
+size_t par_pool_add(Parser *a, char *str);
 void par_optim(Parser *a);
 AstStmtBlock *par_parBlock(Parser *a);
 

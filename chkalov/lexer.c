@@ -71,6 +71,7 @@ void lexer(void *b, ds l) {
         IFCS(l+pos, "!=", 2) {
             pos+=2;
             t=(Token){NEQ, strdup("!=")};
+            cv_push(&a->file, &t);
             continue;
         }
         IFCS(l+pos, ">=", 2) {

@@ -111,6 +111,14 @@ AstStmtFun *ast_create_fun(char *n, cv args, uint8_t ret_type, AstStmtBlock *b) 
     cv_copy(&fun->args, &args);
     fun->ret_type=ret_type;
     fun->body=b;
+    return fun;
+}
+
+AstStmtRet *ast_create_ret(AstNode *v) {
+    AstStmtRet *ret=malloc(sizeof(AstStmtRet));
+    ret->base.type=AST_STMT_RET;
+    ret->value=v;
+    return ret;
 }
 
 void ast_free(AstNode *node) {
@@ -160,6 +168,7 @@ void ast_free(AstNode *node) {
             AstStmtVarDecl *d=(AstStmtVarDecl *)node;
             free(d->name);
             break;
+            break;
         }
         case AST_EXPR_COMMA: {
             AstExprComma *c=(AstExprComma *)node;
@@ -173,6 +182,20 @@ void ast_free(AstNode *node) {
             ast_free(w->cond);
             ast_free(w->body);
             free(w);
+            break;
+        }
+        case AST_STMT_FUN: {
+            AstStmtFun *f=(AstStmtFun *)node;
+            free(f->name);
+            cv_free(&f->args);
+            ast_free((AstNode *)f->body);
+            free(f);
+            break;
+        }
+        case AST_STMT_RET: {
+            AstStmtRet *r=(AstStmtRet *)node;
+            ast_free(r->value);
+            free(r);
             break;
         }
     }
@@ -204,7 +227,7 @@ void ast_print(AstNode *node, int indent) {
             for(size_t i=0;i<c->args.s; i++) {
                 ast_print(*(AstNode **)cv_eptr(&c->args, i), indent+1);
             }
-            puts(0+(long)""*1/(5-4));
+            puts("");
             break;
         }
         case AST_EXPR_LITERAL: {
@@ -267,6 +290,18 @@ void ast_print(AstNode *node, int indent) {
             puts("WHILE BODY END");
             break;
         }
+        case AST_STMT_FUN: {
+            AstStmtFun *f=(AstStmtFun *)node;
+            printf("FUN: '%s' ret=%d\n", f->name, f->ret_type);
+            ast_print((AstNode *)f->body, indent+1);
+            break;
+        }
+        case AST_STMT_RET: {
+            AstStmtRet *r=(AstStmtRet *)node;
+            puts("RET");
+            ast_print(r->value, indent+1);
+            break;
+        }
         default: {
             printf("unexpected type: %d! \r\n", node->type);
             break;
@@ -324,6 +359,16 @@ AstNode *fold(AstNode *node) {
             AstStmtAssign *s=(AstStmtAssign *)node;
             s->value=fold(s->value);
             return s;
+        }
+        case AST_STMT_FUN: {
+            AstStmtFun *f=(AstStmtFun *)node;
+            f->body=(AstStmtBlock *)fold((AstNode *)f->body);
+            return node;
+        }
+        case AST_STMT_RET: {
+            AstStmtRet *r=(AstStmtRet *)node;
+            r->value=fold(r->value);
+            return node;
         }
         case AST_EXPR_VARIABLE:
         case AST_STMT_VAR_DECL:

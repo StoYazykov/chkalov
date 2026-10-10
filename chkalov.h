@@ -99,6 +99,8 @@
 #define JMP_IFN 0x1E
 
 #define INVOKE 0x1F
+#define RET 0x20
+#define ARG 0x21
 
 
 // ----------------------------------------------//
@@ -116,6 +118,7 @@
 #define LIBRARY STR
 
 #define sz(type) (sizeof(type))
+#define NONE ((size_t)-1)
 
 #pragma pack(push, 1)
 
@@ -128,6 +131,14 @@ typedef struct {
     unsigned char opcode;
     int64_t value; // 64 bits - maximal size, will truncated in par_free(a). //
 } Vm;
+
+typedef struct {
+    uint32_t magic;
+    uint64_t entry_point;
+    uint64_t heap_size;
+    uint64_t code_size;
+    char reserved[16];
+} Header;
 
 uint8_t selsz(int64_t a);
 uint8_t selszu(uint64_t a);

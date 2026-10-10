@@ -34,7 +34,8 @@ typedef enum {
     AST_EXPR_COMMA,
     AST_STMT_IF,
     AST_STMT_WHILE,
-    AST_STMT_FUN
+    AST_STMT_FUN,
+    AST_STMT_RET
 } AstNodeType;
 
 typedef struct {
@@ -110,6 +111,10 @@ typedef struct {
     AstStmtBlock *body;
 } AstStmtFun;
 
+typedef struct {
+    AstNode base, *value;
+} AstStmtRet;
+
 AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, cv args);
 AstExprLiteral* ast_create_literal(TokType t, char *v);
@@ -121,6 +126,7 @@ AstExprVariable *ast_create_variable(char *n);
 AstStmtIf *ast_create_if(AstNode *c, AstStmtBlock *b, AstStmtBlock *e);
 AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b);
 AstStmtFun *ast_create_fun(char *n, cv args, uint8_t ret_type, AstStmtBlock *b);
+AstStmtRet *ast_create_ret(AstNode *v);
 
 AstNode *fold(AstNode *node);
 

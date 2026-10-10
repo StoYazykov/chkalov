@@ -42,3 +42,10 @@ Int print_s(size_t argc, int64_t *argp, ChkEnv *env) {
 Int sum_ii(size_t argc, int64_t *argp, ChkEnv *env) {
     return argp[0]+argp[1];
 }
+
+Int readln_s(size_t argc, int64_t *argp, ChkEnv *env) {
+    int num;
+    printf(argp[0]+(*env->_heap));
+    scanf("%d", &num);
+    return num;
+}

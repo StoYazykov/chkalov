@@ -79,22 +79,33 @@ Token *par_post(Parser *a) {
 void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     FILE *a=fopen(fni, "rb");
     memset(n, 0, sizeof(Parser));
+
     n->fn=strdup(fno);
     cv_init(&n->code, 32, sizeof(Vm));
-    n->hp=0;
+    cv_init(&n->funcs, 8, sizeof(UserFunc));
+    cv_init(&n->libs, 4, sizeof(Lib));
+    cv_init(&n->file, 16, sizeof(Token));
+    //cv_init(&n->pool, 8, sizeof(char *));
+
     n->heap=malloc(n->hs=1024);
     n->root=ast_create_block();
-    cv_init(&n->libs, 4, sizeof(Lib));
+
     scos_init(&n->scopes);
     scos_es(&n->scopes);
-    cv_init(&n->file, 16, sizeof(Token));
+
     n->debug=deb;
     ds x;
+
     while(!feof(a)) {
         ds_gl(&x, a);
         lexer(n, x);
     }
     fclose(a);
+}
+
+size_t par_pool_add(Parser *a, char *str) {
+    cv_push(&a->pool, strdup(str));
+    return a->pool.s-1;
 }
 
 void par_render(Parser *a, uint8_t op, int64_t value) {
@@ -120,6 +131,7 @@ ds par_mangle(Func *f) {
 void par_free(Parser *z) {
     cv final;
     size_t i, j;
+    uint8_t size;
     puts("\r\npar free \r\n=====");
     cv_init(&final, 32, 1);
     for(i=0; i<z->libs.s; i++) {
@@ -132,13 +144,8 @@ void par_free(Parser *z) {
     if(z->debug) printf("par_free: fn = '%s'\n", z->fn);
     FILE *fp=fopen(z->fn, "wb");
     if(z->debug) printf("par_free: fp = %p\n", (void*)fp);
-    uint32_t magic=0x05020200;
-    uint64_t size=0; // 4 + 5 + 5 = 14 !!!!!
-    fwrite(&magic, 1, sizeof(uint32_t), fp); ///// 0 2 1 5     9 0 0 0 0 10 0 0 0 0
-    if(z->debug) puts("writing heap...");
-    size=z->hp;
-    fwrite(&size, 1, sz(size), fp);
-    fwrite(z->heap, 1, size, fp);
+    Header hdr;
+    hdr.magic=0x05020200;
 
     for(i=0; i<z->code.s; i++) {
         Vm *vm=cv_eptr(&z->code, i);
@@ -148,9 +155,14 @@ void par_free(Parser *z) {
         for(j=0; j<size; j++) cv_push(&final, ((char *)&vm->value)+j);
     }
 
-    size=final.s;
-    fwrite(&size, 1, sz(size), fp);
-    fwrite(final.d, 1, size, fp);
+    hdr.code_size=final.s;
+    hdr.heap_size=z->hp;
+
+    fwrite(&hdr, 1, sz(Header), fp);
+
+    fwrite(z->heap, 1, z->hp, fp);
+    fwrite(final.d, 1, final.s, fp);
+
     fclose(fp);
     free(z->heap);
     cv_free(&z->code);
@@ -288,25 +300,39 @@ AstNode *par_par_expr(Parser *a) {
         case FUN: {
             char *name=par_post(a)->value;
             cv args;
-            uint8_t ret_type;
+            uint8_t ret_type, c;
             AstStmtBlock *body;
+            AstNode *func;
             Token *n, *w;
 
+            cv_init(&args, 4, 1);
             printf("Function \'%s\' \r\n", name);
             skip(a, LBRACE);
             do {
                 n=par_post(a);
                 expect(a, COLON, ":");
                 w=par_post(a);
+                c=par_stt(w->value);
+                cv_push(&args, &c);
+                scos_addv(&a->scopes, n->value, c);
                 printf("type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
             } while(par_this(a)->type==COMMA&&a->p++);
             skip(a, RBRACE);
             expect(a, COLON, ":");
             n=par_post(a)->value;
+            ret_type=par_stt(n);
             printf("return type: \'%s\' \r\n", n);
             body=par_parBlock(a);
-            return NULL;
+            func=(AstNode *)ast_create_fun(name, args, ret_type, body);
+            cv_free(&args);
+            return func;
         }
+
+        case RETURN: {
+            AstNode *value=par_par_comp(a);
+            return (AstNode *)ast_create_ret(value);
+        }
+
         case WHILE: {
             AstStmtBlock *body;
             AstNode *cond;
