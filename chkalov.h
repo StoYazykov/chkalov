@@ -136,6 +136,7 @@ typedef struct {
     uint32_t magic;
     uint64_t entry_point;
     uint64_t heap_size;
+    uint64_t pool_size;
     uint64_t code_size;
     char reserved[16];
 } Header;

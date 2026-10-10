@@ -47,39 +47,37 @@ int main(int argc, char **argv) {
     /* 0x1F */ "invoke",
     /* 0x20 */ "ret",
     /* 0x21 */ "arg"
-};
+    };
 
     FILE *a=fopen(argv[2], "rb");
-    uint32_t magic;
-    uint64_t t;
-    fread(&magic, 1, sz(uint32_t), a);
-    if(magic!=0x05020200) error("Hex magic number incorrect!");
+    if(!a) error("Not found CVM file!");
+    Header hdr;
+    fread(&hdr, 1, sz(Header), a);
+    if(hdr.magic!=0x05020200) error("Hex magic number incorrect!");
     cv vm;
     char *p;
     uint8_t vp=!!strchr(argv[1], 'h'), vb=!!strchr(argv[1], 'b');
     cv_init(&vm, 8, sz(unsigned char));
-    fread(&t, 1, sz(uint64_t), a);
-    p=malloc(t);
-    fread(p, 1, t, a);
+    p=malloc(hdr.heap_size);
+    fread(p, 1, hdr.heap_size, a);
     if(vp) {
-        printf("Heap (hp=%llx): ", t);
-        for(int i=0; i<t; i++) {
+        printf("Heap (hp=%llx): ", hdr.heap_size);
+        for(int i=0; i<hdr.heap_size; i++) {
             printf("%c", p[i]?p[i]:'$');
         }
         puts("\r\nHeap end");
     }
     if(!vb) goto PEND;
-    fread(&t, 1, sz(t), a);
-    size_t size=t;
-    printf("Bytecode size (in bytes): %llXh / %lld \r\n", t, t);
-    cv_resize(&vm, t);
-    fread(vm.d, 1, t, a);
+    size_t size=hdr.code_size;
+    printf("Bytecode size (in bytes): %llXh / %lld \r\n", size, size);
+    cv_resize(&vm, size);
+    fread(vm.d, 1, size, a);
     unsigned char *c=vm.d;
     uint8_t o, isize;
     int64_t v;
     size_t i=0;
 
-    while(i<t) {
+    while(i<size) {
         o=c[i++];
         isize=c[i++];
         v=0;
