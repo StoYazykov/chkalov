@@ -80,7 +80,15 @@ int main(int argc, char **argv) {
         Vm q;
         q.opcode=c[i++];
         isize=c[i++];
-        q.value=0;
+        int64_t tmp=0;
+        memcpy(&tmp, c+i, isize);
+        switch(isize) {
+            case 1: tmp=(int8_t)tmp; break;
+            case 2: tmp=(int16_t)tmp; break;
+            case 4: tmp=(int32_t)tmp; break;
+            case 8: tmp=(int64_t)tmp; break;
+        }
+        q.value=tmp;
         memcpy(&q.value, c+i, isize);
         cv_push(&vm, &q);
         i+=isize;

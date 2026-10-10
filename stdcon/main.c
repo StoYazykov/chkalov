@@ -20,7 +20,7 @@
 #include "../chkapi.h"
 
 Int println_i(size_t argc, int64_t *argp, ChkEnv *env) {
-    printf("%d\r\n", argp[0]);
+    printf("%lld\r\n", argp[0]);
     return 0;
 }
 
@@ -30,7 +30,7 @@ Int println_s(size_t argc, int64_t *argp, ChkEnv *env) {
 }
 
 Int printi_i(size_t argc, int64_t *argp, ChkEnv *env) {
-    printf("%d", argp[0]);
+    printf("%lld", argp[0]);
     return 0;
 }
 
