@@ -76,7 +76,6 @@ int main(int argc, char **argv) {
         pool=realloc(pool, (i+1)*sizeof(char *));
         pool[i]=malloc(len);
         fread(pool[i], 1, len, a);
-        puts(pool[i]);
     }
 
     cv_resize(&raw, hdr.code_size);
@@ -100,7 +99,6 @@ int main(int argc, char **argv) {
         q.value=tmp;
         cv_push(&vm, &q);
         i+=isize;
-        printf("opcode = %zx, value = %zx\r\n", q.opcode, q.value);
     }
 
     P=((Vm *)vm.d)+hdr.entry_point;
@@ -108,12 +106,9 @@ int main(int argc, char **argv) {
     cv_free(&raw);
     fclose(a);
 
-    printf("vm.s = %zu, entry_point = %llu\n", vm.s, hdr.entry_point);
-
     while(P<end) {
         o=P->opcode;
         v=P->value;
-        printf("stack: s=%zx c=%zu es=%zu d=%p\n", stack.s, stack.c, stack.es, (void*)stack.d);
         switch(o) {
             case PUSH:
             case S_PUSH: {
@@ -308,8 +303,14 @@ int main(int argc, char **argv) {
                 break;
             }
             default: {
-                printf("VM warning: incorrect opcode ( %x / %d )", o, o);
-                break;
+                printf("VM error: incorrect opcode ( %x )\r\n", o, o);
+                printf("stack: s=%zx c=%zx es=%zx d=%p\n", stack.s, stack.c, stack.es, (void*)stack.d);
+                printf("stack: ");
+                for(i=0; i<stack.s; i++) {
+                    printf("%llx ", *((int64_t *)cv_eptr(&stack, i)));
+                }
+                puts("\r\n(stack dump end)");
+                abort();
             }
         }
         P++;
@@ -317,7 +318,7 @@ int main(int argc, char **argv) {
     if(debug) printf("Ended on instruction pointer %llx \r\n", i);
     if(debug) {
         printf("Heap (hp=%llx): ", hp);
-        for(int i=0; i<hp; i++) {
+        for(i=0; i<hp; i++) {
             printf("%c", heap[i]?heap[i]:'$');
         }
         puts("\r\nHeap end");
