@@ -88,6 +88,7 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     cv_init(&n->pool, 8, sizeof(char *));
 
     n->heap=malloc(n->hs=1024);
+    par_heapIns(n, "\0");
     n->root=ast_create_block();
 
     scos_init(&n->scopes);

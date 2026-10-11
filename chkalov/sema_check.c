@@ -64,6 +64,11 @@ void sem_analyze(AstNode *node, Parser *a) {
             break;
         }
 
+        case AST_STMT_FUN: {
+            AstStmtFun *fun=(AstStmtFun *)node;
+            sem_analyze((AstNode *)fun->body, a);
+            break;
+        }
         default: return;
     }
 }
