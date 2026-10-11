@@ -34,7 +34,7 @@ typedef struct {
     int debug;
     cv code, file, funcs, libs, pool;
     char *heap, *fn;
-    size_t hp, hs, p;
+    size_t hp, hs, p, entry_point;
     AstStmtBlock *root;
     ScopeStack scopes;
 } Parser;
@@ -54,7 +54,7 @@ Token* par_post(Parser *a);
 void par_render(Parser *a, uint8_t op, int64_t v);
 void par_parFile(Parser *a);
 void expect(Parser *a, TokType t, char *s);
-void skip(Parser *a, TokType *t);
+void skip(Parser *a, TokType t);
 AstNode *par_par_primary(Parser *a);
 AstNode *par_par_term(Parser *a);
 AstNode *par_par_expr(Parser *a);

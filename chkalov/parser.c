@@ -62,7 +62,7 @@ void expect(Parser *a, TokType t, char *s) {
     }
 }
 
-void skip(Parser *a, TokType *t) {
+void skip(Parser *a, TokType t) {
     if(par_this(a)->type==t) a->p++;
 }
 
@@ -85,7 +85,7 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     cv_init(&n->funcs, 8, sizeof(UserFunc));
     cv_init(&n->libs, 4, sizeof(Lib));
     cv_init(&n->file, 16, sizeof(Token));
-    //cv_init(&n->pool, 8, sizeof(char *));
+    cv_init(&n->pool, 8, sizeof(char *));
 
     n->heap=malloc(n->hs=1024);
     n->root=ast_create_block();
@@ -104,7 +104,8 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
 }
 
 size_t par_pool_add(Parser *a, char *str) {
-    cv_push(&a->pool, strdup(str));
+    char *dup=strdup(str);
+    cv_push(&a->pool, &dup);
     return a->pool.s-1;
 }
 
@@ -143,6 +144,7 @@ void par_free(Parser *z) {
     }
     if(z->debug) printf("par_free: fn = '%s'\n", z->fn);
     FILE *fp=fopen(z->fn, "wb");
+    char **p;
     if(z->debug) printf("par_free: fp = %p\n", (void*)fp);
     Header hdr;
     hdr.magic=0x05020200;
@@ -157,14 +159,24 @@ void par_free(Parser *z) {
 
     hdr.code_size=final.s;
     hdr.heap_size=z->hp;
+    hdr.entry_point=z->entry_point;
+    hdr.pool_size=z->pool.s;
 
     fwrite(&hdr, 1, sz(Header), fp);
 
     fwrite(z->heap, 1, z->hp, fp);
+
+    char **end=((char **)z->pool.d)+hdr.pool_size;
+
+    for(p=(char **)z->pool.d; p<end; p++) {
+        fwrite(*p, 1, strlen(*p)+1, fp);
+    }
+
     fwrite(final.d, 1, final.s, fp);
 
     fclose(fp);
     free(z->heap);
+    cv_free(&z->pool);
     cv_free(&z->code);
     ast_free((AstNode *)z->root);
 }
