@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     size_t hs, hp=0, i=0, bp=0, j=0;
     uint8_t isize, o;
     FILE *a;
-    char *heap, *c, **pool=NULL;
+    char *heap, *c, **pool;
     int64_t v, g, h, f, *p;
     Vm *P, *end;
     cv vm, raw, stack, vars, frames, args;
@@ -71,9 +71,10 @@ int main(int argc, char **argv) {
     heap=malloc(hdr.heap_size);
     fread(heap, 1, hdr.heap_size, a);
 
+    pool=malloc(hdr.pool_size*sz(char *));
+
     for(i=0; i<hdr.pool_size; i++) {
         fread(&len, 1, sz(uint32_t), a);
-        pool=realloc(pool, (i+1)*sizeof(char *));
         pool[i]=malloc(len);
         fread(pool[i], 1, len, a);
     }
@@ -328,6 +329,8 @@ int main(int argc, char **argv) {
     cv_free(&vars);
     cv_free(&stack);
     cv_free(&frames);
+    for(i=0; i<hdr.pool_size; i++) free(pool[i]);
+    free(pool);
     free(heap);
     return 0;
 }
