@@ -169,6 +169,7 @@ void codegen(AstNode *node, Parser *a) {
             printf("WHILE: ls=%zu, cs=%zu, tar=%zu\n", ls, cs, tar);
             break;
         }
+
         case AST_STMT_FUN: {
             AstStmtFun *fun=(AstStmtFun *)node;
             size_t addr=a->code.s;
@@ -177,6 +178,12 @@ void codegen(AstNode *node, Parser *a) {
             printf("func: %s at %zx, body=%p, count=%zu\n", fun->name, addr, fun->body, fun->body->count);
             if(a->debug) printf("func: %s at %zx\n", fun->name, addr);
 
+            if(!strcmp(fun->name, "main")) {
+                a->entry_point=addr;
+            }
+            char buf[256];
+            sprintf(buf, "E%llu%s(II)I", addr, fun->name);
+            par_pool_add(a, buf);
             codegen(fun->body, a);
             break;
         }

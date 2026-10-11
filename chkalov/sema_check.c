@@ -90,11 +90,11 @@ uint8_t sem_binary_type(TokType op, uint8_t lt, uint8_t rt) {
 bool sem_types_compatible(uint8_t lt, uint8_t rt) {
     int comp_result[8][8]={
     //           VOID  CHAR  SHORT INT   LONG  UINT  ULONG STR
-    /* VOID  */ {1   , 0,    0,    0,    0,    0,    0,    0},
+    /* VOID  */ {0,    0,    0,    0,    0,    0,    0,    0},
     /* CHAR  */ {0,    1,    1,    1,    1,    1,    1,    0},
     /* SHORT */ {0,    0,    1,    1,    1,    1,    1,    0},
     /* INT   */ {0,    0,    0,    1,    1,    1,    1,    0},
-    /* LONG  */ {0,    0,    0,    0,    1,    0,    0,    0},
+    /* LONG  */ {0,    0,    0,    0,    1,    0,    1,    0},
     /* UINT  */ {0,    0,    0,    1,    1,    1,    1,    0},
     /* ULONG */ {0,    0,    0,    0,    1,    0,    1,    0},
     /* STR   */ {0,    0,    0,    0,    0,    0,    0,    1}

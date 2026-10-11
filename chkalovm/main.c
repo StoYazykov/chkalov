@@ -37,11 +37,11 @@ void *env_alloc(ChkEnv *e, size_t s) {
 
 int main(int argc, char **argv) {
     bool debug=false;
-    uint32_t magic;
-    size_t hs, hp=0, i=0, bp=0;
+    uint32_t magic, len;
+    size_t hs, hp=0, i=0, bp=0, j=0;
     uint8_t isize, o;
     FILE *a;
-    char *heap, *c;
+    char *heap, *c, **pool=NULL;
     int64_t v, g, h, f, *p;
     Vm *P, *end;
     cv vm, raw, stack, vars, frames, args;
@@ -68,14 +68,23 @@ int main(int argc, char **argv) {
     cv_init(&frames, 4, sz(Frame));
     cv_init(&args, 4, sz(int64_t));
 
-    heap=malloc((hs=(hdr.heap_size<<1)));
-
-    if(debug) printf("Bytecode size: %llx \r\n", hdr.code_size);
-    cv_resize(&raw, hdr.code_size);
+    heap=malloc(hdr.heap_size);
     fread(heap, 1, hdr.heap_size, a);
+
+    for(i=0; i<hdr.pool_size; i++) {
+        fread(&len, 1, sz(uint32_t), a);
+        pool=realloc(pool, (i+1)*sizeof(char *));
+        pool[i]=malloc(len);
+        fread(pool[i], 1, len, a);
+        puts(pool[i]);
+    }
+
+    cv_resize(&raw, hdr.code_size);
     fread(raw.d, 1, hdr.code_size, a);
+
     c=raw.d;
 
+    i=0;
     while(i<raw.s) {
         Vm q;
         q.opcode=c[i++];
@@ -89,18 +98,22 @@ int main(int argc, char **argv) {
             case 8: tmp=(int64_t)tmp; break;
         }
         q.value=tmp;
-        memcpy(&q.value, c+i, isize);
         cv_push(&vm, &q);
         i+=isize;
+        printf("opcode = %zx, value = %zx\r\n", q.opcode, q.value);
     }
 
-    P=(Vm *)vm.d;
+    P=((Vm *)vm.d)+hdr.entry_point;
     end=((Vm *)vm.d)+vm.s;
     cv_free(&raw);
+    fclose(a);
+
+    printf("vm.s = %zu, entry_point = %llu\n", vm.s, hdr.entry_point);
 
     while(P<end) {
         o=P->opcode;
         v=P->value;
+        printf("stack: s=%zx c=%zu es=%zu d=%p\n", stack.s, stack.c, stack.es, (void*)stack.d);
         switch(o) {
             case PUSH:
             case S_PUSH: {
@@ -268,7 +281,7 @@ int main(int argc, char **argv) {
                 Frame f;
                 f.vars_s=vars.s;
                 f.args_s=args.s;
-                f.ret_addr=P;
+                f.ret_addr=P+1;
                 cv_push(&frames, &f);
 
                 for(size_t k=0; k<args.s; k++) {
@@ -289,7 +302,13 @@ int main(int argc, char **argv) {
                 continue;
             }
             case ARG: {
-                cv_push(&args, &v);
+                int64_t arg;
+                cv_pop(&stack, &arg);
+                cv_push(&args, &arg);
+                break;
+            }
+            default: {
+                printf("VM warning: incorrect opcode ( %x / %d )", o, o);
                 break;
             }
         }

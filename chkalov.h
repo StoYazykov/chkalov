@@ -144,4 +144,6 @@ typedef struct {
 uint8_t selsz(int64_t a);
 uint8_t selszu(uint64_t a);
 
+#pragma pack(pop)
+
 #endif

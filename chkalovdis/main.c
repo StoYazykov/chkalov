@@ -52,46 +52,78 @@ int main(int argc, char **argv) {
     FILE *a=fopen(argv[2], "rb");
     if(!a) error("Not found CVM file!");
     Header hdr;
+    char **pool=NULL;
+    uint32_t len;
+    size_t i;
     fread(&hdr, 1, sz(Header), a);
     if(hdr.magic!=0x05020200) error("Hex magic number incorrect!");
-    cv vm;
-    char *p;
+
     uint8_t vp=!!strchr(argv[1], 'h'), vb=!!strchr(argv[1], 'b');
-    cv_init(&vm, 8, sz(unsigned char));
-    p=malloc(hdr.heap_size);
-    fread(p, 1, hdr.heap_size, a);
+
+    char *heap=malloc(hdr.heap_size);
+    fread(heap, 1, hdr.heap_size, a);
+
+    for(i=0; i<hdr.pool_size; i++) {
+        fread(&len, 1, sz(uint32_t), a);
+        pool=realloc(pool, (i+1)*sizeof(char *));
+        pool[i]=malloc(len);
+        fread(pool[i], 1, len, a);
+        puts(pool[i]);
+    }
+
     if(vp) {
         printf("Heap (hp=%llx): ", hdr.heap_size);
-        for(int i=0; i<hdr.heap_size; i++) {
-            printf("%c", p[i]?p[i]:'$');
+        for(size_t i=0; i<hdr.heap_size; i++) {
+            printf("%c", heap[i]?heap[i]:'$');
         }
         puts("\r\nHeap end");
     }
+
     if(!vb) goto PEND;
-    size_t size=hdr.code_size;
-    printf("Bytecode size (in bytes): %llXh / %lld \r\n", size, size);
-    cv_resize(&vm, size);
-    fread(vm.d, 1, size, a);
-    unsigned char *c=vm.d;
-    uint8_t o, isize;
-    int64_t v;
-    size_t i=0;
 
-    while(i<size) {
-        o=c[i++];
-        isize=c[i++];
-        v=0;
-        memcpy(&v, c+i, isize);
+    cv vm, raw;
+    cv_init(&vm, 8, sz(Vm));
+    cv_init(&raw, 8, 1);
+
+    printf("Entry point: %llXh / %lld \r\n", hdr.entry_point, hdr.entry_point);
+    printf("Bytecode size (in bytes): %llXh / %lld \r\n", hdr.code_size, hdr.code_size);
+
+    cv_resize(&raw, hdr.code_size);
+    fread(raw.d, 1, hdr.code_size, a);
+    unsigned char *c=raw.d;
+
+    i=0;
+    while(i<raw.s) {
+        Vm q;
+        q.opcode=c[i++];
+        uint8_t isize=c[i++];
+        q.value=0;
+        memcpy(&q.value, c+i, isize);
         i+=isize;
-
-        printf("%-10s", opcodes[o]);
-        printf("%10llXh / %-10lld", v, v);
-        if(o==CALL||o==S_PUSH) printf("%10s %s", "//", p+v);
-        printf(" \r\n");
+        cv_push(&vm, &q);
     }
+
+    Vm *P=(Vm *)vm.d;
+    Vm *end=((Vm *)vm.d)+vm.s;
+
+    while(P<end) {
+        uint8_t o=P->opcode;
+        int64_t v=P->value;
+
+        printf("%-10llu %-10s", P-((Vm *)vm.d), opcodes[o]);
+        printf("%10llXh / %-10lld", v, v);
+        if(o==CALL||o==S_PUSH) printf("// %s", heap+v);
+        if(hdr.entry_point==(P-((Vm *)vm.d))) printf("<- Entry Point");
+        printf(" \r\n");
+
+        P++;
+    }
+
+    cv_free(&raw);
+    cv_free(&vm);
+
 PEND:
     fclose(a);
-    cv_free(&vm);
-    free(p);
+    free(heap);
     return 0;
 }

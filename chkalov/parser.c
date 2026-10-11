@@ -167,9 +167,12 @@ void par_free(Parser *z) {
     fwrite(z->heap, 1, z->hp, fp);
 
     char **end=((char **)z->pool.d)+hdr.pool_size;
+    uint32_t len;
 
     for(p=(char **)z->pool.d; p<end; p++) {
-        fwrite(*p, 1, strlen(*p)+1, fp);
+        len=strlen(*p)+1;
+        fwrite(&len, 1, sz(uint32_t), fp);
+        fwrite(*p, 1, len, fp);
     }
 
     fwrite(final.d, 1, final.s, fp);
