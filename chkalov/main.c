@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
     par_init(&parser, argv[1], argv[2], debug);
     if(debug) printf("Before par_parFile... \r\n");
     par_parFile(&parser);
+    collect_funcs((AstNode *)parser.root, &parser);
     sem_analyze((AstNode *)parser.root, &parser);
     if(optim) {
         if(debug) {
