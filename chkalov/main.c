@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     optim=1;
     if(argc>3) {
         debug=!!strchr(argv[3], 'd');
-        optim=!(!!strchr(argv[3], 'o'));
+        optim=!strchr(argv[3], 'o');
     }
     Parser parser;
     if(debug) printf("Before par_init... \r\n");
