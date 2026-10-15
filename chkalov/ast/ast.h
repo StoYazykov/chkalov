@@ -20,8 +20,8 @@
 #ifndef _AST_H
 #define _AST_H
 
-#include "token.h"
-#include "../cv.h"
+#include "../token/token.h"
+#include "../../c-vectors/cv.h"
 
 typedef enum {
     AST_STMT_BLOCK=0,

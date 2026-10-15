@@ -20,7 +20,7 @@
 #ifndef _SCOPE_H
 #define _SCOPE_H
 
-#include "../chkalov.h"
+#include "../../chkalov.h"
 
 typedef struct {
     ds name;

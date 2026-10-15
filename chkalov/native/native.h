@@ -2,7 +2,7 @@
 #define _NATIVE_H
 
 #include "types.h"
-#include "parser.h"
+#include "../parser/parser.h"
 
 void lib_add(Parser *a, ds n);
 void func_add(Lib *a, Func z);

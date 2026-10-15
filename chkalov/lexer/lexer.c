@@ -18,7 +18,7 @@
  */
 
 #include "lexer.h"
-#include "parser.h"
+#include "../parser/parser.h"
 
 void lexer(void *b, ds l) {
     Parser *a=(Parser *)b;

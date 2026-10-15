@@ -20,7 +20,7 @@
 #ifndef _TOKEN_H
 #define _TOKEN_H
 
-#include "../chkalov.h"
+#include "../../chkalov.h"
 
 typedef enum {
     NOT, ENOF,

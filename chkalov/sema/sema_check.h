@@ -1,8 +1,8 @@
 #ifndef _ANALYZER_H
 #define _ANALYZER_H
 
-#include "parser.h"
-#include "ast.h"
+#include "../parser/parser.h"
+#include "../ast/ast.h"
 
 void sem_analyze(AstNode *node, Parser *a);
 uint8_t sem_binary_type(TokType op, uint8_t lt, uint8_t rt);

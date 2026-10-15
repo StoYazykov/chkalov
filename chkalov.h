@@ -53,8 +53,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "ds.h"
-#include "cv.h"
+#include "dynamic-strings/ds.h"
+#include "c-vectors/cv.h"
 
 // ----------------------------------------------//
 //              VM opcodes definitions           //

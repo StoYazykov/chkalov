@@ -22,8 +22,8 @@ COMPILER_SRC = $(CHKALOV_SRC)/main.c \
 $(CHKALOV_SRC)/parser/parser.c \
 $(CHKALOV_SRC)/scope/scope.c \
 $(CHKALOV_SRC)/token/token.c \
-$(CHKALOV_DIR)dynamic-strings/ds.c \
-$(CHKALOV_DIR)c-vectors/cv.c \
+$(CHKALOV_DIR)/dynamic-strings/ds.c \
+$(CHKALOV_DIR)/c-vectors/cv.c \
 $(CHKALOV_DIR)/chkalov.c \
 $(CHKALOV_SRC)/ast/ast.c \
 $(CHKALOV_SRC)/codegen/codegen.c \
@@ -34,12 +34,12 @@ $(CHKALOV_SRC)/sema/sema_check.c
 
 STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.c \
-$(CHKALOV_DIR)/ds.c \
-$(CHKALOV_DIR)/cv.c \
+$(CHKALOV_DIR)/dynamic-strings/ds.c \
+$(CHKALOV_DIR)/c-vectors/cv.c \
 $(CHKALOV_DIR)/chkalov.c
 DIS_SRC = $(DIS_DIR)/main.c \
 $(CHKALOV_DIR)/chkalov.c \
-$(CHKALOV_DIR)/cv.c
+$(CHKALOV_DIR)/c-vectors/cv.c
 
 CHKC = $(CHKALOV_DIR)/chkc$(EXT)
 CHKVM = $(CHKALOV_DIR)/chkvm$(EXT)
@@ -53,48 +53,48 @@ DEMO_SRC = $(CHKALOV_DIR)/demo.chk
 DEMO_CVM = $(CHKALOV_DIR)/demo.cvm
 
 all: $(CHKC) $(CHKVM) $(LIBSTDCON) $(DIS)
-@echo "=============================="
-@echo "         Компиляция...        "
-@echo "=============================="
-@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && echo "" && echo "-- VM --" && echo "" && $(CHKVM) $(DEMO_CVM)
+	@echo "=============================="
+	@echo "         Компиляция...        "
+	@echo "=============================="
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && echo "" && echo "-- VM --" && echo "" && $(CHKVM) $(DEMO_CVM)
 
-debug: CFLAGS = -std=c11 -w -g -O0
+debug: CFLAGS = -std=c99 -w -g -O0
 debug: clean all
-@echo "=============================="
-@echo "      Debug-компиляция...     "
-@echo "=============================="
-@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && echo "" && echo "-- VM -- " && echo "" && $(CHKVM) $(DEMO_CVM) -d
+	@echo "=============================="
+	@echo "      Debug-компиляция...     "
+	@echo "=============================="
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && echo "" && echo "-- VM -- " && echo "" && $(CHKVM) $(DEMO_CVM) -d
 
 win:
-make TARGET=win rebuild
+	make TARGET=win rebuild
 
 
 $(CHKC): $(COMPILER_OBJ)
-$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(CHKVM): $(VM_OBJ)
-$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(LIBSTDCON): $(STDCON_SRC)
-$(CC) $(CFLAGS) -shared -fPIC -o $@ $^
+	$(CC) $(CFLAGS) -shared -fPIC -o $@ $^
 $(DIS): $(DIS_SRC)
-$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 #$(ITT): $(ITT_SRC)
 #	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
-$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-rm -f $(CHKC) $(CHKVM) $(LIBSTDCON)
-rm -f $(COMPILER_OBJ) $(VM_OBJ)
-rm -f $(DEMO_CVM)
+	rm -f $(CHKC) $(CHKVM) $(LIBSTDCON)
+	rm -f $(COMPILER_OBJ) $(VM_OBJ)
+	rm -f $(DEMO_CVM)
 
 build: $(CHKC) $(CHKVM) $(LIBSTDCON) $(DIS) #$(ITT)
 
 run: build
-@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
+	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)
 
 rebuild: clean all
 

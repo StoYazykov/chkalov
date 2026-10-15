@@ -18,7 +18,7 @@
  */
 
 #include "../chkalov.h"
-#include "parser.h"
+#include "parser/parser.h"
 
 int main(int argc, char **argv) {
     puts("Chkalov Compiler (version " VERSION ")\r\n");

@@ -20,14 +20,14 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "scope.h"
-#include "ast.h"
-#include "token.h"
+#include "../scope/scope.h"
+#include "../ast/ast.h"
 #include <ctype.h>
-#include "lexer.h"
-#include "types.h"
-#include "function.h"
-#include "../chkalov.h"
+#include "../token/token.h"
+#include "../lexer/lexer.h"
+#include "../native/types.h"
+#include "../function/function.h"
+#include "../../chkalov.h"
 
 
 typedef struct {
@@ -39,7 +39,7 @@ typedef struct {
     ScopeStack scopes;
 } Parser;
 
-#include "sema_check.h"
+#include "../sema/sema_check.h"
 
 void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);

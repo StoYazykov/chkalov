@@ -1,8 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "ast.h"
-#include "../chkalov.h"
+#include "../ast/ast.h"
+#include "../../chkalov.h"
 
 typedef struct {
     ds name;

@@ -20,10 +20,10 @@
 #ifndef _LEXER_H
 #define _LEXER_H
 
-#include "token.h"
+#include "../token/token.h"
 
 void lexer(void *b, ds l);
 
-#include "parser.h"
+#include "../parser/parser.h"
 
 #endif

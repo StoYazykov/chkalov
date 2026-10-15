@@ -61,15 +61,15 @@ void codegen(AstNode *node, Parser *a) {
                     return;
                 }
             }
-            size_t addr=user_func_find(&a->funcs, call->name);
-            if(addr==NONE) error("Undeclared function: \'%s\'", par_mangle(call));
+            UserFunc *uf=user_func_find(&a->funcs, call->name);
+            if(!uf) error("Undeclared function: \'%s\'", call->name);
             size_t j;
             for(j=0; j<call->args.s; j++) {
                 codegen(args[j], a);
                 par_render(a, ARG, 0);
             }
 
-            par_render(a, INVOKE, addr);
+            par_render(a, INVOKE, uf->addr);
             return;
         }
         case AST_EXPR_LITERAL: {
@@ -174,7 +174,12 @@ void codegen(AstNode *node, Parser *a) {
             AstStmtFun *fun=(AstStmtFun *)node;
             size_t addr=a->code.s;
 
-            user_func_add(&a->funcs, fun->name, addr, INT);
+            UserFunc *uf=user_func_find(&a->funcs, fun->name);
+            if(uf) {
+                uf->addr=addr;
+            } else {
+                user_func_add(&a->funcs, fun->name, addr, fun->ret_type);
+            }
             printf("func: %s at %zx, body=%p, count=%zu\n", fun->name, addr, fun->body, fun->body->count);
             if(a->debug) printf("func: %s at %zx\n", fun->name, addr);
 
@@ -197,7 +202,7 @@ void codegen(AstNode *node, Parser *a) {
 }
 
 uint8_t type_expr(AstNode *node, Parser *a) {
-    int conv_table[5][5]={
+    int conv_table[6][6]={
     //             VOID CHAR SHORT INT LONG STR
     /* VOID */  {  0,   0,   0,    0,  0,   0},
     /* CHAR */  {  0,   1,   1,    1,  1,   0},
@@ -250,8 +255,8 @@ uint8_t type_expr(AstNode *node, Parser *a) {
                     return;
                 }
             }
-            size_t addr=user_func_find(&a->funcs, call->name);
-            if(addr==NONE) error("Undeclared function: '%s'!", call->name);
+            UserFunc *uf=user_func_find(&a->funcs, call->name);
+            if(!uf) error("Undeclared function: '%s'!", call->name);
             return INT;
         }
         case AST_BINARY: {

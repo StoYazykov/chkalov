@@ -18,7 +18,7 @@
  */
 
 #include "ast.h"
-#include "parser.h"
+#include "../parser/parser.h"
 #include <stdlib.h>
 #include <stdio.h>
 
