@@ -29,12 +29,16 @@
 #include "../function/function.h"
 #include "../../chkalov.h"
 
+typedef struct {
+    size_t pos;
+    char *name;
+} InvokePatch;
 
 typedef struct {
     int debug;
-    cv code, file, funcs, libs, pool;
+    cv code, file, funcs, libs, pool, invoke_patches;
     char *heap, *fn;
-    size_t hp, hs, p, entry_point;
+    size_t hp, hs, p, entry_point, current_base;
     AstStmtBlock *root;
     ScopeStack scopes;
 } Parser;

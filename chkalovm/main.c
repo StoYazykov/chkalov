@@ -289,7 +289,12 @@ int main(int argc, char **argv) {
                 continue;
             }
             case RET: {
-                Frame *fr=cv_back(&frames);
+                Frame *fr;
+                if(!frames.s) {
+                    P=end;
+                    continue;
+                }
+                fr=cv_back(&frames);
                 vars.s=fr->vars_s;
                 args.s=fr->args_s;
                 bp=fr->vars_s;

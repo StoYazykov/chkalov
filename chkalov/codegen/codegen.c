@@ -68,8 +68,11 @@ void codegen(AstNode *node, Parser *a) {
                 codegen(args[j], a);
                 par_render(a, ARG, 0);
             }
-
-            par_render(a, INVOKE, uf->addr);
+            par_render(a, INVOKE, 0);
+            InvokePatch pt;
+            pt.pos=a->code.s-1;
+            pt.name=strdup(call->name);
+            cv_push(&a->invoke_patches, &pt);
             return;
         }
         case AST_EXPR_LITERAL: {
@@ -115,7 +118,7 @@ void codegen(AstNode *node, Parser *a) {
             variable var;
             scos_getv(&a->scopes, svd->name, &var);
             par_render(a, PUSH, 0);
-            par_render(a, STORE, var.id);
+            par_render(a, STORE, var.id-a->current_base);
             break;
         }
         case AST_EXPR_COMMA: {
@@ -128,7 +131,7 @@ void codegen(AstNode *node, Parser *a) {
             AstExprVariable *var=(AstExprVariable *)node;
             variable vat;
             scos_getv(&a->scopes, var->name, &vat);
-            par_render(a, LOAD, vat.id);
+            par_render(a, LOAD, vat.id-a->current_base);
             break;
         }
         case AST_STMT_ASSIGN: {
@@ -137,7 +140,7 @@ void codegen(AstNode *node, Parser *a) {
             codegen(ass->value, a);
             par_render(a, DUP, 0);
             scos_getv(&a->scopes, ass->name, &vat);
-            par_render(a, STORE, vat.id);
+            par_render(a, STORE, vat.id-a->current_base);
             break;
         }
         case AST_STMT_IF: {
@@ -166,7 +169,7 @@ void codegen(AstNode *node, Parser *a) {
             tar=a->code.s;
             printf("WHILE: after jump: s=%zu, tar=%zu\n", a->code.s, tar);
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
-            printf("WHILE: ls=%zu, cs=%zu, tar=%zu\n", ls, cs, tar);
+            printf("WHILE: ls=%zu, cs=%zu,  tar=%zu\n", ls, cs, tar);
             break;
         }
 
@@ -189,7 +192,10 @@ void codegen(AstNode *node, Parser *a) {
             char buf[256];
             sprintf(buf, "E%llu%s(II)I", addr, fun->name);
             par_pool_add(a, buf);
+            size_t old_base=a->current_base;
+            a->current_base=fun->base_id;
             codegen(fun->body, a);
+            a->current_base=old_base;
             break;
         }
         case AST_STMT_RET: {

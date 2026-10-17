@@ -107,6 +107,7 @@ typedef struct {
     AstNode base;
     char *name;
     cv args; // Arg
+    size_t base_id;
     uint8_t ret_type;
     AstStmtBlock *body;
 } AstStmtFun;

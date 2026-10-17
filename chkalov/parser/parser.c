@@ -85,6 +85,7 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     cv_init(&n->libs, 4, sizeof(Lib));
     cv_init(&n->file, 16, sizeof(Token));
     cv_init(&n->pool, 8, sizeof(char *));
+    cv_init(&n->invoke_patches, 8, sizeof(InvokePatch));
 
     n->heap=malloc(n->hs=1024);
     par_heapIns(n, "\0");
@@ -156,6 +157,12 @@ void par_free(Parser *z) {
         cv_push(&final, &size);
         for(j=0; j<size; j++) cv_push(&final, ((char *)&vm->value)+j);
     }
+
+    for(i=0; i<z->invoke_patches.s; i++) {
+        InvokePatch *pt=cv_eptr(&z->invoke_patches, i);
+        free(pt->name);
+    }
+    cv_free(&z->invoke_patches);
 
     hdr.code_size=final.s;
     hdr.heap_size=z->hp;
@@ -317,10 +324,11 @@ AstNode *par_par_expr(Parser *a) {
             cv args;
             uint8_t ret_type, c;
             AstStmtBlock *body;
-            AstNode *func;
+            AstStmtFun *func;
             Token *n, *w;
 
             cv_init(&args, 4, 1);
+            size_t base_id=a->scopes.gid;
             printf("Function \'%s\' \r\n", name);
             skip(a, LBRACE);
             do {
@@ -338,7 +346,8 @@ AstNode *par_par_expr(Parser *a) {
             ret_type=par_stt(n);
             printf("return type: \'%s\' \r\n", n);
             body=par_parBlock(a);
-            func=(AstNode *)ast_create_fun(name, args, ret_type, body);
+            func=ast_create_fun(name, args, ret_type, body);
+            func->base_id=base_id;
             cv_free(&args);
             return func;
         }
