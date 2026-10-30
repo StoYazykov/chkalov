@@ -132,16 +132,18 @@ void ast_free(AstNode *node) {
     switch(node->type) {
         case AST_STMT_BLOCK: {
             AstStmtBlock *p=(AstStmtBlock*)node;
-            for(size_t i=0; i<p->count; i++) ast_free(p->stats[i]);
+            size_t i;
+            for(i=0; i<p->count; i++) ast_free(p->stats[i]);
             free(p->stats);
             free(p);
             break;
         }
         case AST_STMT_CALL: {
             AstStmtCall *c=(AstStmtCall *)node;
+            size_t i;
             free(c->name);
-            for(size_t i=0;i<c->args.s; i++) {
-                ast_free(&((AstNode *)c->args.d)[i]);
+            for(i=0; i<c->args.s; i++) {
+                ast_free(((AstNode **)c->args.d)[i]);
             }
             free(c);
             break;
