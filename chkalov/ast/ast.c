@@ -56,26 +56,32 @@ AstBinary *ast_create_binary(TokType t, AstNode *l, AstNode *r) {
     return bin;
 }
 
-AstExprVariable *ast_create_variable(char *n) {
+AstExprVariable *ast_create_variable(char *n, size_t id, uint8_t type) {
     AstExprVariable *var=malloc(sizeof(AstExprVariable));
     var->name=strdup(n);
     var->base.type=AST_EXPR_VARIABLE;
+    var->id=id;
+    var->type=type;
     return var;
 }
 
-AstStmtAssign *ast_create_assign(char *n, AstNode *v) {
+AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, uint8_t type) {
     AstStmtAssign *ass=malloc(sizeof(AstStmtAssign));
     ass->name=strdup(n);
     ass->value=v;
+    ass->type=type;
     ass->base.type=AST_STMT_ASSIGN;
+    ass->id=id;
     return ass;
 }
 
-AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt) {
+AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt, size_t id) {
     AstStmtVarDecl *svd=malloc(sizeof(AstStmtVarDecl));
     svd->name=strdup(n);
     svd->var_type=vt;
     svd->base.type=AST_STMT_VAR_DECL;
+    svd->id=id;
+    printf("AST VarDecl create: id=%llx\r\n", id);
     return svd;
 }
 

@@ -53,6 +53,7 @@ Token* par_this(Parser *a);
 Token* par_next(Parser *a);
 uint8_t par_stt(ds s);
 char *par_tts(uint8_t t);
+char par_ttc(uint8_t t);
 void par_split_commas(AstNode *n, cv *q);
 Token* par_post(Parser *a);
 void par_render(Parser *a, uint8_t op, int64_t v);

@@ -41,6 +41,17 @@ char *par_tts(uint8_t t) {
     return "Unknown";
 }
 
+char par_ttc(uint8_t t) {
+    switch(t) {
+        case INT: return 'I';
+        case LONG: return 'L';
+        case CHAR: return 'C';
+        case STR: return 'S';
+        case VOID: return 'V';
+    }
+    return 'U';
+}
+
 void par_parFile(Parser *a) {
     AstNode *an;
     a->p=0;
@@ -91,8 +102,8 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
     par_heapIns(n, "\0");
     n->root=ast_create_block();
 
-    scos_init(&n->scopes);
-    scos_es(&n->scopes);
+    scopes_init(&n->scopes);
+    scopes_enterScope(&n->scopes);
 
     n->debug=deb;
     ds x;
@@ -213,10 +224,10 @@ AstNode *par_par_primary(Parser *a) {
             return p;
         }
         case ID: {
-            variable var;
-            scos_getv(&a->scopes, t.value, &var);
-            if(!var.name) error("Undeclared variable \'%s\'", t.value);
-            return (AstNode *)ast_create_variable(t.value);
+            Variable *var;
+            var=scopes_getVar(&a->scopes, t.value);
+            if(!var) error("Primary: Undeclared variable \'%s\'", t.value);
+            return (AstNode *)ast_create_variable(t.value, var->id, var->type);
         }
         case STRING: return(AstNode *)ast_create_literal(STRING, t.value);
     }
@@ -279,31 +290,18 @@ AstNode *par_par_expr(Parser *a) {
             expect(a, RPAREN, "\'}\'");
             return NULL;
         }
-        case LCALL: {
-            cv q;
-            Token *m=par_post(a);
-            AstNode *n;
-            cv_init(&q, 4, sizeof(AstNode *));
-            if(a->debug) puts("lcall");
-            expect(a, LBRACE, "\'(\'");
-            do {
-                n=par_par_expr(a);
-                par_split_commas(n, &q);
-            } while(par_this(a)->type==COMMA&&a->p++);
-            expect(a, RBRACE, "\')\'");
-            return (AstNode *)ast_create_call(m->value, q);
-        }
         case VAR: {
             AstStmtVarDecl *svd;
             Token *n, *w=par_post(a);
-            AstNode *decl;
-            AstNode *res=NULL;
+            AstNode *decl, *res=NULL;
+            Variable *var;
             expect(a, COLON, ":");
             do {
                 n=par_post(a);
                 if(a->debug) printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
-                scos_addv(&a->scopes, n->value, par_stt(w->value));
-                decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value));
+                var=scopes_addVar(&a->scopes, n->value, par_stt(w->value));
+                decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value), var->id);
+                printf("var->id=%zu\n", var->id);
                 if(!res) {
                     res=decl;
                 } else {
@@ -328,24 +326,34 @@ AstNode *par_par_expr(Parser *a) {
             Token *n, *w;
 
             cv_init(&args, 4, 1);
-            size_t base_id=a->scopes.gid;
-            printf("Function \'%s\' \r\n", name);
-            skip(a, LBRACE);
-            do {
-                n=par_post(a);
+            size_t base_id=a->scopes.lastVar;
+            scopes_enterScope(&a->scopes);
+            printf("Function '%s' \r\n", name);
+            if(par_this(a)->type==LBRACE) {
+                if(par_next(a)->type!=RBRACE) {
+                    do {
+                        n=par_post(a);
+                        expect(a, COLON, ":");
+                        w=par_post(a);
+                        c=par_stt(w->value);
+                        cv_push(&args, &c);
+                        scopes_addVar(&a->scopes, n->value, c);
+                        printf("type='%s', name='%s' \r\n", w->value, n->value);
+                    } while(par_this(a)->type==COMMA&&a->p++);
+                }
+                skip(a, RBRACE);
+            }
+            if(par_this(a)->type==COLON) {
                 expect(a, COLON, ":");
-                w=par_post(a);
-                c=par_stt(w->value);
-                cv_push(&args, &c);
-                scos_addv(&a->scopes, n->value, c);
-                printf("type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
-            } while(par_this(a)->type==COMMA&&a->p++);
-            skip(a, RBRACE);
-            expect(a, COLON, ":");
-            n=par_post(a)->value;
-            ret_type=par_stt(n);
-            printf("return type: \'%s\' \r\n", n);
+                n=par_post(a)->value;
+                ret_type=par_stt(n);
+            } else {
+                n="Void";
+                ret_type=VOID;
+            }
+            printf("return type: '%s' \r\n", n);
             body=par_parBlock(a);
+            scopes_exitScope(&a->scopes);
             func=ast_create_fun(name, args, ret_type, body);
             func->base_id=base_id;
             cv_free(&args);
@@ -364,14 +372,33 @@ AstNode *par_par_expr(Parser *a) {
             body=par_parBlock(a);
             return (AstNode *)ast_create_while(cond, body);
         }
+
         case ID: {
-            variable var;
             Token *w=par_this(a);
-            scos_getv(&a->scopes, t->value, &var);
-            if(!var.name) error("Undeclared variable: %s", t->value);
-            if(w->type==ASSIGN) {
-                a->p++;
-                return ast_create_assign(t->value, par_par_comp(a));
+            if(w->type==LBRACE) {
+                a->p--;
+                cv q;
+                Token *m=par_post(a);
+                AstNode *n;
+                cv_init(&q, 4, sizeof(AstNode *));
+                if(a->debug) puts("lcall");
+                expect(a, LBRACE, "\'(\'");
+                if(par_this(a)->type!=RBRACE) {
+                    do {
+                        n=par_par_expr(a);
+                        par_split_commas(n, &q);
+                    } while(par_this(a)->type==COMMA&&a->p++);
+                }
+                expect(a, RBRACE, "\')\'");
+                return (AstNode *)ast_create_call(m->value, q);
+            } else {
+                Variable *var;
+                var=scopes_getVar(&a->scopes, t->value);
+                if(!var) error("Expr: Undeclared variable: %s", t->value);
+                if(w->type==ASSIGN) {
+                    a->p++;
+                    return ast_create_assign(t->value, par_par_comp(a), var->id, var->type);
+                }
             }
         }
         default: a->p--;

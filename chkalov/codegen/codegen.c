@@ -115,10 +115,8 @@ void codegen(AstNode *node, Parser *a) {
         }
         case AST_STMT_VAR_DECL: {
             AstStmtVarDecl *svd=(AstStmtVarDecl *)node;
-            variable var;
-            scos_getv(&a->scopes, svd->name, &var);
             par_render(a, PUSH, 0);
-            par_render(a, STORE, var.id-a->current_base);
+            par_render(a, STORE, svd->id-a->current_base);
             break;
         }
         case AST_EXPR_COMMA: {
@@ -128,19 +126,18 @@ void codegen(AstNode *node, Parser *a) {
             break;
         }
         case AST_EXPR_VARIABLE: {
-            AstExprVariable *var=(AstExprVariable *)node;
-            variable vat;
-            scos_getv(&a->scopes, var->name, &vat);
-            par_render(a, LOAD, vat.id-a->current_base);
+            AstExprVariable *var_expr=(AstExprVariable *)node;
+            printf("LOAD %s id=%zu base=%zu v=%zu\n", var_expr->name, var_expr->id, a->current_base, var_expr->id-a->current_base);
+            par_render(a, LOAD, var_expr->id-a->current_base);
             break;
         }
         case AST_STMT_ASSIGN: {
             AstStmtAssign *ass=(AstStmtAssign *)node;
-            variable vat;
+            Variable *var;
             codegen(ass->value, a);
             par_render(a, DUP, 0);
-            scos_getv(&a->scopes, ass->name, &vat);
-            par_render(a, STORE, vat.id-a->current_base);
+            var=scopes_getVar(&a->scopes, ass->name);
+            par_render(a, STORE, ass->id-a->current_base);
             break;
         }
         case AST_STMT_IF: {
@@ -175,7 +172,7 @@ void codegen(AstNode *node, Parser *a) {
 
         case AST_STMT_FUN: {
             AstStmtFun *fun=(AstStmtFun *)node;
-            size_t addr=a->code.s;
+            size_t addr=a->code.s, i;
 
             UserFunc *uf=user_func_find(&a->funcs, fun->name);
             if(uf) {
@@ -184,17 +181,25 @@ void codegen(AstNode *node, Parser *a) {
                 user_func_add(&a->funcs, fun->name, addr, fun->ret_type);
             }
             printf("func: %s at %zx, body=%p, count=%zu\n", fun->name, addr, fun->body, fun->body->count);
+            printf("fun %s base_id=%zu\n", fun->name, fun->base_id);
             if(a->debug) printf("func: %s at %zx\n", fun->name, addr);
 
             if(!strcmp(fun->name, "main")) {
                 a->entry_point=addr;
             }
             char buf[256];
-            sprintf(buf, "E%llu%s(II)I", addr, fun->name);
+            sprintf(buf, "E(%llu)%s(", addr, fun->name);
+            for(i=0; i<fun->args.s; i++) {
+                Arg *arg=cv_eptr(&fun->args, i);
+                sprintf(buf+strlen(buf), "%x|", arg->type);
+            }
+            sprintf(buf+strlen(buf), ");%c", par_ttc(fun->ret_type));
             par_pool_add(a, buf);
             size_t old_base=a->current_base;
             a->current_base=fun->base_id;
             codegen(fun->body, a);
+            par_render(a, PUSH, 0);
+            par_render(a, RET, 0);
             a->current_base=old_base;
             break;
         }
@@ -224,10 +229,8 @@ uint8_t type_expr(AstNode *node, Parser *a) {
             return (lit->lit_type==NUMBER)?INT:(lit->lit_type==STRING)?STR:error("Error");
         }
         case AST_EXPR_VARIABLE: {
-            AstExprVariable *var=(AstExprVariable *)node;
-            variable v;
-            scos_getv(&a->scopes, var->name, &v);
-            return v.type;
+            AstExprVariable *var_expr=(AstExprVariable *)node;
+            return var_expr->type;
         }
         case AST_STMT_CALL: {
             size_t i, pos;

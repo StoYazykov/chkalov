@@ -75,17 +75,22 @@ typedef struct {
     AstNode base;
     char *name;
     AstNode *value;
+    uint8_t type;
+    size_t id;
 } AstStmtAssign;
 
 typedef struct {
     AstNode base;
     char *name;
+    size_t id;
+    uint8_t type;
 } AstExprVariable;
 
 typedef struct {
     AstNode base;
     char *name;
     uint8_t var_type;
+    size_t id;
 } AstStmtVarDecl;
 
 typedef struct {
@@ -120,10 +125,10 @@ AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, cv args);
 AstExprLiteral* ast_create_literal(TokType t, char *v);
 AstBinary *ast_create_binary(TokType t, AstNode *l, AstNode *r);
-AstStmtAssign *ast_create_assign(char *n, AstNode *v);
-AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt);
+AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, uint8_t type);
+AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt, size_t id);
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r);
-AstExprVariable *ast_create_variable(char *n);
+AstExprVariable *ast_create_variable(char *n, size_t id, uint8_t type);
 AstStmtIf *ast_create_if(AstNode *c, AstStmtBlock *b, AstStmtBlock *e);
 AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b);
 AstStmtFun *ast_create_fun(char *n, cv args, uint8_t ret_type, AstStmtBlock *b);

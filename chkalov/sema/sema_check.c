@@ -32,13 +32,13 @@ void sem_analyze(AstNode *node, Parser *a) {
 
         case AST_STMT_ASSIGN: {
             AstStmtAssign *assign=(AstStmtAssign *)node;
-            variable v;
-            uint8_t vt;
+            Variable *var;
+            uint8_t varType;
             sem_analyze(assign->value, a);
-            scos_getv(&a->scopes, assign->name, &v);
-            vt=type_expr(assign->value, a);
-            if(vt==VOID) error("Void in assignment");
-            if(!sem_types_compatible(vt, v.type)) error("Cannot assign %s to %s", par_tts(vt), par_tts(v.type));
+            var=scopes_getVar(&a->scopes, assign->name);
+            varType=type_expr(assign->value, a);
+            if(varType==VOID) error("Void in assignment");
+            if(!sem_types_compatible(varType, var->type)) error("Cannot assign %s to %s", par_tts(varType), par_tts(var->type));
             break;
         }
 

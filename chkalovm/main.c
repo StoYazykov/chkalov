@@ -315,7 +315,7 @@ int main(int argc, char **argv) {
                 for(i=0; i<stack.s; i++) {
                     printf("%llx ", *((int64_t *)cv_eptr(&stack, i)));
                 }
-                puts("\r\n(stack dump end)");
+                puts("<< Stack Pointer\r\n(stack dump end)");
                 abort();
             }
         }

@@ -16,6 +16,7 @@ void func_add(Lib *a, Func z) {
 }
 
 Func *func_find(Lib *a, Func z) {
+    printf("func_find: %s, args.s=%zu\n", z.name, z.args.s);
     Func *t;
     size_t i;
     for(i=0; i<a->funcs.s; i++) {

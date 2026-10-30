@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     if(debug) printf("Before par_parFile... \r\n");
     par_parFile(&parser);
     collect_funcs((AstNode *)parser.root, &parser);
-    sem_analyze((AstNode *)parser.root, &parser);
+    //sem_analyze((AstNode *)parser.root, &parser);
     if(optim) {
         if(debug) {
             puts("\r\nAST Tree before optimization:");
