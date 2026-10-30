@@ -58,4 +58,12 @@ void scopes_exitScope(ScopeStack *a) {
     a->curScope--;
 }
 
-void scopes_free(ScopeStack *a);
+void scopes_free(ScopeStack *a) {
+    Scope *scope;
+    Variable *var;
+    for(scope=(Scope *)a->scopes.d; scope<((Scope *)a->scopes.d)+a->scopes.s; scope++) {
+        for(var=(Variable *)scope->vars.d; var<((Variable *)scope->vars.d)+scope->vars.s; var++) free(var->name);
+        cv_free(&scope->vars);
+    }
+    cv_free(&a->scopes);
+}
