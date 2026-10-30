@@ -9,7 +9,7 @@
 *.depend
 *.cbp
 
-demo.*
+demo.cvm
 
 *.kate-swp
 

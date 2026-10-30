@@ -1,0 +1,25 @@
+native stdcon {
+    println(Int): Void,
+    println(String): Void
+}
+
+fun main {
+	var Int: a, b
+	a = b = 52
+	println(a)
+	foo()
+	bar("Hello from bar()!")
+	println(sum(5, 2))
+}
+
+fun foo() {
+	println("Hello World!")
+}
+
+fun bar(x: String) {
+	println(x)
+}
+
+fun sum(a: Int, b: Int): Int {
+	return a + b
+}
