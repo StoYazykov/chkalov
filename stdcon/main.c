@@ -19,12 +19,12 @@
 
 #include "../chkapi.h"
 
-Int println_i(size_t argc, int64_t *argp, ChkEnv *env) {
+Int println_I(size_t argc, int64_t *argp, ChkEnv *env) {
     printf("%lld\r\n", argp[0]);
     return 0;
 }
 
-Int println_s(size_t argc, int64_t *argp, ChkEnv *env) {
+Int println_S(size_t argc, int64_t *argp, ChkEnv *env) {
     printf("%s\r\n", argp[0]+(*env->_heap));
     return 0;
 }

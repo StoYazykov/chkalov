@@ -21,6 +21,7 @@
 #define _TOKEN_H
 
 #include "../../chkalov.h"
+#include "../suffix/suffix.h"
 
 typedef enum {
     NOT, ENOF,
@@ -36,6 +37,7 @@ typedef enum {
 typedef struct {
     TokType type;
     ds value;
+    Suffix suffix;
 } Token;
 
 void tok_init(Token *a, TokType b, ds c);

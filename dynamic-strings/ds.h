@@ -33,5 +33,6 @@ void ds_sub(ds *a, const char *s, size_t n, size_t l);
 ds ds_gl(ds *a, FILE *fp);
 void ds_cat(ds *a, ...);
 void ds_free(ds *a);
+ds c2s(char c);
 
 #endif

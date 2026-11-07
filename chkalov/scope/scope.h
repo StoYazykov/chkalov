@@ -21,11 +21,12 @@
 #define _SCOPE_H
 
 #include "../../chkalov.h"
+#include "../var_types/var_types.h"
 
 typedef struct {
     ds name;
     size_t id;
-    uint8_t type;
+    Type type;
 } Variable;
 
 typedef struct {
@@ -38,7 +39,7 @@ typedef struct {
 } ScopeStack;
 
 void scopes_init(ScopeStack *a);
-Variable *scopes_addVar(ScopeStack *a, ds varName, uint8_t varType);
+Variable *scopes_addVar(ScopeStack *a, ds varName, Type varType);
 Variable *scopes_getVar(ScopeStack *a, ds varName);
 void scopes_enterScope(ScopeStack *a);
 void scopes_exitScope(ScopeStack *a);

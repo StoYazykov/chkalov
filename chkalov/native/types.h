@@ -3,11 +3,12 @@
 
 #include "../ast/ast.h"
 #include "../../chkalov.h"
+#include "../var_types/var_types.h"
 
 typedef struct {
     ds name;
     cv args;
-    uint8_t ret_type;
+    Type ret_type;
 } Func;
 
 typedef struct {

@@ -26,6 +26,7 @@ void lexer(void *b, ds l) {
     uint64_t pos=0;
     while(pos<strlen(l)) {
         t.value=NULL;
+        t.suffix=SUFFIX_NONE;
         while(pos<strlen(l)&&isspace(l[pos])) pos++;
 
         if(pos>=strlen(l)) {
@@ -108,11 +109,33 @@ void lexer(void *b, ds l) {
             continue;
         }
         if(isdigit(l[pos])) {
-            size_t start=pos;
+            size_t start=pos, i;
             while(pos<strlen(l)&&isdigit(l[pos])) pos++;
             t.type=NUMBER;
             t.value=NULL;
             ds_sub(&t.value, l, start, pos-start);
+            for(i=0; i<2; i++) {
+                if(pos<strlen(l)&&(l[pos]=='U'||l[pos]=='L')) {
+                    ds p=c2s(l[pos]);
+                    ds_cat(&t.value, p);
+                    if(l[pos]=='U') {
+                        if(t.suffix==SUFFIX_LONG) t.suffix=SUFFIX_UNSIGNED_LONG;
+                        else t.suffix=SUFFIX_UNSIGNED;
+                    } else {
+                        if(t.suffix==SUFFIX_UNSIGNED) t.suffix=SUFFIX_UNSIGNED_LONG;
+                        else t.suffix=SUFFIX_LONG;
+                    }
+                    if(a->debug) printf("Number '%s', Suffix '%s'\r\n", t.value, p);
+                    free(p);
+                    pos++;
+                }
+            }
+            if(t.suffix!=SUFFIX_NONE) {
+                size_t len=strlen(t.value);
+                size_t cut=(t.suffix==SUFFIX_UNSIGNED_LONG)+1;
+                if(len>=cut) t.value[len-cut]=0;
+            }
+            if(a->debug) printf("Number '%s' (suffix=%d)\r\n", t.value, t.suffix);
             cv_push(&a->file, &t);
             continue;
         }

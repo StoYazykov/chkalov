@@ -24,7 +24,7 @@ void scopes_init(ScopeStack *a) {
     a->lastVar=a->curScope=0;
 }
 
-Variable *scopes_addVar(ScopeStack *a, ds varName, uint8_t varType) {
+Variable *scopes_addVar(ScopeStack *a, ds varName, Type varType) {
     Variable var;
     cv *ptr;
     var.type=varType;

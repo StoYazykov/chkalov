@@ -30,7 +30,8 @@ $(CHKALOV_SRC)/codegen/codegen.c \
 $(CHKALOV_SRC)/lexer/lexer.c \
 $(CHKALOV_SRC)/native/native.c \
 $(CHKALOV_SRC)/function/function.c \
-$(CHKALOV_SRC)/sema/sema_check.c
+$(CHKALOV_SRC)/sema/sema_check.c \
+$(CHKALOV_SRC)/var_types/var_types.c
 
 STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.c \

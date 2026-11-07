@@ -72,3 +72,9 @@ void ds_cat(ds *a, ...) {
     free(*a);
     *a=ns;
 }
+
+ds c2s(char c) {
+    ds s=malloc(1);
+    *s=c;
+    return s;
+}

@@ -23,21 +23,22 @@ void sem_analyze(AstNode *node, Parser *a) {
             AstBinary *bin=(AstBinary *)node;
             sem_analyze(bin->left, a);
             sem_analyze(bin->right, a);
-            uint8_t left_type=type_expr(bin->left, a), right_type=type_expr(bin->right, a);
-            if(right_type==VOID||left_type==VOID) error("Void in expression");
+            Type left_type=type_expr(bin->left, a), right_type=type_expr(bin->right, a);
+            if(right_type==T_VOID||left_type==T_VOID) error("Void in expression");
             if(!sem_binary_type(bin->op, left_type, right_type)) {
                 error("Mismatch types: %s vs %s", par_tts(left_type), par_tts(right_type));
             }
         }
 
         case AST_STMT_ASSIGN: {
+            break;
             AstStmtAssign *assign=(AstStmtAssign *)node;
             Variable *var;
-            uint8_t varType;
+            Type varType;
             sem_analyze(assign->value, a);
             var=scopes_getVar(&a->scopes, assign->name);
             varType=type_expr(assign->value, a);
-            if(varType==VOID) error("Void in assignment");
+            if(varType==T_VOID) error("Void in assignment");
             if(!sem_types_compatible(varType, var->type)) error("Cannot assign %s to %s", par_tts(varType), par_tts(var->type));
             break;
         }
@@ -73,39 +74,13 @@ void sem_analyze(AstNode *node, Parser *a) {
     }
 }
 
-uint8_t sem_binary_type(TokType op, uint8_t lt, uint8_t rt) {
-    uint8_t arith_result[8][8]={
-    //           VOID  CHAR  SHORT INT   LONG  UINT  ULONG STR
-    /* VOID  */ {VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID},
-    /* CHAR  */ {VOID, CHAR, SHORT,INT,  LONG, INT,  LONG, VOID},
-    /* SHORT */ {VOID, SHORT,SHORT,INT,  LONG, INT,  LONG, VOID},
-    /* INT   */ {VOID, INT,  INT,  INT,  LONG, UINT, ULONG,VOID},
-    /* LONG  */ {VOID, LONG, LONG, LONG, LONG, ULONG,ULONG,VOID},
-    /* UINT  */ {VOID, INT,  INT,  UINT, ULONG,UINT, ULONG,VOID},
-    /* ULONG */ {VOID, LONG, LONG, ULONG,ULONG,ULONG,ULONG,VOID},
-    /* STR   */ {VOID, VOID, VOID, VOID, VOID, VOID, VOID, STR},
-    };
-
-    switch(op) {
-        case PLUS: case MINUS: case STAR: case SLASH:
-        case EQ: case NEQ: case LT: case BT: case LE: case BE: return arith_result[lt][rt];
-    }
+Type sem_binary_type(TokType op, Type left_type, Type right_type) {
+    return binary_result[left_type][right_type];
 }
-
-bool sem_types_compatible(uint8_t lt, uint8_t rt) {
-    int comp_result[8][8]={
-    //           VOID  CHAR  SHORT INT   LONG  UINT  ULONG STR
-    /* VOID  */ {0,    0,    0,    0,    0,    0,    0,    0},
-    /* CHAR  */ {0,    1,    1,    1,    1,    1,    1,    0},
-    /* SHORT */ {0,    0,    1,    1,    1,    1,    1,    0},
-    /* INT   */ {0,    0,    0,    1,    1,    1,    1,    0},
-    /* LONG  */ {0,    0,    0,    0,    1,    0,    1,    0},
-    /* UINT  */ {0,    0,    0,    1,    1,    1,    1,    0},
-    /* ULONG */ {0,    0,    0,    0,    1,    0,    1,    0},
-    /* STR   */ {0,    0,    0,    0,    0,    0,    0,    1}
-    };
-    return !!comp_result[lt][rt];
-}
+/*
+bool sem_types_compatible(Type left_type, Type right_type) {
+    return !!comp_result[left_type][right_type];
+}*/
 
 void collect_funcs(AstNode *node, Parser *a) {
     if(!node) return;

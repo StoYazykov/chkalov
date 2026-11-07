@@ -31,19 +31,21 @@ void codegen(AstNode *node, Parser *a) {
         }
         case AST_STMT_CALL: {
             size_t i, pos;
-            uint8_t t;
+            Type t;
             AstStmtCall *call=(AstStmtCall *)node;
             Lib *lib;
             Func key;
             cv types;
-            cv_init(&types, 4, 1);
+            cv_init(&types, 4, sz(Type));
             AstNode **args=(AstNode **)call->args.d;
             for(i=0; i<call->args.s; i++) {
                 t=type_expr(args[i], a);
                 cv_push(&types, &t);
             }
+            puts("Codegen: findeing natives");
             for(i=0; i<a->libs.s; i++) {
                 size_t j;
+                printf("Iteration %d\r\n");
                 lib=cv_eptr(&a->libs, i);
                 key.name=call->name;
                 key.args=types;
@@ -143,7 +145,7 @@ void codegen(AstNode *node, Parser *a) {
         case AST_STMT_IF: {
             AstStmtIf *ifi=(AstStmtIf *)node;
             uintptr_t cs, tar;
-            uint8_t e;
+            Type e;
             codegen(ifi->cond, a);
             cs=a->code.s;
             par_render(a, JMP_IFN, 0);
@@ -155,7 +157,7 @@ void codegen(AstNode *node, Parser *a) {
         case AST_STMT_WHILE: {
             AstStmtWhile *whi=(AstStmtWhile *)node;
             uintptr_t ls=a->code.s, cs, tar;
-            uint8_t e;
+            Type e;
             codegen(whi->cond, a);
             cs=a->code.s;
             par_render(a, JMP_IFN, 0);
@@ -212,21 +214,11 @@ void codegen(AstNode *node, Parser *a) {
     }
 }
 
-uint8_t type_expr(AstNode *node, Parser *a) {
-    int conv_table[6][6]={
-    //             VOID CHAR SHORT INT LONG STR
-    /* VOID */  {  0,   0,   0,    0,  0,   0},
-    /* CHAR */  {  0,   1,   1,    1,  1,   0},
-    /* SHORT */ {  0,   0,   1,    1,  1,   0},
-    /* INT */   {  0,   0,   0,    1,  1,   0},
-    /* LONG */  {  0,   0,   0,    0,  1,   0},
-    /* STR  */  {  0,   0,   0,    0,  0,   1},
-    };
-
+Type type_expr(AstNode *node, Parser *a) {
     switch(node->type) {
         case AST_EXPR_LITERAL: {
             AstExprLiteral *lit=(AstExprLiteral *)node;
-            return (lit->lit_type==NUMBER)?INT:(lit->lit_type==STRING)?STR:error("Error");
+            return (lit->lit_type==NUMBER)?T_INT:(lit->lit_type==STRING)?T_STRING:error("Error");
         }
         case AST_EXPR_VARIABLE: {
             AstExprVariable *var_expr=(AstExprVariable *)node;
@@ -234,12 +226,12 @@ uint8_t type_expr(AstNode *node, Parser *a) {
         }
         case AST_STMT_CALL: {
             size_t i, pos;
-            uint8_t t;
+            Type t;
             AstStmtCall *call=(AstStmtCall *)node;
             Lib *lib;
             Func key;
             cv types;
-            cv_init(&types, 4, 1);
+            cv_init(&types, 4, sz(Type));
             AstNode **args=(AstNode **)call->args.d;
             for(i=0; i<call->args.s; i++) {
                 t=type_expr(args[i], a);
@@ -265,14 +257,13 @@ uint8_t type_expr(AstNode *node, Parser *a) {
                 }
             }
             UserFunc *uf=user_func_find(&a->funcs, call->name);
-            if(!uf) error("Undeclared function: '%s'!", call->name);
-            return INT;
+            if(!uf) error("Codegen: Undeclared function: '%s'!", call->name);
+            return uf->ret_type;
         }
         case AST_BINARY: {
             AstBinary *bin=(AstBinary *)node;
-            uint8_t left=type_expr(bin->left, a);
-            uint8_t right=type_expr(bin->right, a);
-            if(conv_table[left][right]) return MAX(left, right);
+            Type left=type_expr(bin->left, a), right=type_expr(bin->right, a);
+            return left;
         } // fall-through
         default: return 0;
     }

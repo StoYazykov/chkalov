@@ -23,35 +23,6 @@
 
 static Scope nullscope;
 
-uint8_t par_stt(ds s) {
-    if(SEQU(s, "Int")) return INT;
-    if(SEQU(s, "Char")) return CHAR;
-    if(SEQU(s, "String")) return STR;
-    if(SEQU(s, "Long")) return LONG;
-    return 0;
-}
-
-char *par_tts(uint8_t t) {
-    switch(t) {
-        case INT: return "Int";
-        case LONG: return "Long";
-        case CHAR: return "Char";
-        case STR: return "String";
-    }
-    return "Unknown";
-}
-
-char par_ttc(uint8_t t) {
-    switch(t) {
-        case INT: return 'I';
-        case LONG: return 'L';
-        case CHAR: return 'C';
-        case STR: return 'S';
-        case VOID: return 'V';
-    }
-    return 'U';
-}
-
 void par_parFile(Parser *a) {
     AstNode *an;
     a->p=0;
@@ -128,13 +99,23 @@ void par_render(Parser *a, uint8_t op, int64_t value) {
 }
 
 ds par_mangle(Func *f) {
-    ds arg, ret=strdup(f->name);
+    ds ret=strdup(f->name), arg;
+    Type type;
     ds_cat(&ret, "_", NULL);
     size_t i;
     for(i=0; i<f->args.s; i++) {
-        switch(*(char *)cv_eptr(&f->args, i)) {
-            case INT: arg="i"; break;
-            case STR: arg="s"; break;
+        type=*(Type *)cv_eptr(&f->args, i);
+        switch(type) {
+            case T_CHAR:    arg="C"; break;
+            case T_SHORT:   arg="X"; break;
+            case T_INT:     arg="I"; break;
+            case T_LONG:    arg="L"; break;
+            case T_STRING:  arg="S"; break;
+            case T_UCHAR:   arg="c"; break;
+            case T_USHORT:  arg="x"; break;
+            case T_UINT:    arg="i"; break;
+            case T_ULONG:   arg="l"; break;
+            default:        arg=malloc(32);sprintf(arg, "INCORRECT: type %d\r\n", type);
         }
         ds_cat(&ret, arg, NULL);
     }
@@ -151,7 +132,7 @@ void par_free(Parser *z) {
         Lib *lib=cv_eptr(&z->libs, i);
         for(int j=0; j<lib->funcs.s; j++) {
             Func *func=cv_eptr(&lib->funcs, j);
-            printf("%s \r\n", par_mangle(func));
+            printf("native: %s \r\n", par_mangle(func));
         }
     }
     if(z->debug) printf("par_free: fn = '%s'\n", z->fn);
@@ -216,7 +197,10 @@ AstNode *par_par_primary(Parser *a) {
     if(a->debug) puts("par primary start");
     a->p++;
     switch(t.type) {
-        case NUMBER: return (AstNode *)ast_create_literal(NUMBER, t.value);
+        case NUMBER: {
+            return (AstNode *)ast_create_literal(NUMBER, t.value, t.suffix);
+        }
+
         case LBRACE: {
             AstNode *p;
             p=par_par_comp(a);
@@ -229,7 +213,7 @@ AstNode *par_par_primary(Parser *a) {
             if(!var) error("Primary: Undeclared variable \'%s\'", t.value);
             return (AstNode *)ast_create_variable(t.value, var->id, var->type);
         }
-        case STRING: return(AstNode *)ast_create_literal(STRING, t.value);
+        case STRING: return(AstNode *)ast_create_literal(STRING, t.value, SUFFIX_NONE);
     }
     return NULL;
 }
@@ -261,7 +245,7 @@ AstNode *par_par_expr(Parser *a) {
         case NATIVE: {
             Token *n=par_post(a);
             Func z;
-            uint8_t c;
+            Type c;
             printf("library \'%s\', functions: \r\n", n->value);
             lib_add(a, n->value);
             expect(a, LPAREN, "\'{\'");
@@ -270,7 +254,7 @@ AstNode *par_par_expr(Parser *a) {
                 if(n->type!=ID) error("Expected function name!");
                 printf("%s ( ", n->value);
                 skip(a, LBRACE);
-                cv_init(&z.args, 4, 1);
+                cv_init(&z.args, 4, sz(Type));
                 z.name=strdup(n->value);
                 do {
                     n=par_post(a);
@@ -320,7 +304,7 @@ AstNode *par_par_expr(Parser *a) {
         case FUN: {
             char *name=par_post(a)->value;
             cv args;
-            uint8_t ret_type, c;
+            Type ret_type, c;
             AstStmtBlock *body;
             AstStmtFun *func;
             Token *n, *w;
@@ -349,7 +333,7 @@ AstNode *par_par_expr(Parser *a) {
                 ret_type=par_stt(n);
             } else {
                 n="Void";
-                ret_type=VOID;
+                ret_type=T_VOID;
             }
             printf("return type: '%s' \r\n", n);
             body=par_parBlock(a);

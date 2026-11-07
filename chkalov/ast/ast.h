@@ -22,6 +22,8 @@
 
 #include "../token/token.h"
 #include "../../c-vectors/cv.h"
+#include "../var_types/var_types.h"
+#include "../suffix/suffix.h"
 
 typedef enum {
     AST_STMT_BLOCK=0,
@@ -40,7 +42,7 @@ typedef enum {
 
 typedef struct {
     char *name;
-    uint8_t type;
+    Type type;
 } Arg;
 
 typedef struct {
@@ -63,6 +65,7 @@ typedef struct {
     AstNode base;
     TokType lit_type;
     char *value;
+    Suffix suffix;
 } AstExprLiteral;
 
 typedef struct {
@@ -75,7 +78,7 @@ typedef struct {
     AstNode base;
     char *name;
     AstNode *value;
-    uint8_t type;
+    Type type;
     size_t id;
 } AstStmtAssign;
 
@@ -83,13 +86,13 @@ typedef struct {
     AstNode base;
     char *name;
     size_t id;
-    uint8_t type;
+    Type type;
 } AstExprVariable;
 
 typedef struct {
     AstNode base;
     char *name;
-    uint8_t var_type;
+    Type var_type;
     size_t id;
 } AstStmtVarDecl;
 
@@ -113,7 +116,7 @@ typedef struct {
     char *name;
     cv args; // Arg
     size_t base_id;
-    uint8_t ret_type;
+    Type ret_type;
     AstStmtBlock *body;
 } AstStmtFun;
 
@@ -123,15 +126,15 @@ typedef struct {
 
 AstStmtBlock* ast_create_block();
 AstStmtCall* ast_create_call(char *n, cv args);
-AstExprLiteral* ast_create_literal(TokType t, char *v);
+AstExprLiteral* ast_create_literal(TokType t, char *v, Suffix suffix);
 AstBinary *ast_create_binary(TokType t, AstNode *l, AstNode *r);
-AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, uint8_t type);
-AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt, size_t id);
+AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, Type type);
+AstStmtVarDecl *ast_create_vardecl(char *n, Type vt, size_t id);
 AstExprComma *ast_create_comma(AstNode *l, AstNode *r);
-AstExprVariable *ast_create_variable(char *n, size_t id, uint8_t type);
+AstExprVariable *ast_create_variable(char *n, size_t id, Type type);
 AstStmtIf *ast_create_if(AstNode *c, AstStmtBlock *b, AstStmtBlock *e);
 AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b);
-AstStmtFun *ast_create_fun(char *n, cv args, uint8_t ret_type, AstStmtBlock *b);
+AstStmtFun *ast_create_fun(char *n, cv args, Type ret_type, AstStmtBlock *b);
 AstStmtRet *ast_create_ret(AstNode *v);
 
 AstNode *fold(AstNode *node);

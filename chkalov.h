@@ -107,16 +107,6 @@
 //            Types definitions                  //
 // ----------------------------------------------//
 
-#define VOID 0x00
-#define CHAR 0x01
-#define SHORT 0x02
-#define INT 0x03
-#define LONG 0x04
-#define UINT 0x05
-#define ULONG 0x06
-#define STR 0x07 // string in HEAP
-#define LIBRARY STR
-
 #define sz(type) (sizeof(type))
 #define NONE ((size_t)-1)
 

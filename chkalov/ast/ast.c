@@ -39,11 +39,12 @@ AstStmtCall* ast_create_call(char *n, cv args) {
     return call;
 }
 
-AstExprLiteral* ast_create_literal(TokType t, char *v) {
+AstExprLiteral* ast_create_literal(TokType t, char *v, Suffix suffix) {
     AstExprLiteral *lit=malloc(sizeof(AstExprLiteral));
     lit->base.type=AST_EXPR_LITERAL;
     lit->lit_type=t;
     lit->value=strdup(v);
+    lit->suffix=suffix;
     return lit;
 }
 
@@ -56,7 +57,7 @@ AstBinary *ast_create_binary(TokType t, AstNode *l, AstNode *r) {
     return bin;
 }
 
-AstExprVariable *ast_create_variable(char *n, size_t id, uint8_t type) {
+AstExprVariable *ast_create_variable(char *n, size_t id, Type type) {
     AstExprVariable *var=malloc(sizeof(AstExprVariable));
     var->name=strdup(n);
     var->base.type=AST_EXPR_VARIABLE;
@@ -65,7 +66,7 @@ AstExprVariable *ast_create_variable(char *n, size_t id, uint8_t type) {
     return var;
 }
 
-AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, uint8_t type) {
+AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, Type type) {
     AstStmtAssign *ass=malloc(sizeof(AstStmtAssign));
     ass->name=strdup(n);
     ass->value=v;
@@ -75,7 +76,7 @@ AstStmtAssign *ast_create_assign(char *n, AstNode *v, size_t id, uint8_t type) {
     return ass;
 }
 
-AstStmtVarDecl *ast_create_vardecl(char *n, uint8_t vt, size_t id) {
+AstStmtVarDecl *ast_create_vardecl(char *n, Type vt, size_t id) {
     AstStmtVarDecl *svd=malloc(sizeof(AstStmtVarDecl));
     svd->name=strdup(n);
     svd->var_type=vt;
@@ -110,7 +111,7 @@ AstStmtWhile *ast_create_while(AstNode *c, AstStmtBlock *b) {
     return whi;
 }
 
-AstStmtFun *ast_create_fun(char *n, cv args, uint8_t ret_type, AstStmtBlock *b) {
+AstStmtFun *ast_create_fun(char *n, cv args, Type ret_type, AstStmtBlock *b) {
     AstStmtFun *fun=malloc(sizeof(AstStmtFun));
     fun->base.type=AST_STMT_FUN;
     fun->name=strdup(n);
@@ -354,7 +355,7 @@ AstNode *fold(AstNode *node) {
             ast_free(b);
             char buf[32];
             sprintf(buf, "%lld", e);
-            return (AstNode *)ast_create_literal(NUMBER, buf);
+            return (AstNode *)ast_create_literal(NUMBER, buf, SUFFIX_NONE);
         }
         case AST_EXPR_COMMA: {
             AstExprComma *c=(AstExprComma *)node;
