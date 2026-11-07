@@ -20,27 +20,18 @@
 #include "../chkapi.h"
 
 Int println_I(size_t argc, int64_t *argp, ChkEnv *env) {
-    printf("%lld\r\n", argp[0]);
+    printf("%i\r\n", (Int)argp[0]);
     return 0;
 }
 
 Int println_S(size_t argc, int64_t *argp, ChkEnv *env) {
-    printf("%s\r\n", argp[0]+(*env->_heap));
+    printf("%s\r\n", (size_t)argp[0]+(*env->_heap));
     return 0;
 }
 
-Int printi_i(size_t argc, int64_t *argp, ChkEnv *env) {
-    printf("%lld", argp[0]);
+Int println_L(size_t argc, int64_t *argp, ChkEnv *env) {
+    printf("%ld\r\n", (long)argp[0]);
     return 0;
-}
-
-Int print_s(size_t argc, int64_t *argp, ChkEnv *env) {
-    printf("%s", argp[0]+(*env->_heap));
-    return 0;
-}
-
-Int sum_ii(size_t argc, int64_t *argp, ChkEnv *env) {
-    return argp[0]+argp[1];
 }
 
 Int readln_s(size_t argc, int64_t *argp, ChkEnv *env) {

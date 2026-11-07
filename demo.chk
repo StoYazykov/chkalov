@@ -1,6 +1,7 @@
 native stdcon {
     println(Int): Void,
-    println(String): Void
+    println(String): Void,
+    println(Long): Void
 }
 
 fun main {

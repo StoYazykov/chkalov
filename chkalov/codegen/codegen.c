@@ -218,7 +218,15 @@ Type type_expr(AstNode *node, Parser *a) {
     switch(node->type) {
         case AST_EXPR_LITERAL: {
             AstExprLiteral *lit=(AstExprLiteral *)node;
-            return (lit->lit_type==NUMBER)?T_INT:(lit->lit_type==STRING)?T_STRING:error("Error");
+            if(lit->lit_type==NUMBER) {
+                switch(lit->suffix) {
+                    case SUFFIX_NONE: puts("type_expr: Suffix None"); return T_INT;
+                    case SUFFIX_UNSIGNED: puts("type_expr: Suffix Unsigned"); return T_UINT;
+                    case SUFFIX_LONG: puts("type_expr: Suffix Long"); return T_LONG;
+                    case SUFFIX_UNSIGNED_LONG: puts("type_expr: Suffix Unsigned Long"); return T_ULONG;
+                    default: error("TYPE_EXPR SUFFIX ERROR");
+                }
+            } else return T_STRING;
         }
         case AST_EXPR_VARIABLE: {
             AstExprVariable *var_expr=(AstExprVariable *)node;
