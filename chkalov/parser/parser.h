@@ -45,6 +45,7 @@ typedef struct {
 } Parser;
 
 #include "../sema/sema_check.h"
+#include "expressions_parser.h"
 
 void par_init(Parser *a, const ds fni, const ds fno, int deb);
 size_t par_heapIns(Parser *a, ds k);
@@ -58,11 +59,7 @@ void par_render(Parser *a, uint8_t op, int64_t v);
 void par_parFile(Parser *a);
 void expect(Parser *a, TokType t, char *s);
 void skip(Parser *a, TokType t);
-AstNode *par_par_primary(Parser *a);
-AstNode *par_par_term(Parser *a);
-AstNode *par_par_expr(Parser *a);
-AstNode *par_par_comma(Parser *a, AstNode *l);
-AstNode *par_par_comp(Parser *a);
+
 size_t par_pool_add(Parser *a, char *str);
 void par_optim(Parser *a);
 AstStmtBlock *par_parBlock(Parser *a);

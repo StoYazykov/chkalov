@@ -1,9 +1,11 @@
 native stdcon {
-    println(Int): Void,
-    println(String): Void,
-    println(Long): Void
+    println(Int): Unit,
+    println(String): Unit,
+    println(Long): Unit
 }
 
 fun main {
 	println(100L)
+	println(100)
 }
+

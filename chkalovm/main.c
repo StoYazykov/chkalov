@@ -310,10 +310,10 @@ int main(int argc, char **argv) {
             }
             default: {
                 printf("VM error: incorrect opcode ( %x )\r\n", o, o);
-                printf("stack: s=%zx c=%zx es=%zx d=%p\n", stack.s, stack.c, stack.es, (void*)stack.d);
+                printf("ip=%zx stack: s=%zx c=%zx es=%zx d=%p\n", P-(Vm *)vm.d, stack.s, stack.c, stack.es, (void*)stack.d);
                 printf("stack: ");
                 for(i=0; i<stack.s; i++) {
-                    printf("%llx ", *((int64_t *)cv_eptr(&stack, i)));
+                    printf("%lx ", *((int64_t *)cv_eptr(&stack, i)));
                 }
                 puts("<< Stack Pointer\r\n(stack dump end)");
                 abort();
