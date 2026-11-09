@@ -118,7 +118,7 @@ AstNode *par_par_expr(Parser *a) {
             AstStmtFun *func;
             Token *n, *w;
 
-            cv_init(&args, 4, 1);
+            cv_init(&args, 4, sz(Type));
             size_t base_id=a->scopes.lastVar;
             scopes_enterScope(&a->scopes);
             printf("Function '%s' \r\n", name);
@@ -130,8 +130,9 @@ AstNode *par_par_expr(Parser *a) {
                         w=par_post(a);
                         c=par_stt(w->value);
                         cv_push(&args, &c);
+                        printf("ARGUMENT: \'%s\'\r\n", par_tts(*(Type *)cv_back(&args)));
                         scopes_addVar(&a->scopes, n->value, c);
-                        printf("type='%s', name='%s' \r\n", w->value, n->value);
+                        printf("type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
                     } while(par_this(a)->type==COMMA&&a->p++);
                 }
                 skip(a, RBRACE);

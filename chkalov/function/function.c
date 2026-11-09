@@ -1,6 +1,6 @@
 #include "function.h"
 
-void user_func_add(cv *funcs, char *name, size_t addr, uint8_t ret_type) {
+void user_func_add(cv *funcs, char *name, size_t addr, Type ret_type) {
     UserFunc uf;
     uf.name=strdup(name);
     uf.addr=addr;

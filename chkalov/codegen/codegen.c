@@ -191,9 +191,10 @@ void codegen(AstNode *node, Parser *a) {
             }
             char buf[256];
             sprintf(buf, "E(%llu)%s(", addr, fun->name);
+            Type arg_type;
             for(i=0; i<fun->args.s; i++) {
-                Arg *arg=cv_eptr(&fun->args, i);
-                sprintf(buf+strlen(buf), "%x|", arg->type);
+                arg_type=*(Type *)cv_eptr(&fun->args, i);
+                sprintf(buf+strlen(buf), "%c", par_ttc(arg_type));
             }
             sprintf(buf+strlen(buf), ");%c", par_ttc(fun->ret_type));
             par_pool_add(a, buf);
@@ -232,7 +233,7 @@ Type type_expr(AstNode *node, Parser *a) {
             AstExprVariable *var_expr=(AstExprVariable *)node;
             return var_expr->type;
         }
-        case AST_STMT_CALL: {
+       case AST_STMT_CALL: {
             size_t i, pos;
             Type t;
             AstStmtCall *call=(AstStmtCall *)node;
@@ -252,20 +253,20 @@ Type type_expr(AstNode *node, Parser *a) {
                 key.args=types;
 
                 if(func_find(lib, key)) {
-                    ds final=strdup(lib->name), mangled=par_mangle(&key);
-                    ds_cat(&final, ".", mangled, NULL);
-                    for(j=0; j<call->args.s; j++) codegen(args[j], a);
-                    pos=par_heapIns(a, final);
-                    par_render(a, PUSH, call->args.s);
-                    par_render(a, CALL, pos);
-                    free(final);
-                    free(mangled);
+                    //ds final=strdup(lib->name), mangled=par_mangle(&key);
+                    //ds_cat(&final, ".", mangled, NULL);
+                    //for(j=0; j<call->args.s; j++) codegen(args[j], a);
+                    //pos=par_heapIns(a, final);
+                    //par_render(a, PUSH, call->args.s);
+                    //par_render(a, CALL, pos);
+                    //free(final);
+                    //free(mangled);
                     cv_free(&types);
                     return;
                 }
             }
             UserFunc *uf=user_func_find(&a->funcs, call->name);
-            if(!uf) error("Codegen: Undeclared function: '%s'!", call->name);
+            if(!uf) error("Codegen: Undeclared function: \'%s\'!", call->name);
             return uf->ret_type;
         }
         case AST_BINARY: {

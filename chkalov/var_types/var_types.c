@@ -56,6 +56,6 @@ char par_ttc(Type t) {
         case T_UINT: return 'i';
         case T_ULONG: return 'l';
         case T_STRING: return 'S';
-        default: error("par_t2s: incorrect type");
+        default: error("par_t2c: incorrect type");
     }
 }

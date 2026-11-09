@@ -172,6 +172,7 @@ void par_free(Parser *z) {
         len=strlen(*p)+1;
         fwrite(&len, 1, sz(uint32_t), fp);
         fwrite(*p, 1, len, fp);
+        printf("POOL WRITED: \'%s\'\r\n", *p);
     }
 
     fwrite(final.d, 1, final.s, fp);

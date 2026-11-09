@@ -24,6 +24,7 @@ void cv_init(cv *v, size_t c, size_t s) {
     v->c=c;
     v->s=0;
     v->es=s;
+    printf("CV_INIT: c=%lx, es=%lx\r\n", c, s);
 }
 
 void cv_resize(cv *v, size_t s) {
