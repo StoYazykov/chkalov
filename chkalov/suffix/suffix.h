@@ -3,9 +3,7 @@
 
 typedef enum {
     SUFFIX_NONE=0x00,
-    SUFFIX_UNSIGNED=0x01,
-    SUFFIX_LONG=0x02,
-    SUFFIX_UNSIGNED_LONG=0x03
+    SUFFIX_LONG=0x01
 } Suffix;
 
 #endif

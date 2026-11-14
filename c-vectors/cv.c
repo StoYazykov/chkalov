@@ -24,7 +24,7 @@ void cv_init(cv *v, size_t c, size_t s) {
     v->c=c;
     v->s=0;
     v->es=s;
-    printf("CV_INIT: c=%lx, es=%lx\r\n", c, s);
+    //printf("CV_INIT: c=%lx, es=%lx\r\n", c, s);
 }
 
 void cv_resize(cv *v, size_t s) {
@@ -72,7 +72,7 @@ void *cv_eptr(cv *v, size_t i) {
 }
 
 bool cv_equ(cv *a, cv *b) {
-    printf("cv_equ: a.s=%zu b.s=%zu a.es=%zu b.es=%zu\n", a->s, b->s, a->es, b->es);
+    //printf("cv_equ: a.s=%zu b.s=%zu a.es=%zu b.es=%zu\n", a->s, b->s, a->es, b->es);
     return (a->s==b->s&&a->es==b->es&&!memcmp(a->d, b->d, a->s*a->es));
 }
 

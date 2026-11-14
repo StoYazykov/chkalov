@@ -55,8 +55,8 @@ void codegen(AstNode *node, Parser *a) {
                     ds_cat(&final, ".", mangled, NULL);
                     for(j=0; j<call->args.s; j++) codegen(args[j], a);
                     pos=par_heapIns(a, final);
-                    par_render(a, PUSH, call->args.s);
-                    par_render(a, CALL, pos);
+                    par_render(a, OP_IPUSH, call->args.s);
+                    par_render(a, OP_CALL, pos);
                     free(final);
                     free(mangled);
                     cv_free(&types);
@@ -68,9 +68,9 @@ void codegen(AstNode *node, Parser *a) {
             size_t j;
             for(j=0; j<call->args.s; j++) {
                 codegen(args[j], a);
-                par_render(a, ARG, 0);
+                par_render(a, OP_ARG, 0);
             }
-            par_render(a, INVOKE, 0);
+            par_render(a, OP_INVOKE, 0);
             InvokePatch pt;
             pt.pos=a->code.s-1;
             pt.name=strdup(call->name);
@@ -78,47 +78,42 @@ void codegen(AstNode *node, Parser *a) {
             return;
         }
         case AST_EXPR_LITERAL: {
-            long long j;
             AstExprLiteral *lit=(AstExprLiteral *)node;
-            switch(lit->lit_type) {
-                case NUMBER: {
-                    j=atoll(lit->value);
-                    par_render(a, PUSH, j);
-                    if(a->debug) puts("push long");
-                    break;
+            if(lit->lit_type==NUMBER) {
+                switch(lit->suffix) {
+                    case SUFFIX_NONE: puts("type_expr: Suffix None"); par_render(a, OP_IPUSH, atol(lit->value)); break;
+                    case SUFFIX_LONG: puts("type_expr: Suffix Long"); par_render(a, OP_LPUSH, atol(lit->value)); break;
+                    default: error("TYPE_EXPR SUFFIX ERROR"); break;
                 }
-                case STRING: {
-                    j=par_heapIns(a, lit->value);
-                    par_render(a, S_PUSH, j);
-                    if(a->debug) puts("push string");
-                    break;
-                }
+            } else {
+                size_t offset=par_heapIns(a, lit->value);
+                par_render(a, OP_APUSH, offset);
             }
-            break;
+            return;
         }
         case AST_BINARY: {
             AstBinary *bin=(AstBinary *)node;
             codegen(bin->left, a);
             codegen(bin->right, a);
             switch(bin->op) {
-                case PLUS: par_render(a, ADD, 0); break;
-                case MINUS: par_render(a, SUB, 0); break;
-                case STAR: par_render(a, MUL, 0); break;
-                case SLASH: par_render(a, DIV, 0); break;
-                case EQ: par_render(a, CMP_EQ, 0); break;
-                case NEQ: par_render(a, CMP_NEQ, 0); break;
-                case LT: par_render(a, CMP_LT, 0); break;
-                case BT: par_render(a, CMP_BT, 0); break;
-                case LE: par_render(a, CMP_LE, 0); break;
-                case BE: par_render(a, CMP_BE, 0); break;
+                case PLUS: par_render(a, OP_IADD, 0); break;
+                case MINUS: par_render(a, OP_ISUB, 0); break;
+                case STAR: par_render(a, OP_IMUL, 0); break;
+                case SLASH: par_render(a, OP_IDIV, 0); break;
+                case EQ: par_render(a, OP_IEQ, 0); break;
+                case NEQ: par_render(a, OP_INEQ, 0); break;
+                case LT: par_render(a, OP_ILT, 0); break;
+                case BT: par_render(a, OP_IBT, 0); break;
+                case LE: par_render(a, OP_ILE, 0); break;
+                case BE: par_render(a, OP_IBE, 0); break;
                 default: error("Unknown binary operator: %d", bin->op);
             }
             break;
         }
         case AST_STMT_VAR_DECL: {
             AstStmtVarDecl *svd=(AstStmtVarDecl *)node;
-            par_render(a, PUSH, 0);
-            par_render(a, STORE, svd->id-a->current_base);
+            par_render(a, OP_IPUSH, 0);
+            par_render(a, OP_ISTORE, svd->id-a->current_base);
             break;
         }
         case AST_EXPR_COMMA: {
@@ -130,16 +125,16 @@ void codegen(AstNode *node, Parser *a) {
         case AST_EXPR_VARIABLE: {
             AstExprVariable *var_expr=(AstExprVariable *)node;
             printf("LOAD %s id=%zu base=%zu v=%zu\n", var_expr->name, var_expr->id, a->current_base, var_expr->id-a->current_base);
-            par_render(a, LOAD, var_expr->id-a->current_base);
+            par_render(a, OP_ILOAD, var_expr->id-a->current_base);
             break;
         }
         case AST_STMT_ASSIGN: {
             AstStmtAssign *ass=(AstStmtAssign *)node;
             Variable *var;
             codegen(ass->value, a);
-            par_render(a, DUP, 0);
+            par_render(a, OP_DUP, 0);
             var=scopes_getVar(&a->scopes, ass->name);
-            par_render(a, STORE, ass->id-a->current_base);
+            par_render(a, OP_ISTORE, ass->id-a->current_base);
             break;
         }
         case AST_STMT_IF: {
@@ -148,7 +143,7 @@ void codegen(AstNode *node, Parser *a) {
             Type e;
             codegen(ifi->cond, a);
             cs=a->code.s;
-            par_render(a, JMP_IFN, 0);
+            par_render(a, OP_JMP_IFN, 0);
             codegen(ifi->body, a);
             tar=a->code.s;
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
@@ -160,11 +155,11 @@ void codegen(AstNode *node, Parser *a) {
             Type e;
             codegen(whi->cond, a);
             cs=a->code.s;
-            par_render(a, JMP_IFN, 0);
+            par_render(a, OP_JMP_IFN, 0);
             printf("WHILE: before body: s=%zu\n", a->code.s);
             codegen(whi->body, a);
             printf("WHILE: after body: s=%zu\n", a->code.s);
-            par_render(a, JUMP, ls);
+            par_render(a, OP_JUMP, ls);
             tar=a->code.s;
             printf("WHILE: after jump: s=%zu, tar=%zu\n", a->code.s, tar);
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
@@ -201,15 +196,15 @@ void codegen(AstNode *node, Parser *a) {
             size_t old_base=a->current_base;
             a->current_base=fun->base_id;
             codegen(fun->body, a);
-            par_render(a, PUSH, 0);
-            par_render(a, RET, 0);
+            par_render(a, OP_IPUSH, 0);
+            par_render(a, OP_RET, 0);
             a->current_base=old_base;
             break;
         }
         case AST_STMT_RET: {
             AstStmtRet *ret=(AstStmtRet *)node;
             codegen(ret->value, a);
-            par_render(a, RET, 0);
+            par_render(a, OP_RET, 0);
             break;
         }
     }
@@ -222,9 +217,7 @@ Type type_expr(AstNode *node, Parser *a) {
             if(lit->lit_type==NUMBER) {
                 switch(lit->suffix) {
                     case SUFFIX_NONE: puts("type_expr: Suffix None"); return T_INT;
-                    case SUFFIX_UNSIGNED: puts("type_expr: Suffix Unsigned"); return T_UINT;
                     case SUFFIX_LONG: puts("type_expr: Suffix Long"); return T_LONG;
-                    case SUFFIX_UNSIGNED_LONG: puts("type_expr: Suffix Unsigned Long"); return T_ULONG;
                     default: error("TYPE_EXPR SUFFIX ERROR");
                 }
             } else return T_STRING;

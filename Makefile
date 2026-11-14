@@ -15,7 +15,6 @@ CHKALOV_DIR = /root/c
 STDCON_DIR = $(CHKALOV_DIR)/stdcon
 CHKALOV_SRC = $(CHKALOV_DIR)/chkalov
 VM_DIR = $(CHKALOV_DIR)/chkalovm
-DIS_DIR = $(CHKALOV_DIR)/chkalovdis
 #ITT_DIR = $(CHKALOV_DIR)/chkalovitt
 
 COMPILER_SRC = $(CHKALOV_SRC)/main.c \
@@ -39,14 +38,10 @@ VM_SRC = $(VM_DIR)/main.c \
 $(CHKALOV_DIR)/dynamic-strings/ds.c \
 $(CHKALOV_DIR)/c-vectors/cv.c \
 $(CHKALOV_DIR)/chkalov.c
-DIS_SRC = $(DIS_DIR)/main.c \
-$(CHKALOV_DIR)/chkalov.c \
-$(CHKALOV_DIR)/c-vectors/cv.c
 
 CHKC = $(CHKALOV_DIR)/chkc$(EXT)
 CHKVM = $(CHKALOV_DIR)/chkvm$(EXT)
 LIBSTDCON = $(STDCON_DIR)/libstdcon.so
-DIS = $(CHKALOV_DIR)/chkdis$(EXT)
 
 COMPILER_OBJ = $(COMPILER_SRC:.c=.o)
 VM_OBJ = $(VM_SRC:.c=.o)
@@ -54,7 +49,7 @@ VM_OBJ = $(VM_SRC:.c=.o)
 DEMO_SRC = $(CHKALOV_DIR)/demo.chk
 DEMO_CVM = $(CHKALOV_DIR)/demo.cvm
 
-all: $(CHKC) $(CHKVM) $(LIBSTDCON) $(DIS)
+all: $(CHKC) $(CHKVM) $(LIBSTDCON)
 	@echo "=============================="
 	@echo "         Компиляция...        "
 	@echo "=============================="
@@ -79,8 +74,6 @@ $(CHKVM): $(VM_OBJ)
 
 $(LIBSTDCON): $(STDCON_SRC)
 	$(CC) $(CFLAGS) -shared -fPIC -o $@ $^
-$(DIS): $(DIS_SRC)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 #$(ITT): $(ITT_SRC)
 #	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -93,7 +86,7 @@ clean:
 	rm -f $(COMPILER_OBJ) $(VM_OBJ)
 	rm -f $(DEMO_CVM)
 
-build: $(CHKC) $(CHKVM) $(LIBSTDCON) $(DIS) #$(ITT)
+build: $(CHKC) $(CHKVM) $(LIBSTDCON) #$(ITT)
 
 run: build
 	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) && $(CHKVM) $(DEMO_CVM)

@@ -94,6 +94,7 @@ size_t par_pool_add(Parser *a, char *str) {
 
 void par_render(Parser *a, uint8_t op, int64_t value) {
     Vm vm;
+    printf("DEBUG: par_render op=0x%02x value=%lld\n", op, (long long)value);
     vm.opcode=op, vm.value=value;
     cv_push(&a->code, &vm);
 }
@@ -142,11 +143,40 @@ void par_free(Parser *z) {
     Header hdr;
     hdr.magic=0x05020200;
 
+    int operand_sizes_base[]={
+        1, // CPUSH
+        2, // SPUSH
+        4, // IPUSH
+        8, // LPUSH
+        8, // APUSH
+        0, // POP
+        0, // DUP
+        0, // SWAP
+        8, // JUMP
+        8, // JMP_IF
+        8, // JMP_IFN
+        8, // CALL
+        0, // RET
+        0, // ARG
+        8, // INVOKE
+        8, // INVOKE_EXT
+        8, // ALLOC
+        8  // FREE
+    };
+
     for(i=0; i<z->code.s; i++) {
         Vm *vm=cv_eptr(&z->code, i);
         cv_push(&final, &vm->opcode);
-        size=selsz(vm->value);
-        cv_push(&final, &size);
+        uint8_t op=vm->opcode;
+        if (op>=OP_CLOAD&&op<=OP_ASTORE) {
+            size=4;
+        } else if (op>=OP_CADD&&op<=OP_ANEG) {
+            size=0;
+        } else if (op==OP_CAST) {
+            size=1;
+        } else {
+            size=operand_sizes_base[op];
+        }
         for(j=0; j<size; j++) cv_push(&final, ((char *)&vm->value)+j);
     }
 
