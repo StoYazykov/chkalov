@@ -4,5 +4,5 @@ native stdcon {
 }
 
 fun main {
-	println(52)
+	println("Hello, World!" + 5)
 }

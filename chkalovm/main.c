@@ -402,7 +402,7 @@ int main(int argc, char **argv) {
             case OP_CMOD: {
                 cv_pop(&stack, &h);
                 cv_pop(&stack, &g);
-                if(h==0) error("CMOD: division by zero");
+                if(!h) error("CMOD: division by zero");
                 push((int64_t)(int8_t)(g%h));
                 break;
             }
@@ -434,7 +434,7 @@ int main(int argc, char **argv) {
             case OP_SMOD: {
                 cv_pop(&stack, &h);
                 cv_pop(&stack, &g);
-                if(h==0) error("SMOD: division by zero");
+                if(!h) error("SMOD: division by zero");
                 push((int64_t)(int16_t)(g%h));
                 break;
             }
@@ -466,7 +466,7 @@ int main(int argc, char **argv) {
             case OP_IMOD: {
                 cv_pop(&stack, &h);
                 cv_pop(&stack, &g);
-                if(h==0) error("IMOD: division by zero");
+                if(!h) error("IMOD: division by zero");
                 push((int64_t)(int32_t)(g%h));
                 break;
             }
@@ -498,7 +498,7 @@ int main(int argc, char **argv) {
             case OP_LMOD: {
                 cv_pop(&stack, &h);
                 cv_pop(&stack, &g);
-                if(h==0) error("LMOD: division by zero");
+                if(!h) error("LMOD: division by zero");
                 push(g%h);
                 break;
             }
