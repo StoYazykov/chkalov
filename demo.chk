@@ -4,5 +4,10 @@ native stdcon {
 }
 
 fun main {
-	println("Hello, World!" + 5)
+	println("Hello, World!")
+	println(sum(5, 2) * 5)
+}
+
+fun sum(a: Int, b: Int): Int {
+	return a + b
 }

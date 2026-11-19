@@ -5,10 +5,13 @@
 
 AstNode *par_par_primary(Parser *a);
 AstNode *par_par_term(Parser *a);
+AstNode *par_par_add(Parser *a);
+AstNode *par_par_cmp(Parser *a);
 AstNode *par_par_expr(Parser *a);
-AstNode *par_par_comma(Parser *a, AstNode *l);
-AstNode *par_par_comp(Parser *a);
+AstNode *par_par_stmt(Parser *a);
 
-//void pa
+AstNode *par_par_comma(Parser *a, AstNode *l);
+AstStmtBlock *par_parBlock(Parser *a);
+void par_split_commas(AstNode *n, cv *q);
 
 #endif

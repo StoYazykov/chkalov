@@ -29,10 +29,7 @@ void lexer(void *b, ds l) {
         t.suffix=SUFFIX_NONE;
         while(pos<strlen(l)&&isspace(l[pos])) pos++;
 
-        if(pos>=strlen(l)) {
-            Token abcv={EOF, strdup("")};
-            cv_push(&a->file, &abcv);
-        }
+        if(pos>=strlen(l)) break;
         IFCS(l+pos, "native", 6) {
             pos+=6;
             t=(Token){NATIVE, strdup("native")};

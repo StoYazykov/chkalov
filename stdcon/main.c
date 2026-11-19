@@ -33,10 +33,3 @@ Int println_L(size_t argc, int64_t *argp, ChkEnv *env) {
     printf("%ld\r\n", (long)argp[0]);
     return 0;
 }
-
-Int readln_s(size_t argc, int64_t *argp, ChkEnv *env) {
-    int num;
-    printf(argp[0]+(*env->_heap));
-    scanf("%d", &num);
-    return num;
-}

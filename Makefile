@@ -2,19 +2,11 @@ CC = gcc
 CFLAGS = -std=c99 -w -O2
 LDFLAGS = -ldl
 
-ifeq ($(TARGET),win)
-EXT = .exe
-LIBSTDCON = $(STDCON_DIR)/stdcon.dll
-CFLAGS=$(CFLAGS) -fno-use-linker-plugin
-else
-EXT =
-LIBSTDCON = $(STDCON_DIR)/libstdcon.so
-endif
-
 CHKALOV_DIR = /root/c
 STDCON_DIR = $(CHKALOV_DIR)/stdcon
 CHKALOV_SRC = $(CHKALOV_DIR)/chkalov
 VM_DIR = $(CHKALOV_DIR)/chkalovm
+LIB_DIR = $(CHKALOV_DIR)/lib
 #ITT_DIR = $(CHKALOV_DIR)/chkalovitt
 
 COMPILER_SRC = $(CHKALOV_SRC)/main.c \
@@ -41,7 +33,7 @@ $(CHKALOV_DIR)/chkalov.c
 
 CHKC = $(CHKALOV_DIR)/chkc$(EXT)
 CHKVM = $(CHKALOV_DIR)/chkvm$(EXT)
-LIBSTDCON = $(STDCON_DIR)/libstdcon.so
+LIBSTDCON = $(LIB_DIR)/stdcon/libstdcon.so
 
 COMPILER_OBJ = $(COMPILER_SRC:.c=.o)
 VM_OBJ = $(VM_SRC:.c=.o)
@@ -62,10 +54,6 @@ debug: clean all
 	@echo "=============================="
 	@export CHKALOV=$(CHKALOV_DIR) && $(CHKC) $(DEMO_SRC) $(DEMO_CVM) -d && echo "" && echo "-- VM -- " && echo "" && $(CHKVM) $(DEMO_CVM) -d
 
-win:
-	make TARGET=win rebuild
-
-
 $(CHKC): $(COMPILER_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
@@ -73,6 +61,7 @@ $(CHKVM): $(VM_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(LIBSTDCON): $(STDCON_SRC)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -shared -fPIC -o $@ $^
 
 #$(ITT): $(ITT_SRC)

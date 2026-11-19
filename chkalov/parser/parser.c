@@ -24,10 +24,11 @@
 static Scope nullscope;
 
 void par_parFile(Parser *a) {
+    printf("FILE: file.s=%zu\n", a->file.s);
     AstNode *an;
     a->p=0;
     while(a->p<a->file.s) {
-        an=par_par_expr(a);
+        an=par_par_stmt(a);
         if(an) ast_add((AstNode *)a->root, an);
     }
 }
@@ -81,6 +82,7 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
 
     while(!feof(a)) {
         ds_gl(&x, a);
+        if(!x||!*x) break;
         lexer(n, x);
     }
     fclose(a);
@@ -231,7 +233,7 @@ AstStmtBlock *par_parBlock(Parser *a) {
     AstNode *an;
     expect(a, LPAREN, "{");
     while(a->p<a->file.s&&par_this(a)->type!=RPAREN) {
-        an=par_par_expr(a);
+        an=par_par_stmt(a);
         if(an) ast_add(block, an);
     }
     if(par_this(a)->type==RPAREN) a->p++;

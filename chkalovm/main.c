@@ -25,6 +25,17 @@ typedef struct {
     Vm *ret_addr;
 } Frame;
 
+static uint64_t hex(const char *s, const char **end) {
+    uint64_t v=0;
+    while (isxdigit((unsigned char)*s)) {
+        int d=(*s<='9')?*s-'0':(tolower(*s)-'a'+10);
+        v=v*16+d;
+        s++;
+    }
+    *end=s;
+    return v;
+}
+
 void *env_alloc(ChkEnv *e, size_t s) {
     //printf("Env_alloc! \r\n");
     if(s>=*e->_hs) {
@@ -35,7 +46,7 @@ void *env_alloc(ChkEnv *e, size_t s) {
     return ret;
 }
 
-cv vm, raw, stack, vars, frames, args;
+cv vm, raw, stack, vars, frames, args, pool;
 
 void push(int64_t p) {
     cv_push(&stack, &p);
@@ -77,6 +88,7 @@ int main(int argc, char **argv) {
     cv_init(&vars, 8, sz(int64_t));
     cv_init(&frames, 4, sz(Frame));
     cv_init(&args, 4, sz(int64_t));
+    cv_init(&pool, 4, sz(PoolEntry));
 
     hp=hdr.heap_size;
     heap=malloc(hdr.heap_size);
@@ -90,13 +102,46 @@ int main(int argc, char **argv) {
         fread(raw_pool[i], 1, len, a);
     }
 
+    for(i=0; i<hdr.pool_size; i++) {
+        char *p=raw_pool[i];
+        PoolEntry entry;
+        entry.tag=*p++;
+        entry.operand=0;
+        entry.name=NULL;
+        switch(entry.tag) {
+            case 'N':
+            case 'L':
+            case 'S':
+                entry.name=strdup(p);
+                break;
+
+            case 'X':
+            case 'F':
+            case 'E':
+                if(*p=='(') {
+                    p++;
+                    while(isxdigit((unsigned char)*p)) {
+                        int d=(*p<='9')?*p-'0':(tolower(*p)-'a'+10);
+                        entry.operand=entry.operand*16+d;
+                        p++;
+                    }
+                    if(*p==')') p++;
+                }
+                if(*p) entry.name=strdup(p);
+                break;
+        }
+        printf("POOL: TAG \'%c\' OP \'%zx\' NAME \'%s\'\n", entry.tag, entry.operand, entry.name);
+        cv_push(&pool, &entry);
+        free(raw_pool[i]);
+    }
+    free(raw_pool);
+
     cv_resize(&raw, hdr.code_size);
     fread(raw.d, 1, hdr.code_size, a);
 
     c=raw.d;
 
     i=0;
-
 
     int operand_sizes_base[]={
         1, // CPUSH
@@ -143,6 +188,9 @@ int main(int argc, char **argv) {
     end=((Vm *)vm.d)+vm.s;
     cv_free(&raw);
     fclose(a);
+
+
+    puts("VM Main Loop starting...");
 
     while(P<end) {
         o=P->opcode;
@@ -201,46 +249,34 @@ int main(int argc, char **argv) {
                 continue;
             }
             case OP_CALL: {
-               // printf("VM: DEBUG OP_CALL");
-                ds m, l, r;
-                r=heap+(uint32_t)v;
-                ds d=strchr(r, '.');
-                size_t ml=d-r;
-                m=malloc(ml+1);
-                strncpy(m, r, ml);
-                m[ml]=0;
-                l=strdup(d+1);
-                ds s=strdup(getenv("CHKALOV"));
-                ds_cat(&s, "/", m, NULL);
-#ifdef _WIN32
-                ds_cat(&s, m, NULL);
-#else
-                ds_cat(&s, "/lib", m, NULL);
-#endif
-#ifdef _WIN32
-                ds_cat(&s, ".dll", NULL);
-#else
-                ds_cat(&s, ".so", NULL);
-#endif
-                void *h=dlopen(s, RTLD_LAZY);
+                size_t x_id=(uint32_t)v;
+                PoolEntry *x=cv_eptr(&pool, x_id);
+                size_t n_id=x->operand;
+                PoolEntry *n=cv_eptr(&pool, n_id);
+
+                ds so_path=strdup(getenv("CHKALOV"));
+                ds_cat(&so_path, "/lib/", n->name, "/lib", n->name, ".so", NULL);
+                void *h=dlopen(so_path, RTLD_LAZY);
+                free(so_path);
+                if (!h) error("Cannot load: %s", dlerror());
+
                 typedef Int (*CFUNC)(size_t argc, int64_t *argp, ChkEnv *env);
-                CFUNC func=(CFUNC)dlsym(h, l);
-                if(!func) {
-                    dlclose(h);
-                    error("VM: undefined function");
-                }
+                CFUNC func=(CFUNC)dlsym(h, x->name);
+                if (!func) { dlclose(h); error("Undefined: %s", x->name); }
+
                 cv_pop(&stack, &f);
                 int64_t args[16];
-                for(size_t k=0; k<f; k++) {
-                    cv_pop(&stack, &args[k]);
-                }
-                ChkEnv env;
-                env._heap=&heap;
-                env._hp=&hp;
-                env._hs=&hs;
+                for (size_t k=0; k<f; k++) cv_pop(&stack, &args[k]);
+
+                ChkEnv env={0};
                 env.alloc=env_alloc;
+                env._heap=&heap;
+                env._hs=&hs;
+                env._hp=&hp;
+
                 g=func(f, args, &env);
                 cv_push(&stack, &g);
+
                 dlclose(h);
                 break;
             }

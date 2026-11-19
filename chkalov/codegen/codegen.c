@@ -51,14 +51,27 @@ void codegen(AstNode *node, Parser *a) {
                 key.args=types;
 
                 if(func_find(lib, key)) {
-                    ds final=strdup(lib->name), mangled=par_mangle(&key);
-                    ds_cat(&final, ".", mangled, NULL);
-                    for(j=0; j<call->args.s; j++) codegen(args[j], a);
-                    pos=par_heapIns(a, final);
-                    par_render(a, OP_IPUSH, call->args.s);
-                    par_render(a, OP_CALL, pos);
-                    free(final);
+                    ds nbuf=strdup("N");
+                    ds_cat(&nbuf, lib->name, NULL);
+                    size_t n_id=par_pool_add(a, nbuf);
+                    free(nbuf);
+
+                    char hex[32];
+                    snprintf(hex, sizeof(hex), "%zx", n_id);
+
+                    char *mangled=par_mangle(&key);
+                    ds xbuf=strdup("X(");
+                    ds_cat(&xbuf, hex, ")", mangled, NULL);
+                    size_t x_id=par_pool_add(a, xbuf);
+                    free(xbuf);
                     free(mangled);
+
+                    for(size_t j=0; j<call->args.s; j++) {
+                        codegen(args[j], a);
+                    }
+                    par_render(a, OP_IPUSH, call->args.s);
+                    par_render(a, OP_CALL, x_id);
+
                     cv_free(&types);
                     return;
                 }
@@ -185,13 +198,13 @@ void codegen(AstNode *node, Parser *a) {
                 a->entry_point=addr;
             }
             char buf[256];
-            sprintf(buf, "E(%llu)%s(", addr, fun->name);
+            sprintf(buf, "E(%zx)%s(", addr, fun->name);
             Type arg_type;
             for(i=0; i<fun->args.s; i++) {
                 arg_type=*(Type *)cv_eptr(&fun->args, i);
                 sprintf(buf+strlen(buf), "%c", par_ttc(arg_type));
             }
-            sprintf(buf+strlen(buf), ");%c", par_ttc(fun->ret_type));
+            sprintf(buf+strlen(buf), ")%c", par_ttc(fun->ret_type));
             par_pool_add(a, buf);
             size_t old_base=a->current_base;
             a->current_base=fun->base_id;

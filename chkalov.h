@@ -231,6 +231,12 @@ typedef struct {
     char reserved[16];
 } Header;
 
+typedef struct {
+    char tag;
+    size_t operand;
+    char *name;
+} PoolEntry;
+
 uint8_t selsz(int64_t a);
 uint8_t selszu(uint64_t a);
 

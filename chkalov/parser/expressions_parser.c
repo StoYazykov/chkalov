@@ -2,27 +2,43 @@
 
 AstNode *par_par_primary(Parser *a) {
     Token t=*par_this(a);
-    AstNode *arg;
     if(a->debug) puts("par primary start");
-    a->p++;
     switch(t.type) {
         case NUMBER: {
+            a->p++;
             return (AstNode *)ast_create_literal(NUMBER, t.value, t.suffix);
         }
-
-        case LBRACE: {
-            AstNode *p;
-            p=par_par_comp(a);
-            expect(a, RBRACE, "')'");
-            return p;
+        case STRING: {
+            a->p++;
+            return (AstNode *)ast_create_literal(STRING, t.value, SUFFIX_NONE);
         }
         case ID: {
-            Variable *var;
-            var=scopes_getVar(&a->scopes, t.value);
+            a->p++;
+            if(par_this(a)->type==LBRACE) {
+                a->p++;
+                cv q;
+                AstNode *n;
+                cv_init(&q, 4, sizeof(AstNode *));
+                if(par_this(a)->type!=RBRACE) {
+                    do {
+                        n=par_par_expr(a);
+                        par_split_commas(n, &q);
+                    } while(par_this(a)->type==COMMA&&a->p++);
+                }
+                expect(a, RBRACE, "\')\'");
+                return (AstNode *)ast_create_call(t.value, q);
+            }
+            Variable *var=scopes_getVar(&a->scopes, t.value);
             if(!var) error("Primary: Undeclared variable \'%s\'", t.value);
             return (AstNode *)ast_create_variable(t.value, var->id, var->type);
         }
-        case STRING: return(AstNode *)ast_create_literal(STRING, t.value, SUFFIX_NONE);
+        case LBRACE: {
+            a->p++;
+            AstNode *p=par_par_expr(a);
+            expect(a, RBRACE, "\')\'");
+            return p;
+        }
+        default: error("Primary: unexpected token \'%s\'", t.value?t.value:"?");
     }
     return NULL;
 }
@@ -31,13 +47,9 @@ AstNode *par_par_term(Parser *a) {
     Token op;
     if(a->debug) puts("par term start");
     AstNode *l=par_par_primary(a);
-    if(a->debug&&a->p<a->file.s) printf("after calling primary (in term): p=%llu token='%s'\n", a->p, par_this(a)->value);
     while(a->p<a->file.s) {
         op=*par_this(a);
-        if(!((op.type==STAR)||(op.type==SLASH))) {
-            if(a->debug) printf("ne to! vmesto */ naydeno %s \r\n", op.value);
-            break;
-        }
+        if(!((op.type==STAR)||(op.type==SLASH))) break;
         a->p++;
         AstNode *r=par_par_primary(a);
         l=(AstNode *)ast_create_binary(op.type, l, r);
@@ -45,28 +57,87 @@ AstNode *par_par_term(Parser *a) {
     return l;
 }
 
+AstNode *par_par_add(Parser *a) {
+    Token op;
+    AstNode *l=par_par_term(a);
+    while(a->p<a->file.s) {
+        op=*par_this(a);
+        if(!((op.type==PLUS)||(op.type==MINUS))) break;
+        a->p++;
+        AstNode *r=par_par_term(a);
+        l=(AstNode *)ast_create_binary(op.type, l, r);
+    }
+    return l;
+}
+
+AstNode *par_par_cmp(Parser *a) {
+    AstNode *l=par_par_add(a), *r;
+    Token *op;
+    while(a->p<a->file.s) {
+        op=par_this(a);
+        switch(op->type) {
+            case EQ:
+            case NEQ:
+            case LT:
+            case BT:
+            case LE:
+            case BE:
+                break;
+            default: return l;
+        }
+        a->p++;
+        r=par_par_add(a);
+        l=(AstNode *)ast_create_binary(op->type, l, r);
+    }
+    return l;
+}
+
 AstNode *par_par_expr(Parser *a) {
-    Token op, *t=par_this(a);
-    AstNode *arg;
-    if(a->debug) puts("par expr start");
-    a->p++;
-    switch(t->type) {
+    AstNode *l=par_par_cmp(a);
+    if(a->p<a->file.s&&par_this(a)->type==ASSIGN) {
+        a->p++;
+        if(l->type!=AST_EXPR_VARIABLE) error("Assign: left not variable");
+        AstExprVariable *v=(AstExprVariable *)l;
+        AstNode *r=par_par_expr(a);
+        return ast_create_assign(v->name, r, v->id, v->type);
+    }
+    return l;
+}
+
+AstNode *par_par_comma(Parser *a, AstNode *l) {
+    while(a->p<a->file.s&&par_this(a)->type==COMMA) {
+        a->p++;
+        AstNode *r=par_par_expr(a);
+        l=(AstNode*)ast_create_comma(l, r);
+    }
+    return l;
+}
+
+AstNode *par_par_stmt(Parser *a) {
+    Token t=*par_this(a);
+    switch(t.type) {
         case NATIVE: {
-            Token *n=par_post(a);
+            Token *n;
             Func z;
             Type c;
-            printf("library \'%s\', functions: \r\n", n->value);
+            a->p++;
+            n=par_this(a);
+            a->p++;
+            if(n->type!=ID) error("Expected library name!");
+            printf("library '%s', functions:\r\n", n->value);
             lib_add(a, n->value);
-            expect(a, LPAREN, "\'{\'");
+            expect(a, LPAREN, "'{'");
             do {
-                n=par_post(a);
+                n=par_this(a);
+                a->p++;
                 if(n->type!=ID) error("Expected function name!");
                 printf("%s ( ", n->value);
                 skip(a, LBRACE);
                 cv_init(&z.args, 4, sz(Type));
                 z.name=strdup(n->value);
                 do {
-                    n=par_post(a);
+                    n=par_this(a);
+                    a->p++;
                     c=par_stt(n->value);
                     cv_push(&z.args, &c);
                     printf("%s ", n->value);
@@ -75,172 +146,104 @@ AstNode *par_par_expr(Parser *a) {
                 skip(a, RBRACE);
                 printf(")\r\n");
                 skip(a, COLON);
-                n=par_post(a);
+                n=par_this(a);
+                a->p++;
                 z.ret_type=par_stt(n->value);
                 func_add((Lib *)cv_back(&a->libs), z);
                 if(par_this(a)->type==COMMA) a->p++;
-            } while (par_this(a)->type!=RPAREN);
-            expect(a, RPAREN, "\'}\'");
+            } while(par_this(a)->type!=RPAREN);
+            expect(a, RPAREN, "'}'");
             return NULL;
         }
         case VAR: {
-            AstStmtVarDecl *svd;
-            Token *n, *w=par_post(a);
+            Token *n, *w;
             AstNode *decl, *res=NULL;
             Variable *var;
+            a->p++;
+            w=par_this(a);
+            a->p++;
             expect(a, COLON, ":");
             do {
-                n=par_post(a);
-                if(a->debug) printf("var; type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
+                n=par_this(a);
+                a->p++;
+                if(a->debug) printf("var; type='%s', name='%s'\r\n", w->value, n->value);
                 var=scopes_addVar(&a->scopes, n->value, par_stt(w->value));
                 decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value), var->id);
-                printf("var->id=%zu\n", var->id);
-                if(!res) {
-                    res=decl;
-                } else {
-                    res=(AstNode*)ast_create_comma(res, decl);
-                }
+                if(!res) res=decl;
+                else res=(AstNode*)ast_create_comma(res, decl);
             } while(par_this(a)->type==COMMA&&a->p++);
             return res;
         }
         case IF: {
             AstStmtBlock *body;
             AstNode *cond;
-            cond=par_par_comp(a);
+            a->p++;
+            cond=par_par_cmp(a);
             body=par_parBlock(a);
             return (AstNode *)ast_create_if(cond, body, NULL);
         }
         case FUN: {
-            char *name=par_post(a)->value;
+            char *name;
             cv args;
             Type ret_type, c;
             AstStmtBlock *body;
             AstStmtFun *func;
             Token *n, *w;
-
+            a->p++;
+            n=par_this(a);
+            a->p++;
+            name=n->value;
             cv_init(&args, 4, sz(Type));
             size_t base_id=a->scopes.lastVar;
             scopes_enterScope(&a->scopes);
-            printf("Function '%s' \r\n", name);
+            printf("Function '%s'\r\n", name);
             if(par_this(a)->type==LBRACE) {
                 if(par_next(a)->type!=RBRACE) {
                     do {
-                        n=par_post(a);
+                        n=par_this(a);
+                        a->p++;
                         expect(a, COLON, ":");
-                        w=par_post(a);
+                        w=par_this(a);
+                        a->p++;
                         c=par_stt(w->value);
                         cv_push(&args, &c);
-                        printf("ARGUMENT: \'%s\'\r\n", par_tts(*(Type *)cv_back(&args)));
                         scopes_addVar(&a->scopes, n->value, c);
-                        printf("type=\'%s\', name=\'%s\' \r\n", w->value, n->value);
                     } while(par_this(a)->type==COMMA&&a->p++);
                 }
                 skip(a, RBRACE);
             }
             if(par_this(a)->type==COLON) {
                 expect(a, COLON, ":");
-                n=par_post(a)->value;
-                ret_type=par_stt(n);
+                n=par_this(a);
+                a->p++;
+                ret_type=par_stt(n->value);
             } else {
-                n="Void";
                 ret_type=T_VOID;
             }
-            printf("return type: '%s' \r\n", n);
+            printf("return type: '%s'\r\n", par_tts(ret_type));
             body=par_parBlock(a);
             scopes_exitScope(&a->scopes);
             func=ast_create_fun(name, args, ret_type, body);
             func->base_id=base_id;
             cv_free(&args);
-            return func;
+            return (AstNode *)func;
         }
-
         case RETURN: {
-            AstNode *value=par_par_comp(a);
+            AstNode *value;
+            a->p++;
+            value=par_par_cmp(a);
             return (AstNode *)ast_create_ret(value);
         }
-
         case WHILE: {
             AstStmtBlock *body;
             AstNode *cond;
-            cond=par_par_comp(a);
+            a->p++;
+            cond=par_par_cmp(a);
             body=par_parBlock(a);
             return (AstNode *)ast_create_while(cond, body);
         }
-
-        case ID: {
-            Token *w=par_this(a);
-            if(w->type==LBRACE) {
-                a->p--;
-                cv q;
-                Token *m=par_post(a);
-                AstNode *n;
-                cv_init(&q, 4, sizeof(AstNode *));
-                if(a->debug) puts("lcall");
-                expect(a, LBRACE, "\'(\'");
-                if(par_this(a)->type!=RBRACE) {
-                    do {
-                        n=par_par_expr(a);
-                        par_split_commas(n, &q);
-                    } while(par_this(a)->type==COMMA&&a->p++);
-                }
-                expect(a, RBRACE, "\')\'");
-                return (AstNode *)ast_create_call(m->value, q);
-            } else {
-                Variable *var;
-                var=scopes_getVar(&a->scopes, t->value);
-                if(!var) error("Expr: Undeclared variable: %s", t->value);
-                if(w->type==ASSIGN) {
-                    a->p++;
-                    return ast_create_assign(t->value, par_par_comp(a), var->id, var->type);
-                }
-            }
+        default: {
+            return par_par_expr(a);
         }
-        default: a->p--;
     }
-    AstNode *l=par_par_term(a);
-    if(a->debug) puts("after calling term (in expr)");
-    while(a->p<a->file.s) {
-        op=*par_this(a);
-        if(a->debug) printf("par_expr: op=\'%s\' \r\n", op.value);
-        if(!((op.type==PLUS)||(op.type==MINUS))) {
-            if(a->debug) printf("ne to! vmesto +- naydeno %s \r\n", op.value);
-            break;
-        }
-        a->p++;
-        AstNode *r=par_par_term(a);
-        l=(AstNode *)ast_create_binary(op.type, l, r);
-    }
-    l=par_par_comma(a, l);
-    return l;
-}
-
-AstNode *par_par_comma(Parser *a, AstNode *l) {
-    while(a->p<a->file.s&&par_this(a)->type==COMMA) {
-        a->p++;
-        AstNode *r=par_par_comp(a);
-        l=(AstNode*)ast_create_comma(l, r);
-    }
-    return l;
-}
-
-AstNode *par_par_comp(Parser *a) {
-    AstNode *left=par_par_expr(a), *right;
-    Token *op, *peek;
-    while(a->p<a->file.s) {
-        peek=par_this(a);
-        switch(peek->type) {
-            case EQ:
-            case NEQ:
-            case LT:
-            case BT:
-            case LE:
-            case BE:
-                break;
-            default: return left;
-        }
-        op=par_post(a);
-        right=par_par_comp(a);
-        left=(AstNode *)ast_create_binary(op->type, left, right);
-    }
-    return left;
 }
