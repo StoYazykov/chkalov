@@ -29,7 +29,8 @@ STDCON_SRC = $(STDCON_DIR)/main.c
 VM_SRC = $(VM_DIR)/main.c \
 $(CHKALOV_DIR)/dynamic-strings/ds.c \
 $(CHKALOV_DIR)/c-vectors/cv.c \
-$(CHKALOV_DIR)/chkalov.c
+$(CHKALOV_DIR)/chkalov.c \
+$(VM_DIR)/vm_modules.c
 
 CHKC = $(CHKALOV_DIR)/chkc$(EXT)
 CHKVM = $(CHKALOV_DIR)/chkvm$(EXT)

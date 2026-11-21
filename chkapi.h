@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Chkalov.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifndef _CHKAPI_H
+#define _CHKAPI_H
 
 #include "chkalov.h"
 typedef struct {
@@ -24,4 +26,10 @@ typedef struct {
     size_t *_hs, *_hp;
 } ChkEnv;
 
-typedef int Int;
+typedef int8_t Char;
+typedef int16_t Short;
+typedef int32_t Int;
+typedef int64_t Long;
+typedef char *String;
+
+#endif
