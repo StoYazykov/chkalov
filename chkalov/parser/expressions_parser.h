@@ -9,6 +9,7 @@ AstNode *par_par_add(Parser *a);
 AstNode *par_par_cmp(Parser *a);
 AstNode *par_par_expr(Parser *a);
 AstNode *par_par_stmt(Parser *a);
+AstNode *par_par_unary(Parser *a);
 
 AstNode *par_par_comma(Parser *a, AstNode *l);
 AstStmtBlock *par_parBlock(Parser *a);

@@ -2,14 +2,15 @@ native stdcon {
     println(Int): Void
 }
 
+import "chkalov/core/math"
+
 fun main {
-	if 1 {
-		var Int: x
-		x = 5
-		println(x)
-	}
-	if 2 == 2 {
-		var Int: x
-		println(x)
-	}
+    	var Int: number
+    	number = -42
+    	
+    	var Int: absNumber
+    	absNumber = abs(number)
+    	
+    	println(absNumber++absNumber)
 }
+

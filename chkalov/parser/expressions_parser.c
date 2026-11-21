@@ -46,12 +46,12 @@ AstNode *par_par_primary(Parser *a) {
 AstNode *par_par_term(Parser *a) {
     Token op;
     if(a->debug) puts("par term start");
-    AstNode *l=par_par_primary(a);
+    AstNode *l=par_par_unary(a);
     while(a->p<a->file.s) {
         op=*par_this(a);
         if(!((op.type==STAR)||(op.type==SLASH))) break;
         a->p++;
-        AstNode *r=par_par_primary(a);
+        AstNode *r=par_par_unary(a);
         l=(AstNode *)ast_create_binary(op.type, l, r);
     }
     return l;
@@ -255,4 +255,18 @@ AstNode *par_par_stmt(Parser *a) {
             return par_par_expr(a);
         }
     }
+}
+
+AstNode *par_par_unary(Parser *a) {
+    if(par_this(a)->type==MINUS) {
+        a->p++;
+        AstNode *operand=par_par_unary(a);
+        AstExprLiteral *zero=ast_create_literal(NUMBER, "0", SUFFIX_NONE);
+        return (AstNode *)ast_create_binary(MINUS, (AstNode *)zero, operand);
+    }
+    if (par_this(a)->type==PLUS) {
+        a->p++;
+        return par_par_unary(a);
+    }
+    return par_par_primary(a);
 }
