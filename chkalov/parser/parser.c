@@ -228,11 +228,13 @@ AstStmtBlock *par_parBlock(Parser *a) {
     AstStmtBlock *block=ast_create_block();
     AstNode *an;
     expect(a, LPAREN, "{");
+    scopes_enterScope(&a->scopes);
     while(a->p<a->file.s&&par_this(a)->type!=RPAREN) {
         an=par_par_stmt(a);
         if(an) ast_add(block, an);
     }
     if(par_this(a)->type==RPAREN) a->p++;
+    scopes_exitScope(&a->scopes);
     return block;
 }
 

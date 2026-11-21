@@ -147,12 +147,9 @@ void codegen(AstNode *node, Parser *a) {
         }
         case AST_STMT_ASSIGN: {
             AstStmtAssign *ass=(AstStmtAssign *)node;
-            Variable *var;
             codegen(ass->value, a);
             par_render(a, OP_DUP, 0);
-            var=scopes_getVar(&a->scopes, ass->name);
-            if(!var) error("Undeclared variable %s", ass->name);
-            par_render(a, OP_ISTORE, ass->id-a->current_base);
+            par_render(a, OP_ISTORE, ass->id - a->current_base);
             break;
         }
         case AST_STMT_IF: {

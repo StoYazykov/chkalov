@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     cv scopes;
-    size_t lastVar, curScope;
+    size_t lastVar;
 } ScopeStack;
 
 void scopes_init(ScopeStack *a);

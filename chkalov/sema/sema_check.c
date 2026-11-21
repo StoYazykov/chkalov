@@ -30,29 +30,14 @@ void sem_analyze(AstNode *node, Parser *a) {
         }
         case AST_STMT_ASSIGN: {
             AstStmtAssign *assign=(AstStmtAssign *)node;
-            Variable *var;
             Type varType;
-            scopes_enterScope(&a->scopes);
             sem_analyze(assign->value, a);
-            printf("assign->name = \'%s\', calling scopes_getVar...\n", assign->name);
-            var=scopes_getVar(&a->scopes, assign->name);
-            if(!var) {
-                Scope *scope;
-                Variable *var2;
-                for(scope=(Scope *)a->scopes.scopes.d; scope<((Scope *)a->scopes.scopes.d)+a->scopes.scopes.s; scope++) {
-                    for(var2=(Variable *)scope->vars.d; var2<((Variable *)scope->vars.d)+scope->vars.s; var2++) {
-                        printf("VAR: \'%s\': %s", var2->name, par_tts(var2->type));
-                    }
-                }
-                error("Undeclared variable %s in assign", assign->name);
-            }
             varType=type_expr(assign->value, a);
             if(varType==T_INCORRECT) error("Internal: incorrect type");
             if(varType==T_VOID) error("Void in assignment");
-            if(!sem_types_compatible(varType, var->type))
-                error("Cannot assign %s to %s", par_tts(varType), par_tts(var->type));
+            if(!sem_types_compatible(varType, assign->type))
+                error("Cannot assign %s to %s", par_tts(varType), par_tts(assign->type));
             break;
-            scopes_exitScope(&a->scopes);
         }
         case AST_EXPR_COMMA: {
             AstExprComma *comma=(AstExprComma *)node;

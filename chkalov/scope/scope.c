@@ -21,7 +21,7 @@
 
 void scopes_init(ScopeStack *a) {
     cv_init(&a->scopes, 4, sz(Scope));
-    a->lastVar=a->curScope=0;
+    a->lastVar=0;
 }
 
 Variable *scopes_addVar(ScopeStack *a, ds varName, Type varType) {
@@ -30,22 +30,17 @@ Variable *scopes_addVar(ScopeStack *a, ds varName, Type varType) {
     var.type=varType;
     var.name=strdup(varName);
     var.id=a->lastVar++;
-    ptr=&((Scope *)cv_eptr(&a->scopes, a->curScope))->vars;
+    ptr=&((Scope *)cv_eptr(&a->scopes, a->scopes.s-1))->vars;
     cv_push(ptr, &var);
     return ((Variable *)cv_back(ptr));
 }
 
 Variable *scopes_getVar(ScopeStack *a, ds varName) {
-    Scope *scope;
-    Variable *var;
-    printf("scopes_getVar start, \'%s\', a->scopes.s = %zu\n", varName, a->scopes.s);
-    for(scope=(((Scope *)a->scopes.d)+a->curScope); scope>=(Scope *)a->scopes.d; scope--) {
-        for(var=(((Variable *)scope->vars.d)+scope->vars.s-1); var>=(Variable *)scope->vars.d; var--) {
-            printf("scopes_getVar: [%zu] \'%s\' vs. \'%s\'\n", (char *)var-(intptr_t)scope->vars.d, var->name, varName);
-            if(!strcmp(var->name, varName)) {
-                printf("scopes_getVar: finded\n");
-                return var;
-            }
+    for (size_t i=a->scopes.s; i-->0;) {
+        Scope *scope=(Scope *)cv_eptr(&a->scopes, i);
+        for (size_t j=scope->vars.s; j-->0;) {
+            Variable *var=(Variable *)cv_eptr(&scope->vars, j);
+            if (!strcmp(var->name, varName)) return var;
         }
     }
     return NULL;
@@ -53,14 +48,20 @@ Variable *scopes_getVar(ScopeStack *a, ds varName) {
 
 void scopes_enterScope(ScopeStack *a) {
     Scope scope;
-    printf("enterScope: curScope=%zu, scopes.s=%zu\n", a->curScope, a->scopes.s);
+    printf("enterScope: scopes.s-1=%zu, scopes.s=%zu\n", a->scopes.s-1, a->scopes.s);
     cv_init(&scope.vars, 4, sz(Variable));
-    cv_push(&a->scopes, &scope);
-    a->curScope=a->scopes.s-1;
+    cv_push(&a->scopes, &scope);;
 }
 
 void scopes_exitScope(ScopeStack *a) {
-    a->curScope--;
+    if (a->scopes.s-1==0) return;
+    Scope *scope=(Scope *)cv_eptr(&a->scopes, a->scopes.s-1);
+    for (size_t i=0; i<scope->vars.s; i++) {
+        Variable *var=(Variable *)cv_eptr(&scope->vars, i);
+        free(var->name);
+    }
+    cv_free(&scope->vars);
+    a->scopes.s--;
 }
 
 void scopes_free(ScopeStack *a) {
