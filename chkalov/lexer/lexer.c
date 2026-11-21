@@ -36,6 +36,12 @@ void lexer(void *b, ds l) {
             cv_push(&a->file, &t);
             continue;
         }
+        IFCS(l+pos, "import", 6) {
+            pos+=6;
+            t=(Token){IMPORT, strdup("import")};
+            cv_push(&a->file, &t);
+            continue;
+        }
         IFCS(l+pos, "return", 6) {
             pos+=6;
             t=(Token){RETURN, strdup("return")};

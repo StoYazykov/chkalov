@@ -114,10 +114,6 @@ ds par_mangle(Func *f) {
             case T_INT:     arg="I"; break;
             case T_LONG:    arg="L"; break;
             case T_STRING:  arg="S"; break;
-            case T_UCHAR:   arg="c"; break;
-            case T_USHORT:  arg="x"; break;
-            case T_UINT:    arg="i"; break;
-            case T_ULONG:   arg="l"; break;
             default:        arg=malloc(32);sprintf(arg, "INCORRECT: type %d\r\n", type);
         }
         ds_cat(&ret, arg, NULL);
@@ -249,4 +245,83 @@ void par_split_commas(AstNode *n, cv *q) {
     } else {
         cv_push(q, &n);
     }
+}
+
+void par_import_module(Parser *a, char *name) {
+    char *base=getenv("CHKALOV");
+    ds path=strdup(base);
+    ds_cat(&path, "/lib/", name, ".cvm", NULL);
+
+    FILE *f=fopen(path, "rb");
+    if(!f) error("Cannot import: %s", path);
+
+    Header hdr;
+    fread(&hdr, 1, sz(Header), f);
+    if(hdr.magic!=0x05020200) error("Bad magic: %s", path);
+
+    fseek(f, hdr.heap_size, SEEK_CUR);
+
+    PoolEntry *pool=calloc(hdr.pool_size, sizeof(PoolEntry));
+    for(size_t i=0; i<hdr.pool_size; i++) {
+        uint32_t len;
+        fread(&len, 1, sz(uint32_t), f);
+        char *buf=malloc(len);
+        fread(buf, 1, len, f);
+        char *p=buf;
+        PoolEntry entry={0};
+        entry.tag=*p++;
+        switch(entry.tag) {
+            case 'N': case 'L': case 'S':
+                entry.name=strdup(p);
+                break;
+            case 'X': case 'F': case 'E':
+                if(*p=='(') {
+                    p++;
+                    while(isxdigit((unsigned char)*p)) {
+                        int d=(*p<='9')?*p-'0':(tolower(*p)-'a'+10);
+                        entry.operand=entry.operand*16+d;
+                        p++;
+                    }
+                    if(*p==')') p++;
+                }
+                if(*p) entry.name=strdup(p);
+                break;
+        }
+        pool[i]=entry;
+        free(buf);
+    }
+    fclose(f);
+
+    ds lbuf=strdup("L");
+    ds_cat(&lbuf, name, NULL);
+    size_t l_id=par_pool_add(a, lbuf);
+    free(lbuf);
+
+    for(size_t i=0; i<hdr.pool_size; i++) {
+        if(pool[i].tag!='E') continue;
+
+        char hex[32];
+        snprintf(hex, sizeof(hex), "%zx", l_id);
+        ds fbuf=strdup("F(");
+        ds_cat(&fbuf, hex, ")", pool[i].name, NULL);
+        size_t f_id=par_pool_add(a, fbuf);
+        free(fbuf);
+
+        char *sig=strdup(pool[i].name);
+        char *open=strchr(sig, '(');
+        char *close=open?strchr(open, ')'):NULL;
+        if(!open||!close||!close[1]) { free(sig); continue; }
+
+        size_t name_len=open-sig;
+        char *name_only=malloc(name_len+1);
+        memcpy(name_only, sig, name_len);
+        name_only[name_len]=0;
+
+        Type ret=par_ctt(close[1]);
+        free(sig);
+        user_func_add_extern(&a->funcs, name_only, f_id, ret);
+        free(name_only);
+    }
+    free(pool);
+    free(path);
 }

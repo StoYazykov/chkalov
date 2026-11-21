@@ -83,11 +83,15 @@ void codegen(AstNode *node, Parser *a) {
                 codegen(args[j], a);
                 par_render(a, OP_ARG, 0);
             }
-            par_render(a, OP_INVOKE, 0);
-            InvokePatch pt;
-            pt.pos=a->code.s-1;
-            pt.name=strdup(call->name);
-            cv_push(&a->invoke_patches, &pt);
+            if(uf->is_extern) {
+                par_render(a, OP_INVOKE_EXT, uf->F_id);
+            } else {
+                par_render(a, OP_INVOKE, 0);
+                InvokePatch pt;
+                pt.pos=a->code.s-1;
+                pt.name=strdup(call->name);
+                cv_push(&a->invoke_patches, &pt);
+            }
             return;
         }
         case AST_EXPR_LITERAL: {
@@ -147,6 +151,7 @@ void codegen(AstNode *node, Parser *a) {
             codegen(ass->value, a);
             par_render(a, OP_DUP, 0);
             var=scopes_getVar(&a->scopes, ass->name);
+            if(!var) error("Undeclared variable %s", ass->name);
             par_render(a, OP_ISTORE, ass->id-a->current_base);
             break;
         }

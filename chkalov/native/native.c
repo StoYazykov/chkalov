@@ -8,11 +8,11 @@ void lib_add(Parser *a, ds n) {
 }
 
 void func_add(Lib *a, Func z) {
-    Func *copy=malloc(sizeof(Func));
-    copy->name=strdup(z.name);
-    copy->ret_type=z.ret_type;
-    cv_copy(&copy->args, &z.args);
-    cv_push(&a->funcs, copy);
+    Func copy;
+    copy.name=strdup(z.name);
+    copy.ret_type=z.ret_type;
+    cv_copy(&copy.args, &z.args);
+    cv_push(&a->funcs, &copy);
 }
 
 Func *func_find(Lib *a, Func z) {

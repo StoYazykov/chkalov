@@ -38,9 +38,14 @@ Variable *scopes_addVar(ScopeStack *a, ds varName, Type varType) {
 Variable *scopes_getVar(ScopeStack *a, ds varName) {
     Scope *scope;
     Variable *var;
+    printf("scopes_getVar start, \'%s\', a->scopes.s = %zu\n", varName, a->scopes.s);
     for(scope=(((Scope *)a->scopes.d)+a->curScope); scope>=(Scope *)a->scopes.d; scope--) {
         for(var=(((Variable *)scope->vars.d)+scope->vars.s-1); var>=(Variable *)scope->vars.d; var--) {
-            if(!strcmp(var->name, varName)) return var;
+            printf("scopes_getVar: [%zu] \'%s\' vs. \'%s\'\n", (char *)var-(intptr_t)scope->vars.d, var->name, varName);
+            if(!strcmp(var->name, varName)) {
+                printf("scopes_getVar: finded\n");
+                return var;
+            }
         }
     }
     return NULL;

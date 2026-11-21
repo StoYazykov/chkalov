@@ -10,12 +10,8 @@ typedef enum {
     T_SHORT=0x03,
     T_INT=0x04,
     T_LONG=0x05,
-    T_UCHAR=0x06,
-    T_USHORT=0x07,
-    T_UINT=0x08,
-    T_ULONG=0x09,
-    T_STRING=0x0A,
-    T_COUNT=0x0B
+    T_STRING=0x06,
+    T_COUNT=0x07
 } Type;
 
 typedef struct {
@@ -26,5 +22,6 @@ typedef struct {
 Type par_stt(ds s);
 char *par_tts(Type t);
 char par_ttc(Type t);
+Type par_ctt(char c);
 
 #endif

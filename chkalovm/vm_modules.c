@@ -114,7 +114,7 @@ Module *load_module(VMState *vm, const char *name) {
 
     char *base=getenv("CHKALOV");
     ds path=strdup(base);
-    ds_cat(&path, "/", name, ".cvm", NULL);
+    ds_cat(&path, "/lib/", name, ".cvm", NULL);
 
     Module *m=load_module_path(vm, path, name);
     free(path);

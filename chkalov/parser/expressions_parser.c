@@ -116,6 +116,15 @@ AstNode *par_par_comma(Parser *a, AstNode *l) {
 AstNode *par_par_stmt(Parser *a) {
     Token t=*par_this(a);
     switch(t.type) {
+        case IMPORT: {
+            Token *n;
+            a->p++;
+            n=par_post(a);
+            if(n->type!=STRING) error("Expected module name string!");
+            printf("import: %s\n", n->value);
+            par_import_module(a, n->value);
+            return NULL;
+        }
         case NATIVE: {
             Token *n;
             Func z;

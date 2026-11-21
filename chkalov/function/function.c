@@ -1,7 +1,7 @@
 #include "function.h"
 
 void user_func_add(cv *funcs, char *name, size_t addr, Type ret_type) {
-    UserFunc uf;
+    UserFunc uf={0};
     uf.name=strdup(name);
     uf.addr=addr;
     uf.ret_type=ret_type;
@@ -25,4 +25,14 @@ void user_func_free(cv *funcs) {
         free(uf->name);
     }
     cv_free(funcs);
+}
+
+void user_func_add_extern(cv *funcs, char *name, size_t F_id, Type ret_type) {
+    UserFunc uf;
+    uf.name=strdup(name);
+    uf.addr=0;
+    uf.ret_type=ret_type;
+    uf.is_extern=true;
+    uf.F_id=F_id;
+    cv_push(funcs, &uf);
 }

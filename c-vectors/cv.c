@@ -72,8 +72,17 @@ void *cv_eptr(cv *v, size_t i) {
 }
 
 bool cv_equ(cv *a, cv *b) {
-    //printf("cv_equ: a.s=%zu b.s=%zu a.es=%zu b.es=%zu\n", a->s, b->s, a->es, b->es);
-    return (a->s==b->s&&a->es==b->es&&!memcmp(a->d, b->d, a->s*a->es));
+    bool memres=!memcmp(a->d, b->d, a->s*a->es);
+    char *pa, *pb, *e;
+    e=((char *)a->d)+a->s*a->es;
+    pa=a->d;
+    pb=b->d;
+    while(pa<e) {
+        printf("a 0x%.2x\nb 0x%.2x\n", *pa, *pb);
+        pa++, pb++;
+    }
+    printf("CV_EQU: a.s=%zu b.s=%zu a.es=%zu b.es=%zu, memory %s\n", a->s, b->s, a->es, b->es, memres?"equal":"not equal");
+    return (a->s==b->s&&a->es==b->es&&memres);
 }
 
 // освобождение. Сказать нечего.

@@ -63,5 +63,6 @@ void skip(Parser *a, TokType t);
 size_t par_pool_add(Parser *a, char *str);
 void par_optim(Parser *a);
 AstStmtBlock *par_parBlock(Parser *a);
+void par_import_module(Parser *a, char *name);
 
 #endif

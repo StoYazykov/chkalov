@@ -8,6 +8,8 @@ typedef struct {
     char *name;
     size_t addr;
     Type ret_type;
+    bool is_extern;
+    size_t F_id;
 } UserFunc;
 
 void user_func_add(cv *funcs, char *name, size_t addr, Type ret_type);
