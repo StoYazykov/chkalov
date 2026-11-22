@@ -260,11 +260,12 @@ Type type_expr(AstNode *node, Parser *a) {
             }
             for(i=0; i<a->libs.s; i++) {
                 size_t j;
+                Func *func;
                 lib=cv_eptr(&a->libs, i);
                 key.name=call->name;
                 key.args=types;
 
-                if(func_find(lib, key)) {
+                if(func=func_find(lib, key)) {
                     //ds final=strdup(lib->name), mangled=par_mangle(&key);
                     //ds_cat(&final, ".", mangled, NULL);
                     //for(j=0; j<call->args.s; j++) codegen(args[j], a);
@@ -274,7 +275,7 @@ Type type_expr(AstNode *node, Parser *a) {
                     //free(final);
                     //free(mangled);
                     cv_free(&types);
-                    return;
+                    return func->ret_type;
                 }
             }
             UserFunc *uf=user_func_find(&a->funcs, call->name);
