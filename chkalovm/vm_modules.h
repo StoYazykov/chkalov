@@ -3,6 +3,7 @@
 
 #include "../chkalov.h"
 #include "../chkapi.h"
+#include <ctype.h>
 
 typedef struct Module {
     char *name;

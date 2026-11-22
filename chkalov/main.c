@@ -19,6 +19,7 @@
 
 #include "../chkalov.h"
 #include "parser/parser.h"
+#include "codegen/codegen.h"
 
 int main(int argc, char **argv) {
     puts("Chkalov Compiler (version " VERSION ")\r\n");

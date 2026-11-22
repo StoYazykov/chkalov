@@ -2,6 +2,7 @@
 #define _EXPRESSIONS_PARSER_H
 
 #include "parser.h"
+#include "../native/native.h"
 
 AstNode *par_par_primary(Parser *a);
 AstNode *par_par_term(Parser *a);

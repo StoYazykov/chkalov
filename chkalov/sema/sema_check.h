@@ -5,6 +5,7 @@
 #include "../ast/ast.h"
 #include "../var_types/var_types.h"
 #include "../scope/scope.h"
+#include "../codegen/codegen.h"
 
 void sem_analyze(AstNode *node, Parser *a);
 Type sem_binary_type(TokType op, Type left_type, Type right_type);
