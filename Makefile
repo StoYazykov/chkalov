@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -w -O2
+CFLAGS = -std=c99 -Wimplicit-function-declaration -O2
 LDFLAGS = -ldl
 
 CHKALOV_DIR = /root/c

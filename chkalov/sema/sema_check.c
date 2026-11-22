@@ -67,24 +67,6 @@ void sem_analyze(AstNode *node, Parser *a) {
     }
 }
 
-void collect_funcs(AstNode *node, Parser *a) {
-    if(!node) return;
-    switch(node->type) {
-        case AST_STMT_BLOCK: {
-            AstStmtBlock *block=(AstStmtBlock *)node;
-            for(size_t i=0; i<block->count; i++) collect_funcs(block->stats[i], a);
-            break;
-        }
-        case AST_STMT_FUN: {
-            AstStmtFun *fun=(AstStmtFun *)node;
-            user_func_add(&a->funcs, fun->name, 0, fun->ret_type);
-            collect_funcs((AstNode *)fun->body, a);
-            break;
-        }
-        default: break;
-    }
-}
-
 Type sem_binary_type(TokType op, Type left_type, Type right_type) {
     if(left_type<0||left_type>=T_COUNT) return T_INCORRECT;
     if(right_type<0||right_type>=T_COUNT) return T_INCORRECT;
@@ -110,4 +92,22 @@ bool sem_types_compatible(Type left_type, Type right_type) {
     if(left_type<0||left_type>=T_COUNT) return false;
     if(right_type<0||right_type>=T_COUNT) return false;
     return types_compatible[left_type][right_type];
+}
+
+void collect_funcs(AstNode *node, Parser *a) {
+    if(!node) return;
+    switch(node->type) {
+        case AST_STMT_BLOCK: {
+            AstStmtBlock *block=(AstStmtBlock *)node;
+            for(size_t i=0; i<block->count; i++) collect_funcs(block->stats[i], a);
+            break;
+        }
+        case AST_STMT_FUN: {
+            AstStmtFun *fun=(AstStmtFun *)node;
+            user_func_add(&a->funcs, fun->name, 0, fun->ret_type);
+            collect_funcs((AstNode *)fun->body, a);
+            break;
+        }
+        default: break;
+    }
 }

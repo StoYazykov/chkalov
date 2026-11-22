@@ -21,6 +21,7 @@
 #define _CODEGEN_H
 
 #include "../parser/parser.h"
+#include "../native/native.h"
 
 void codegen(AstNode *node, Parser *a);
 

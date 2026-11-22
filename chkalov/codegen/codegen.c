@@ -42,40 +42,43 @@ void codegen(AstNode *node, Parser *a) {
                 t=type_expr(args[i], a);
                 cv_push(&types, &t);
             }
-            puts("Codegen: findeing natives");
+
+            /* 1. Пробуем нативные из a->libs */
             for(i=0; i<a->libs.s; i++) {
-                size_t j;
-                printf("Iteration %d\r\n");
                 lib=cv_eptr(&a->libs, i);
                 key.name=call->name;
                 key.args=types;
 
-                if(func_find(lib, key)) {
-                    ds nbuf=strdup("N");
-                    ds_cat(&nbuf, lib->name, NULL);
-                    size_t n_id=par_pool_add(a, nbuf);
-                    free(nbuf);
+                Func *fn=func_find(lib, key);
+                if(!fn) continue;
 
-                    char hex[32];
-                    snprintf(hex, sizeof(hex), "%zx", n_id);
+                ds nbuf=strdup("N");
+                ds_cat(&nbuf, lib->name, NULL);
+                size_t n_id=par_pool_add(a, nbuf);
+                free(nbuf);
 
-                    char *mangled=par_mangle(&key);
-                    ds xbuf=strdup("X(");
-                    ds_cat(&xbuf, hex, ")", mangled, NULL);
-                    size_t x_id=par_pool_add(a, xbuf);
-                    free(xbuf);
-                    free(mangled);
+                char hex[32];
+                snprintf(hex, sizeof(hex), "%zx", n_id);
 
-                    for(size_t j=0; j<call->args.s; j++) {
-                        codegen(args[j], a);
-                    }
-                    par_render(a, OP_IPUSH, call->args.s);
-                    par_render(a, OP_CALL, x_id);
+                char *mangled=par_mangle(&key);
+                char retbuf[2]={par_ttc(fn->ret_type), 0};
+                ds xbuf=strdup("X(");
+                ds_cat(&xbuf, hex, ")", mangled, ":", retbuf, NULL);
+                size_t x_id=par_pool_add(a, xbuf);
+                free(xbuf);
+                free(mangled);
 
-                    cv_free(&types);
-                    return;
+                size_t j;
+                for(j=0; j<call->args.s; j++) {
+                    codegen(args[j], a);
                 }
+                par_render(a, OP_IPUSH, call->args.s);
+                par_render(a, OP_CALL, x_id);
+
+                cv_free(&types);
+                return;
             }
+
             UserFunc *uf=user_func_find(&a->funcs, call->name);
             if(!uf) error("Undeclared function: \'%s\'", call->name);
             size_t j;
@@ -92,6 +95,7 @@ void codegen(AstNode *node, Parser *a) {
                 pt.name=strdup(call->name);
                 cv_push(&a->invoke_patches, &pt);
             }
+            cv_free(&types);
             return;
         }
         case AST_EXPR_LITERAL: {

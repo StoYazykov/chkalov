@@ -21,7 +21,6 @@ chkdis
 *~
 *.swp
 *.swo
-*.sh
 
 *.java
 *.class

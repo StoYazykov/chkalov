@@ -1,6 +1,7 @@
-fun abs(num: Int): Int {
-	if num < 0 {
-		return -num
-	}
-	return num
+native stdcon {
+	println(Int): Void
+}
+
+fun sum(a: Int, b: Int): Int {
+	return a + b
 }
