@@ -21,7 +21,7 @@ UserFunc *user_func_find(cv *funcs, char *name) {
 void user_func_free(cv *funcs) {
     size_t i;
     for(i=0; i<funcs->s; i++) {
-        UserFunc *uf=cv_eptr(&funcs, i);
+        UserFunc *uf=cv_eptr(funcs, i);
         free(uf->name);
     }
     cv_free(funcs);

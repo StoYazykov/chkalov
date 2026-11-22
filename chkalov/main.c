@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
         puts("\r\nAST Tree:");
         ast_print((AstNode *)parser.root, 0);
     }
-    codegen(parser.root, &parser);
+    codegen((AstNode *)parser.root, &parser);
     for(size_t i=0; i<parser.invoke_patches.s; i++) {
         InvokePatch *pt = cv_eptr(&parser.invoke_patches, i);
         UserFunc *uf = user_func_find(&parser.funcs, pt->name);
