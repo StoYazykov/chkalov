@@ -102,8 +102,8 @@ void codegen(AstNode *node, Parser *a) {
             AstExprLiteral *lit=(AstExprLiteral *)node;
             if(lit->lit_type==NUMBER) {
                 switch(lit->suffix) {
-                    case SUFFIX_NONE: puts("type_expr: Suffix None"); par_render(a, OP_IPUSH, atol(lit->value)); break;
-                    case SUFFIX_LONG: puts("type_expr: Suffix Long"); par_render(a, OP_LPUSH, atol(lit->value)); break;
+                    case SUFFIX_NONE: fputs("codegen: Suffix None\n", stderr); par_render(a, OP_IPUSH, atol(lit->value)); break;
+                    case SUFFIX_LONG: fputs("codegen: Suffix Long\n", stderr); par_render(a, OP_LPUSH, atol(lit->value)); break;
                     default: error("TYPE_EXPR SUFFIX ERROR"); break;
                 }
             } else {
@@ -145,7 +145,7 @@ void codegen(AstNode *node, Parser *a) {
         }
         case AST_EXPR_VARIABLE: {
             AstExprVariable *var_expr=(AstExprVariable *)node;
-            printf("LOAD %s id=%zu base=%zu v=%zu\n", var_expr->name, var_expr->id, a->current_base, var_expr->id-a->current_base);
+            fprintf(stderr, "LOAD %s id=%zu base=%zu v=%zu\n", var_expr->name, var_expr->id, a->current_base, var_expr->id-a->current_base);
             par_render(a, OP_ILOAD, var_expr->id-a->current_base);
             break;
         }
@@ -175,14 +175,14 @@ void codegen(AstNode *node, Parser *a) {
             codegen(whi->cond, a);
             cs=a->code.s;
             par_render(a, OP_JMP_IFN, 0);
-            printf("WHILE: before body: s=%zu\n", a->code.s);
+            fprintf(stderr, "WHILE: before body: s=%zu\n", a->code.s);
             codegen(whi->body, a);
-            printf("WHILE: after body: s=%zu\n", a->code.s);
+            fprintf(stderr, "WHILE: after body: s=%zu\n", a->code.s);
             par_render(a, OP_JUMP, ls);
             tar=a->code.s;
-            printf("WHILE: after jump: s=%zu, tar=%zu\n", a->code.s, tar);
+            fprintf(stderr, "WHILE: after jump: s=%zu, tar=%zu\n", a->code.s, tar);
             ((Vm *)cv_eptr(&a->code, cs))->value=tar;
-            printf("WHILE: ls=%zu, cs=%zu,  tar=%zu\n", ls, cs, tar);
+            fprintf(stderr, "WHILE: ls=%zu, cs=%zu,  tar=%zu\n", ls, cs, tar);
             break;
         }
 
@@ -196,9 +196,9 @@ void codegen(AstNode *node, Parser *a) {
             } else {
                 user_func_add(&a->funcs, fun->name, addr, fun->ret_type);
             }
-            printf("func: %s at %zx, body=%p, count=%zu\n", fun->name, addr, fun->body, fun->body->count);
-            printf("fun %s base_id=%zu\n", fun->name, fun->base_id);
-            if(a->debug) printf("func: %s at %zx\n", fun->name, addr);
+            fprintf(stderr, "func: %s at %zx, body=%p, count=%zu\n", fun->name, addr, fun->body, fun->body->count);
+            fprintf(stderr, "fun %s base_id=%zu\n", fun->name, fun->base_id);
+            if(a->debug) fprintf(stderr, "func: %s at %zx\n", fun->name, addr);
 
             if(!strcmp(fun->name, "main")) {
                 a->entry_point=addr;
@@ -235,8 +235,8 @@ Type type_expr(AstNode *node, Parser *a) {
             AstExprLiteral *lit=(AstExprLiteral *)node;
             if(lit->lit_type==NUMBER) {
                 switch(lit->suffix) {
-                    case SUFFIX_NONE: puts("type_expr: Suffix None"); return T_INT;
-                    case SUFFIX_LONG: puts("type_expr: Suffix Long"); return T_LONG;
+                    case SUFFIX_NONE: fputs("type_expr: Suffix None\n", stderr); return T_INT;
+                    case SUFFIX_LONG: fputs("type_expr: Suffix Long\n", stderr); return T_LONG;
                     default: error("TYPE_EXPR SUFFIX ERROR");
                 }
             } else return T_STRING;

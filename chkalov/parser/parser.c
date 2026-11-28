@@ -24,7 +24,7 @@
 static Scope nullscope;
 
 void par_parFile(Parser *a) {
-    printf("FILE: file.s=%zu\n", a->file.s);
+    fprintf(stderr, "FILE: file.s=%zu\n", a->file.s);
     AstNode *an;
     a->p=0;
     while(a->p<a->file.s) {
@@ -89,6 +89,11 @@ void par_init(Parser *n, const ds fni, const ds fno, int deb) {
 }
 
 size_t par_pool_add(Parser *a, char *str) {
+    char **p;
+    for(size_t i=0; i<a->pool.s; i++) {
+        p=cv_eptr(&a->pool, i);
+        if(!strcmp(*p, str)) return i;
+    }
     char *dup=strdup(str);
     cv_push(&a->pool, &dup);
     return a->pool.s-1;
@@ -96,7 +101,7 @@ size_t par_pool_add(Parser *a, char *str) {
 
 void par_render(Parser *a, uint8_t op, int64_t value) {
     Vm vm;
-    printf("DEBUG: par_render op=0x%02x value=%lld\n", op, (long long)value);
+    fprintf(stderr, "DEBUG: par_render op=0x%02x value=%lld\n", op, (long long)value);
     vm.opcode=op, vm.value=value;
     cv_push(&a->code, &vm);
 }
@@ -125,19 +130,19 @@ void par_free(Parser *z) {
     cv final;
     size_t i, j;
     uint8_t size;
-    puts("\r\npar free \r\n=====");
+    fputs("\r\npar free \r\n=====\n", stderr);
     cv_init(&final, 32, 1);
     for(i=0; i<z->libs.s; i++) {
         Lib *lib=cv_eptr(&z->libs, i);
         for(int j=0; j<lib->funcs.s; j++) {
             Func *func=cv_eptr(&lib->funcs, j);
-            printf("native: %s \r\n", par_mangle(func));
+            fprintf(stderr, "native: %s \r\n", par_mangle(func));
         }
     }
-    if(z->debug) printf("par_free: fn = '%s'\n", z->fn);
+    if(z->debug) fprintf(stderr, "par_free: fn = '%s'\n", z->fn);
     FILE *fp=fopen(z->fn, "wb");
     char **p;
-    if(z->debug) printf("par_free: fp = %p\n", (void*)fp);
+    if(z->debug) fprintf(stderr, "par_free: fp = %p\n", (void*)fp);
     Header hdr;
     hdr.magic=0x05020200;
 
@@ -200,7 +205,7 @@ void par_free(Parser *z) {
         len=strlen(*p)+1;
         fwrite(&len, 1, sz(uint32_t), fp);
         fwrite(*p, 1, len, fp);
-        printf("POOL WRITED: \'%s\'\r\n", *p);
+        fprintf(stderr, "POOL WRITED: \'%s\'\r\n", *p);
     }
 
     fwrite(final.d, 1, final.s, fp);
@@ -300,29 +305,31 @@ void par_import_module(Parser *a, char *name) {
     free(lbuf);
 
     for(size_t i=0; i<hdr.pool_size; i++) {
-        if(pool[i].tag!='E') continue;
+        if(pool[i].tag=='E') {
+            char hex[32];
+            snprintf(hex, sizeof(hex), "%zx", l_id);
+            ds fbuf=strdup("F(");
+            ds_cat(&fbuf, hex, ")", pool[i].name, NULL);
+            size_t f_id=par_pool_add(a, fbuf);
+            free(fbuf);
 
-        char hex[32];
-        snprintf(hex, sizeof(hex), "%zx", l_id);
-        ds fbuf=strdup("F(");
-        ds_cat(&fbuf, hex, ")", pool[i].name, NULL);
-        size_t f_id=par_pool_add(a, fbuf);
-        free(fbuf);
+            char *sig=strdup(pool[i].name);
+            char *open=strchr(sig, '(');
+            char *close=open?strchr(open, ')'):NULL;
+            if(!open||!close||!close[1]) { free(sig); continue; }
 
-        char *sig=strdup(pool[i].name);
-        char *open=strchr(sig, '(');
-        char *close=open?strchr(open, ')'):NULL;
-        if(!open||!close||!close[1]) { free(sig); continue; }
+            size_t name_len=open-sig;
+            char *name_only=malloc(name_len+1);
+            memcpy(name_only, sig, name_len);
+            name_only[name_len]=0;
 
-        size_t name_len=open-sig;
-        char *name_only=malloc(name_len+1);
-        memcpy(name_only, sig, name_len);
-        name_only[name_len]=0;
+            Type ret=par_ctt(close[1]);
+            free(sig);
+            user_func_add_extern(&a->funcs, name_only, f_id, ret);
+            free(name_only);
+        } else if(pool[i].tag=='X') {
 
-        Type ret=par_ctt(close[1]);
-        free(sig);
-        user_func_add_extern(&a->funcs, name_only, f_id, ret);
-        free(name_only);
+        }
     }
     free(pool);
     free(path);

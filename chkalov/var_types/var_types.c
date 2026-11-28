@@ -2,7 +2,7 @@
 
 Type par_stt(ds s) {
     size_t i;
-    puts("called par_s2t");
+    fputs("called par_s2t\n", stderr);
     TypeNameEntry type_names[T_COUNT]={
         { "Unit",   T_VOID    },
         { "Void",   T_VOID    },
@@ -17,7 +17,7 @@ Type par_stt(ds s) {
         if (!strncmp(s, type_names[i].name, strlen(type_names[i].name)))
             return type_names[i].type;
     }
-    printf("incorrect: %s\r\n", s);
+    fprintf(stderr, "incorrect: %s\r\n", s);
     return T_INCORRECT;
 }
 

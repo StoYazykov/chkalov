@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     P=current_module->code+current_module->entry_point;
     end=current_module->code+current_module->code_size;
 
-    puts("VM Main Loop starting...");
+    fputs("VM Main Loop starting...\n", stderr);
 
     while(P<end) {
         o=P->opcode;
@@ -340,19 +340,19 @@ int main(int argc, char **argv) {
                 break;
             }
             default: {
-                printf("VM error: incorrect opcode ( %x )\r\n", o, o);
-                printf("ip=%zx stack: s=%zx c=%zx es=%zx d=%p\n", P-current_module->code, stack.s, stack.c, stack.es, (void*)stack.d);
-                printf("stack: ");
+                fprintf(stderr, "VM error: incorrect opcode ( %x )\r\n", o, o);
+                fprintf(stderr, "ip=%zx stack: s=%zx c=%zx es=%zx d=%p\n", P-current_module->code, stack.s, stack.c, stack.es, (void*)stack.d);
+                fprintf(stderr, "stack: ");
                 for(i=0; i<stack.s; i++)
-                    printf("%lx ", *((int64_t *)cv_eptr(&stack, i)));
-                puts("<< Stack Pointer\r\n(stack dump end)");
+                    fprintf(stderr, "%lx ", *((int64_t *)cv_eptr(&stack, i)));
+                fputs("<< Stack Pointer\r\n(stack dump end)\n", stderr);
                 abort();
             }
         }
         P++;
     }
 
-    if(debug) printf("Ended on instruction pointer %llx\r\n", i);
+    if(debug) fprintf(stderr, "Ended on instruction pointer %llx\r\n", i);
 
     cv_free(&stack);
     cv_free(&vars);

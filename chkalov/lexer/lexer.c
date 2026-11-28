@@ -124,7 +124,7 @@ void lexer(void *b, ds l) {
                 pos++;
             }
 
-            printf("LEXER: Number '%s' (suffix=%d)\r\n", t.value, t.suffix);
+            fprintf(stderr, "LEXER: Number '%s' (suffix=%d)\r\n", t.value, t.suffix);
             cv_push(&a->file, &t);
             continue;
         }

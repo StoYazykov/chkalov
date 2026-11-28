@@ -72,11 +72,11 @@ int main(int argc, char **argv) {
     }
 
     if(vp) {
-        printf("Heap (hp=%llx): ", hdr.heap_size);
+        fprintf(stderr, "Heap (hp=%llx): ", hdr.heap_size);
         for(size_t i=0; i<hdr.heap_size; i++) {
-            printf("%c", heap[i]?heap[i]:'$');
+            fprintf(stderr, "%c", heap[i]?heap[i]:'$');
         }
-        puts("\r\nHeap end");
+        fputs("\r\nHeap end\n", stderr);
     }
 
     if(!vb) goto PEND;
@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
     cv_init(&vm, 8, sz(Vm));
     cv_init(&raw, 8, 1);
 
-    printf("Entry point: %llXh / %lld \r\n", hdr.entry_point, hdr.entry_point);
-    printf("Bytecode size (in bytes): %llXh / %lld \r\n", hdr.code_size, hdr.code_size);
+    fprintf(stderr, "Entry point: %llXh / %lld \r\n", hdr.entry_point, hdr.entry_point);
+    fprintf(stderr, "Bytecode size (in bytes): %llXh / %lld \r\n", hdr.code_size, hdr.code_size);
 
     cv_resize(&raw, hdr.code_size);
     fread(raw.d, 1, hdr.code_size, a);
@@ -110,11 +110,11 @@ int main(int argc, char **argv) {
         uint8_t o=P->opcode;
         int64_t v=P->value;
 
-        printf("%-10llu %-10s", P-((Vm *)vm.d), opcodes[o]);
-        printf("%10llXh / %-10lld", v, v);
-        if(o==CALL||o==S_PUSH) printf("// %s", heap+v);
-        if(hdr.entry_point==(P-((Vm *)vm.d))) printf("<- Entry Point");
-        printf(" \r\n");
+        fprintf(stderr, "%-10llu %-10s", P-((Vm *)vm.d), opcodes[o]);
+        fprintf(stderr, "%10llXh / %-10lld", v, v);
+        if(o==CALL||o==S_PUSH) fprintf(stderr, "// %s", heap+v);
+        if(hdr.entry_point==(P-((Vm *)vm.d))) fprintf(stderr, "<- Entry Point");
+        fprintf(stderr, " \r\n");
 
         P++;
     }

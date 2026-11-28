@@ -1,12 +1,11 @@
+native stdcon {
+	println(Int): Unit
+}
+
 import "chkalov/core/math"
 
-native stdcon {
-	println(Int): Void
-}
-
 fun main {
-    	var Int: number
-    	number = sum(5, 2)
-    	println(number)
+	var Int: x
+	x = sum(5, 2)
+	println(x)
 }
-

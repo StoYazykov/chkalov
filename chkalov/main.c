@@ -29,11 +29,9 @@ int main(int argc, char **argv) {
         puts("  o - disable optimisation");
         puts("  d - out debug info\r\n");
         return 1;
-    }
-    if(!getenv("CHKALOV")) {
-        printf("CHKALOV not set! \r\n");
         return 1;
     }
+    if(!getenv("CHKALOV")) error("CHKALOV not set!");
     //char *a=argv[3];
     int debug, optim;
     debug=0;
@@ -43,24 +41,24 @@ int main(int argc, char **argv) {
         optim=!strchr(argv[3], 'o');
     }
     Parser parser;
-    if(debug) printf("Before par_init... \r\n");
+    fprintf(stderr, "Before par_init... \r\n");
     par_init(&parser, argv[1], argv[2], debug);
-    if(debug) printf("Before par_parFile... \r\n");
+    fprintf(stderr, "Before par_parFile... \r\n");
     par_parFile(&parser);
     collect_funcs((AstNode *)parser.root, &parser);
     sem_analyze((AstNode *)parser.root, &parser);
     if(optim) {
         if(debug) {
-            puts("\r\nAST Tree before optimization:");
+            fputs("\r\nAST Tree before optimization:", stderr);
             ast_print((AstNode *)parser.root, 0);
         }
         par_optim(&parser);
         if(debug) {
-            puts("\r\nAST Tree after optimization:");
+            fputs("\r\nAST Tree after optimization:", stderr);
             ast_print((AstNode *)parser.root, 0);
         }
     } else if(debug) {
-        puts("\r\nAST Tree:");
+        fputs("\r\nAST Tree:", stderr);
         ast_print((AstNode *)parser.root, 0);
     }
     codegen((AstNode *)parser.root, &parser);
@@ -70,7 +68,7 @@ int main(int argc, char **argv) {
         if(!uf) error("Undeclared function: '%s'", pt->name);
         ((Vm *)cv_eptr(&parser.code, pt->pos))->value = uf->addr;
     }
-    if(debug) printf("\r\nBefore par_free... \r\n");
+    if(debug) fprintf(stderr, "\r\nBefore par_free... \r\n");
     par_free(&parser);
     printf("Compilation succesfull! \r\n");
     return 0;

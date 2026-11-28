@@ -47,7 +47,7 @@
     #include <dlfcn.h>
 #endif
 
-#define error(...) (fprintf(stderr, "Error: " __VA_ARGS__),fprintf(stderr, "!\r\n"),exit(0x08),0)
+#define error(...) (fprintf(stdout, "Error: " __VA_ARGS__),fprintf(stdout, "!\r\n"),exit(0x08),0)
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -224,10 +224,10 @@ typedef struct {
 
 typedef struct {
     uint32_t magic;
-    uint64_t entry_point;
-    uint64_t heap_size;
-    uint64_t pool_size;
-    uint64_t code_size;
+    uint32_t entry_point;
+    uint32_t heap_size;
+    uint32_t pool_size;
+    uint32_t code_size;
     char reserved[16];
 } Header;
 

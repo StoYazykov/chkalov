@@ -24,7 +24,7 @@ void cv_init(cv *v, size_t c, size_t s) {
     v->c=c;
     v->s=0;
     v->es=s;
-    //printf("CV_INIT: c=%lx, es=%lx\r\n", c, s);
+    //fprintf(stderr, "CV_INIT: c=%lx, es=%lx\r\n", c, s);
 }
 
 void cv_resize(cv *v, size_t s) {
@@ -37,8 +37,14 @@ void cv_resize(cv *v, size_t s) {
 
 // Пуш. Сигнатура cv_push(вектор, указатель_на_элемент)
 void cv_push(cv *v, const void *e) {
+   // printf("cv_push, capacity %zu bytes, size %zu bytes\n", (v->c*v->es), v->s);
     if(v->s>=v->c) {
-        v->d=realloc(v->d, (v->c<<=1)*v->es);
+        void *t=v->d;
+        v->d=realloc(t, (v->c<<=1)*v->es);
+        if(!v->d) {
+            free(t);
+            error("Out of memory, requested %f KB", (v->c*v->es)/1024);
+        }
     }
     memcpy(v->d+(v->es*v->s), e, v->es);
     v->s++;
@@ -78,10 +84,10 @@ bool cv_equ(cv *a, cv *b) {
     pa=a->d;
     pb=b->d;
     while(pa<e) {
-        printf("a 0x%.2x\nb 0x%.2x\n", *pa, *pb);
+        fprintf(stderr, "a 0x%.2x\nb 0x%.2x\n", *pa, *pb);
         pa++, pb++;
     }
-    printf("CV_EQU: a.s=%zu b.s=%zu a.es=%zu b.es=%zu, memory %s\n", a->s, b->s, a->es, b->es, memres?"equal":"not equal");*/
+    fprintf(stderr, "CV_EQU: a.s=%zu b.s=%zu a.es=%zu b.es=%zu, memory %s\n", a->s, b->s, a->es, b->es, memres?"equal":"not equal");*/
     return (a->s==b->s&&a->es==b->es&&!memcmp(a->d, b->d, a->s*a->es));
 }
 

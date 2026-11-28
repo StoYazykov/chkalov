@@ -82,7 +82,7 @@ AstStmtVarDecl *ast_create_vardecl(char *n, Type vt, size_t id) {
     svd->var_type=vt;
     svd->base.type=AST_STMT_VAR_DECL;
     svd->id=id;
-    printf("AST VarDecl create: id=%llx\r\n", id);
+    fprintf(stderr, "AST VarDecl create: id=%llx\r\n", id);
     return svd;
 }
 
@@ -223,96 +223,96 @@ void ast_add(AstNode *r, AstNode *n) {
 }
 
 void ast_print(AstNode *node, int indent) {
-    for(int i=0; i<indent; i++) printf("  ");
+    for(int i=0; i<indent; i++) fprintf(stderr, "  ");
     switch(node->type) {
         case AST_STMT_BLOCK:
-            puts("Program");
+            fputs("Program\n", stderr);
             AstStmtBlock *p=(AstStmtBlock *)node;
             for(size_t i=0; i<p->count; i++) ast_print(p->stats[i], indent+1);
             break;
         case AST_STMT_CALL: {
             AstStmtCall *c=(AstStmtCall *)node;
-            printf("CALL: \'%s\' args (%lu) \r\n", c->name, c->args.s);
+            fprintf(stderr, "CALL: \'%s\' args (%lu) \r\n", c->name, c->args.s);
             for(size_t i=0;i<c->args.s; i++) {
                 ast_print(*(AstNode **)cv_eptr(&c->args, i), indent+1);
             }
-            puts("");
+            fputs("\n", stderr);
             break;
         }
         case AST_EXPR_LITERAL: {
             AstExprLiteral *l=(AstExprLiteral *)node;
-            printf("LITERAL: %s \r\n", l->value);
+            fprintf(stderr, "LITERAL: %s \r\n", l->value);
             break;
         }
         case AST_BINARY: {
             AstBinary *b=(AstBinary *)node;
-            puts("BINARY");
+            fputs("BINARY\n", stderr);
             ast_print(b->left, indent+1);
             ast_print(b->right, indent+1);
             break;
         }
         case AST_STMT_ASSIGN: {
             AstStmtAssign *a=(AstStmtAssign *)node;
-            puts("ASSIGN");
-            printf("  NAME: %s \r\n", a->name);
+            fputs("ASSIGN\n", stderr);
+            fprintf(stderr, "  NAME: %s \r\n", a->name);
             ast_print(a->value, indent+1);
             break;
         }
         case AST_EXPR_VARIABLE: {
             AstExprVariable *v=(AstExprVariable *)node;
-            printf("VARIABLE \r\n  NAME: %s \r\n", v->name);
+            fprintf(stderr, "VARIABLE \r\n  NAME: %s \r\n", v->name);
             break;
         }
         case AST_STMT_VAR_DECL: {
             AstStmtVarDecl *d=(AstStmtVarDecl *)node;
-            printf("VARIABLE DECL \r\n    NAME: %s \r\n    TYPE: %s \r\n", d->name, par_tts(d->var_type));
+            fprintf(stderr, "VARIABLE DECL \r\n    NAME: %s \r\n    TYPE: %s \r\n", d->name, par_tts(d->var_type));
             break;
         }
         case AST_EXPR_COMMA: {
             AstExprComma *c=(AstExprComma *)node;
-            puts("COMMA");
+            fputs("COMMA\n", stderr);
             ast_print(c->left, indent+1);
             ast_print(c->right, indent+1);
             break;
         }
         case AST_STMT_IF: {
             AstStmtIf *stmt=(AstStmtIf *)node;
-            printf("IF\n");
-            printf("CONDITION:\n");
+            fprintf(stderr, "IF\n");
+            fprintf(stderr, "CONDITION:\n");
             ast_print(stmt->cond, indent+1);
-            printf("BODY:\n");
+            fprintf(stderr, "BODY:\n");
             ast_print(stmt->body, indent+1);
             if(stmt->els) {
-                printf("ELSE:\n");
+                fprintf(stderr, "ELSE:\n");
                 ast_print(stmt->els, indent+1);
             }
-            puts("IF BODY END");
+            fputs("IF BODY END\n", stderr);
             break;
         }
         case AST_STMT_WHILE: {
             AstStmtWhile *stmt=(AstStmtWhile *)node;
-            printf("WHILE\n");
-            printf("CONDITION:\n");
+            fprintf(stderr, "WHILE\n");
+            fprintf(stderr, "CONDITION:\n");
             ast_print(stmt->cond, indent+1);
-            printf("BODY:\n");
+            fprintf(stderr, "BODY:\n");
             ast_print(stmt->body, indent+1);
-            puts("WHILE BODY END");
+            fputs("WHILE BODY END\n", stderr);
             break;
         }
         case AST_STMT_FUN: {
             AstStmtFun *f=(AstStmtFun *)node;
-            printf("FUN: '%s' ret=%d\n", f->name, f->ret_type);
+            fprintf(stderr, "FUN: '%s' ret=%d\n", f->name, f->ret_type);
             ast_print((AstNode *)f->body, indent+1);
             break;
         }
         case AST_STMT_RET: {
             AstStmtRet *r=(AstStmtRet *)node;
-            puts("RET");
+            fputs("RET\n", stderr);
             ast_print(r->value, indent+1);
             break;
         }
         default: {
-            printf("unexpected type: %d! \r\n", node->type);
+            fprintf(stderr, "unexpected type: %d! \r\n", node->type);
             break;
         }
     }

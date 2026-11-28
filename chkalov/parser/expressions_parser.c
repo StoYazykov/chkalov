@@ -2,7 +2,7 @@
 
 AstNode *par_par_primary(Parser *a) {
     Token t=*par_this(a);
-    if(a->debug) puts("par primary start");
+    if(a->debug) fputs("par primary start\n", stderr);
     switch(t.type) {
         case NUMBER: {
             a->p++;
@@ -45,7 +45,7 @@ AstNode *par_par_primary(Parser *a) {
 
 AstNode *par_par_term(Parser *a) {
     Token op;
-    if(a->debug) puts("par term start");
+    if(a->debug) fputs("par term start\n", stderr);
     AstNode *l=par_par_unary(a);
     while(a->p<a->file.s) {
         op=*par_this(a);
@@ -121,7 +121,7 @@ AstNode *par_par_stmt(Parser *a) {
             a->p++;
             n=par_post(a);
             if(n->type!=STRING) error("Expected module name string!");
-            printf("import: %s\n", n->value);
+            fprintf(stderr, "import: %s\n", n->value);
             par_import_module(a, n->value);
             return NULL;
         }
@@ -133,14 +133,14 @@ AstNode *par_par_stmt(Parser *a) {
             n=par_this(a);
             a->p++;
             if(n->type!=ID) error("Expected library name!");
-            printf("library '%s', functions:\r\n", n->value);
+            fprintf(stderr, "library '%s', functions:\r\n", n->value);
             lib_add(a, n->value);
             expect(a, LPAREN, "'{'");
             do {
                 n=par_this(a);
                 a->p++;
                 if(n->type!=ID) error("Expected function name!");
-                printf("%s ( ", n->value);
+                fprintf(stderr, "%s ( ", n->value);
                 skip(a, LBRACE);
                 cv_init(&z.args, 4, sz(Type));
                 z.name=strdup(n->value);
@@ -149,11 +149,11 @@ AstNode *par_par_stmt(Parser *a) {
                     a->p++;
                     c=par_stt(n->value);
                     cv_push(&z.args, &c);
-                    printf("%s ", n->value);
+                    fprintf(stderr, "%s ", n->value);
                     if(par_this(a)->type==COMMA) a->p++;
                 } while(par_this(a)->type!=RBRACE&&par_this(a)->type!=COLON);
                 skip(a, RBRACE);
-                printf(")\r\n");
+                fprintf(stderr, ")\r\n");
                 skip(a, COLON);
                 n=par_this(a);
                 a->p++;
@@ -175,7 +175,7 @@ AstNode *par_par_stmt(Parser *a) {
             do {
                 n=par_this(a);
                 a->p++;
-                if(a->debug) printf("var; type='%s', name='%s'\r\n", w->value, n->value);
+                if(a->debug) fprintf(stderr, "var; type='%s', name='%s'\r\n", w->value, n->value);
                 var=scopes_addVar(&a->scopes, n->value, par_stt(w->value));
                 decl=(AstNode*)ast_create_vardecl(n->value, par_stt(w->value), var->id);
                 if(!res) res=decl;
@@ -205,7 +205,7 @@ AstNode *par_par_stmt(Parser *a) {
             cv_init(&args, 4, sz(Type));
             size_t base_id=a->scopes.lastVar;
             scopes_enterScope(&a->scopes);
-            printf("Function '%s'\r\n", name);
+            fprintf(stderr, "Function '%s'\r\n", name);
             if(par_this(a)->type==LBRACE) {
                 if(par_next(a)->type!=RBRACE) {
                     do {
@@ -229,7 +229,7 @@ AstNode *par_par_stmt(Parser *a) {
             } else {
                 ret_type=T_VOID;
             }
-            printf("return type: '%s'\r\n", par_tts(ret_type));
+            fprintf(stderr, "return type: '%s'\r\n", par_tts(ret_type));
             body=par_parBlock(a);
             scopes_exitScope(&a->scopes);
             func=ast_create_fun(name, args, ret_type, body);

@@ -1,7 +1,3 @@
-native stdcon {
-	println(Int): Void
-}
-
 fun sum(a: Int, b: Int): Int {
 	return a + b
 }

@@ -134,16 +134,19 @@ Module *load_module(VMState *vm, const char *name) {
             free(fname);
         } else if(m->pool[k].tag=='X') {
             size_t lib_id=m->pool[k].operand;
+            char *funcname=strdup(m->pool[k].name);
+            funcname[strlen(m->pool[k].name)-2]=0;
             char *libname=m->pool[lib_id].name;
             ds so_path=strdup(getenv("CHKALOV"));
             ds_cat(&so_path, "/lib/", libname, "/lib", libname, ".so", NULL);
             void *h=dlopen(so_path, RTLD_LAZY);
             free(so_path);
             if(!h) error("Cannot load: %s", dlerror());
-            void *func=dlsym(h, m->pool[k].name);
-            if(!func) { dlclose(h); error("Undefined: %s", m->pool[k].name); }
+            void *func=dlsym(h, funcname);
+            if(!func) { dlclose(h); error("Undefined native func: %s", funcname); }
             m->imports[k].is_native=true;
             m->imports[k].native_func=func;
+            free(funcname);
         }
     }
     return m;
@@ -166,13 +169,15 @@ void resolve_main(VMState *vm, Module *m) {
         } else if(m->pool[k].tag=='X') {
             size_t lib_id=m->pool[k].operand;
             char *libname=m->pool[lib_id].name;
+            char *funcname=strdup(m->pool[k].name);
+            funcname[strlen(m->pool[k].name)-2]=0;
             ds so_path=strdup(getenv("CHKALOV"));
             ds_cat(&so_path, "/lib/", libname, "/lib", libname, ".so", NULL);
             void *h=dlopen(so_path, RTLD_LAZY);
             free(so_path);
             if(!h) error("Cannot load: %s", dlerror());
-            void *func=dlsym(h, m->pool[k].name);
-            if(!func) { dlclose(h); error("Undefined: %s", m->pool[k].name); }
+            void *func=dlsym(h, funcname);
+            if(!func) { dlclose(h); error("Undefined: %s", funcname); }
             m->imports[k].is_native=true;
             m->imports[k].native_func=func;
         }
